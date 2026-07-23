@@ -1,0 +1,28 @@
+{
+  "multipart": [
+    {
+      "when": { "up": "true" },
+      "apply": { "model": "cryo-awakening:block/ice_sheet", "x": 270 }
+    },
+    {
+      "when": { "down": "true" },
+      "apply": { "model": "cryo-awakening:block/ice_sheet", "x": 90 }
+    },
+    {
+      "when": { "north": "true" },
+      "apply": { "model": "cryo-awakening:block/ice_sheet" }
+    },
+    {
+      "when": { "south": "true" },
+      "apply": { "model": "cryo-awakening:block/ice_sheet", "y": 180 }
+    },
+    {
+      "when": { "west": "true" },
+      "apply": { "model": "cryo-awakening:block/ice_sheet", "y": 270 }
+    },
+    {
+      "when": { "east": "true" },
+      "apply": { "model": "cryo-awakening:block/ice_sheet", "y": 90 }
+    }
+  ]
+}

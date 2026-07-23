@@ -1,0 +1,12 @@
+{
+  "block.cryo_vent.ambient": {
+    "category": "blocks",
+    "subtitle": "subtitles.cryo-awakening.block.cryo_vent.ambient",
+    "sounds": [
+      {
+        "name": "cryo-awakening:softwind",
+        "stream": false
+      }
+    ]
+  }
+}
