@@ -1,0 +1,67 @@
+{
+  "attributes": {
+    "minecraft:visual/sky_color": "#1f2233",
+    "minecraft:audio/background_music": {
+      "default": {
+        "min_delay": 12000,
+        "max_delay": 24000,
+        "sound": "minecraft:music.overworld.dripstone_caves",
+        "replace_current_music": false
+      }
+    }
+  },
+  "carvers": [],
+  "downfall": 0.0,
+  "effects": {
+    "fog_color": "#303d49",
+    "water_color": "#3d6e83",
+    "water_fog_color": "#050533",
+    "grass_color": "#606860",
+    "foliage_color": "#606860"
+  },
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+  ],
+  "has_precipitation": false,
+  "spawn_costs": {},
+  "spawners": {
+    "ambient": [],
+    "axolotls": [],
+    "creature": [],
+    "misc": [],
+    "monster": [
+      {
+        "type": "minecraft:stray",
+        "minCount": 2,
+        "maxCount": 4,
+        "weight": 80
+      },
+      {
+        "type": "minecraft:skeleton",
+        "minCount": 2,
+        "maxCount": 4,
+        "weight": 40
+      },
+      {
+        "type": "minecraft:creeper",
+        "minCount": 1,
+        "maxCount": 4,
+        "weight": 60
+      }
+    ],
+    "underground_water_creature": [],
+    "water_ambient": [],
+    "water_creature": []
+  },
+  "temperature": -0.7
+}

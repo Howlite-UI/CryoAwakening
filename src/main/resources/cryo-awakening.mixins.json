@@ -3,7 +3,8 @@
 	"package": "com.howlite.cryoawakening.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"mixins": [
-		"ExampleMixin"
+		"ExampleMixin",
+		"OverworldBiomeBuilderMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
