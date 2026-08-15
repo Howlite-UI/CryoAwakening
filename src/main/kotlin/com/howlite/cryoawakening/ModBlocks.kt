@@ -220,6 +220,11 @@ object ModBlocks {
             output.accept(BLUE_ICE_SHEET_GABBRO_STONE_ITEM)
             output.accept(ICE_SHEET_ITEM)
             output.accept(BLUE_ICE_SHEET_ITEM)
+
+            // Armures Cryo Awakening (Fossilized, Primordial, Apex Glacial)
+            com.howlite.cryoawakening.item.ModItems.ALL_ARMOR_ITEMS.forEach { armorItem ->
+                output.accept(armorItem)
+            }
         }
         .build()
 
