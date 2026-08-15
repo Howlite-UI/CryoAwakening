@@ -1,6 +1,8 @@
 package com.howlite.cryoawakening
 
+import com.howlite.cryoawakening.block.CryoTombBlock
 import com.howlite.cryoawakening.block.CryoVentBlock
+import com.howlite.cryoawakening.block.entity.CryoTombBlockEntity
 import com.howlite.cryoawakening.block.entity.CryoVentBlockEntity
 import net.fabricmc.fabric.api.`object`.builder.v1.block.entity.FabricBlockEntityTypeBuilder
 import net.minecraft.core.Registry
@@ -178,6 +180,23 @@ object ModBlocks {
     )
     val BLUE_ICE_SHEET_ITEM: Item = BlockItem(BLUE_ICE_SHEET, Item.Properties().setId(BLUE_ICE_SHEET_ITEM_KEY))
 
+    // 13. Cryo Tomb (Tombe de Glace)
+    val CRYO_TOMB_KEY: ResourceKey<Block> = blockKey("cryo_tomb")
+    val CRYO_TOMB_ITEM_KEY: ResourceKey<Item> = itemKey("cryo_tomb")
+    val CRYO_TOMB: Block = CryoTombBlock(
+        BlockBehaviour.Properties.of()
+            .setId(CRYO_TOMB_KEY)
+            .strength(2.0f, 6.0f)
+            .sound(SoundType.GLASS)
+            .requiresCorrectToolForDrops()
+            .noOcclusion()
+    )
+    val CRYO_TOMB_ITEM: Item = BlockItem(CRYO_TOMB, Item.Properties().setId(CRYO_TOMB_ITEM_KEY))
+
+    // BlockEntityType pour CryoTombBlock
+    val CRYO_TOMB_BLOCK_ENTITY_TYPE: BlockEntityType<CryoTombBlockEntity> =
+        FabricBlockEntityTypeBuilder.create(::CryoTombBlockEntity, CRYO_TOMB).build()
+
     // Onglet Créatif Dédié "Cryo Awakening"
     val CRYO_AWAKENING_TAB_KEY: ResourceKey<CreativeModeTab> = ResourceKey.create(
         Registries.CREATIVE_MODE_TAB,
@@ -189,6 +208,7 @@ object ModBlocks {
         .title(Component.translatable("itemGroup.cryo-awakening.cryo_awakening"))
         .displayItems { _, output ->
             output.accept(CRYO_VENT_ITEM)
+            output.accept(CRYO_TOMB_ITEM)
             output.accept(BISMUTH_ORE_SHIVERING_SHALE_ITEM)
             output.accept(FROZEN_FLYSCH_ITEM)
             output.accept(BLUE_FROZEN_FLYSCH_ITEM)
@@ -206,6 +226,7 @@ object ModBlocks {
     fun register() {
         // Enregistrement des blocs et items
         registerBlock(CRYO_VENT_KEY, CRYO_VENT, CRYO_VENT_ITEM_KEY, CRYO_VENT_ITEM)
+        registerBlock(CRYO_TOMB_KEY, CRYO_TOMB, CRYO_TOMB_ITEM_KEY, CRYO_TOMB_ITEM)
         registerBlock(BISMUTH_ORE_SHIVERING_SHALE_KEY, BISMUTH_ORE_SHIVERING_SHALE, BISMUTH_ORE_SHIVERING_SHALE_ITEM_KEY, BISMUTH_ORE_SHIVERING_SHALE_ITEM)
         registerBlock(FROZEN_FLYSCH_KEY, FROZEN_FLYSCH, FROZEN_FLYSCH_ITEM_KEY, FROZEN_FLYSCH_ITEM)
         registerBlock(BLUE_FROZEN_FLYSCH_KEY, BLUE_FROZEN_FLYSCH, BLUE_FROZEN_FLYSCH_ITEM_KEY, BLUE_FROZEN_FLYSCH_ITEM)
@@ -223,6 +244,11 @@ object ModBlocks {
             BuiltInRegistries.BLOCK_ENTITY_TYPE,
             CryoAwakening.id("cryo_vent"),
             CRYO_VENT_BLOCK_ENTITY_TYPE
+        )
+        Registry.register(
+            BuiltInRegistries.BLOCK_ENTITY_TYPE,
+            CryoAwakening.id("cryo_tomb"),
+            CRYO_TOMB_BLOCK_ENTITY_TYPE
         )
 
         // Onglet Créatif Mod

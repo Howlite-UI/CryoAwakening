@@ -1,12 +1,15 @@
 package com.howlite.cryoawakening.client
 
+import com.howlite.cryoawakening.ModBlocks
 import com.howlite.cryoawakening.ModParticleTypes
 import com.howlite.cryoawakening.client.particle.StylizedWindTrailParticle
+import com.howlite.cryoawakening.client.render.CryoTombBlockEntityRenderer
 import com.howlite.cryoawakening.worldgen.CryoWorldGenConfig
 import com.howlite.cryoawakening.worldgen.biome.ModBiomes
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers
 import net.minecraft.core.BlockPos
 import kotlin.math.cos
 import kotlin.math.sin
@@ -15,6 +18,12 @@ import kotlin.math.atan2
 
 object CryoAwakeningClient : ClientModInitializer {
 	override fun onInitializeClient() {
+		// Enregistrement du renderer de la Cryo-Tomb (affiche le mob capturé dans la glace)
+		BlockEntityRenderers.register(
+			ModBlocks.CRYO_TOMB_BLOCK_ENTITY_TYPE,
+			::CryoTombBlockEntityRenderer
+		)
+
 		// Enregistrement de la factory de particule StylizedWindTrailParticle
 		ParticleProviderRegistry.getInstance().register(
 			ModParticleTypes.STYLIZED_WIND,

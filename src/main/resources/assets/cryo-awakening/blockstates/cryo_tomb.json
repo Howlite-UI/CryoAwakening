@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "half=lower": {
+      "model": "cryo-awakening:block/cryo_tomb_bottom"
+    },
+    "half=upper": {
+      "model": "cryo-awakening:block/cryo_tomb_top"
+    }
+  }
+}

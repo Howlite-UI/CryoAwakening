@@ -1,0 +1,21 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:translucent",
+  "textures": {
+    "ice": "minecraft:block/ice",
+    "particle": "minecraft:block/ice"
+  },
+  "elements": [
+    {
+      "from": [ 0, 0, 0 ],
+      "to": [ 16, 16, 16 ],
+      "faces": {
+        "down":  { "uv": [ 0, 0, 16, 16 ], "texture": "#ice", "cullface": "down" },
+        "north": { "uv": [ 0, 0, 16, 16 ], "texture": "#ice", "cullface": "north" },
+        "south": { "uv": [ 0, 0, 16, 16 ], "texture": "#ice", "cullface": "south" },
+        "west":  { "uv": [ 0, 0, 16, 16 ], "texture": "#ice", "cullface": "west" },
+        "east":  { "uv": [ 0, 0, 16, 16 ], "texture": "#ice", "cullface": "east" }
+      }
+    }
+  ]
+}
