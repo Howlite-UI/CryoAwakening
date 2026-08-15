@@ -1,5 +1,6 @@
 package com.howlite.cryoawakening.mixin;
 
+import com.howlite.cryoawakening.worldgen.CryoWorldGenConfig;
 import com.howlite.cryoawakening.worldgen.biome.ModBiomes;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.resources.ResourceKey;
@@ -16,13 +17,7 @@ import java.util.function.Consumer;
 /**
  * OverworldBiomeBuilderMixin
  *
- * Injection de `cryo_caverns` dans le MultiNoise de l'Overworld.
- *
- * Plage validée RTree :
- *  - Temperature : [-1.20,  1.20] (toutes les températures)
- *  - Humidity    : [-1.20,  1.20] (toutes les humidités)
- *  - Depth       : [ 0.70,  1.20] (STRICTEMENT sous-terrain profond / Y < -20)
- *  - Offset      : 0.0f (requis pour la compatibilité du RTree de /locatebiome)
+ * Injection de `cryo_caverns` dans le MultiNoise de l'Overworld sous forme de poches ciblées.
  */
 @Mixin(OverworldBiomeBuilder.class)
 public class OverworldBiomeBuilderMixin {
@@ -34,19 +29,20 @@ public class OverworldBiomeBuilderMixin {
     ) {
         ResourceKey<Biome> biomeKey = ModBiomes.INSTANCE.getCRYO_CAVERNS();
 
-        // Parameter points couvrant l'ensemble du sous-sol profond (depth >= 0.70)
-        // Offset = 0.0f pour compatibilité 100% avec l'arbre RTree de /locatebiome
+        // Parameter points ciblés définis dans CryoWorldGenConfig
+        // Crée des poches d'environ 200-300 blocs englobant précisément la cathédrale de glace
         mapper.accept(Pair.of(
             Climate.parameters(
-                Climate.Parameter.span(-1.20f,  1.20f),  // temperature : toutes
-                Climate.Parameter.span(-1.20f,  1.20f),  // humidity    : toutes
-                Climate.Parameter.span(-1.20f,  1.20f),  // continentalness : toutes
-                Climate.Parameter.span(-1.20f,  1.20f),  // erosion     : toutes
-                Climate.Parameter.span( 0.70f,  1.20f),  // depth       : SOUTERRAIN PROFOND (Y < -20)
-                Climate.Parameter.span(-1.20f,  1.20f),  // weirdness   : toutes
-                0.0f                                     // offset validé RTree
+                CryoWorldGenConfig.INSTANCE.getTEMPERATURE_SPAN(),
+                CryoWorldGenConfig.INSTANCE.getHUMIDITY_SPAN(),
+                CryoWorldGenConfig.INSTANCE.getCONTINENTALNESS_SPAN(),
+                CryoWorldGenConfig.INSTANCE.getEROSION_SPAN(),
+                CryoWorldGenConfig.INSTANCE.getDEPTH_SPAN(),
+                CryoWorldGenConfig.INSTANCE.getWEIRDNESS_SPAN(),
+                CryoWorldGenConfig.OFFSET
             ),
             biomeKey
         ));
     }
 }
+

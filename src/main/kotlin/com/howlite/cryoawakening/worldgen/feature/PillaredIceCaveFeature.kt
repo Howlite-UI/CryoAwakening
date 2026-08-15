@@ -1,6 +1,9 @@
 package com.howlite.cryoawakening.worldgen.feature
 
+import com.howlite.cryoawakening.CryoAwakening
 import com.howlite.cryoawakening.ModBlocks
+import com.howlite.cryoawakening.worldgen.CryoWorldGenConfig
+import com.howlite.cryoawakening.worldgen.biome.ModBiomes
 import com.mojang.serialization.Codec
 import net.minecraft.core.BlockPos
 import net.minecraft.world.level.WorldGenLevel
@@ -39,14 +42,14 @@ class PillaredIceCaveFeature(codec: Codec<NoneFeatureConfiguration>) :
     Feature<NoneFeatureConfiguration>(codec) {
 
     companion object {
-        private const val CAVE_GRID_SPACING = 380   // 380 blocs -> 1 seule cave géante par biome
+        private const val CAVE_GRID_SPACING = CryoWorldGenConfig.CAVE_GRID_SPACING
         private const val VORONOI_CELL_SIZE = 36    // Cellule Voronoi spéléothèmes (36 blocs)
         private const val GOUR_CELL_SIZE    = 42    // Cellule Voronoi Gours (42 blocs)
 
-        private const val BASE_EDGE_FLOOR_Y= -49   // Sol sur les bords (Y = -49)
-        private const val FLOOR_MAX_DIP    = 5     // Creux maximal de 5 blocs au centre (Y = -54 au centre)
-        private const val CAVE_MAX_HEIGHT  = 38    // Clearance monumentale (38 blocs de haut au centre)
-        private const val BEDROCK_SAFE_Y   = -58   // Protection stricte de la bedrock
+        private const val BASE_EDGE_FLOOR_Y = CryoWorldGenConfig.BASE_EDGE_FLOOR_Y
+        private const val FLOOR_MAX_DIP     = CryoWorldGenConfig.FLOOR_MAX_DIP
+        private const val CAVE_MAX_HEIGHT   = CryoWorldGenConfig.CAVE_MAX_HEIGHT
+        private const val BEDROCK_SAFE_Y    = CryoWorldGenConfig.BEDROCK_SAFE_Y
 
         private const val ICICLE_CHANCE   = 0.04  // 4% (petites stalactites de glace 1 à 3 blocs)
         private const val ICICLE_MAX_LEN  = 3
@@ -109,10 +112,8 @@ class PillaredIceCaveFeature(codec: Codec<NoneFeatureConfiguration>) :
         val chunkMidZ = czMin + 8
         val gridX = Math.floorDiv(chunkMidX, CAVE_GRID_SPACING)
         val gridZ = Math.floorDiv(chunkMidZ, CAVE_GRID_SPACING)
-        val domeSeed = gridX.toLong() * 341873128712L xor gridZ.toLong() * 132897987541L
-
-        val centerX = gridX * CAVE_GRID_SPACING + (CAVE_GRID_SPACING / 2) + ((hash1D(domeSeed) - 0.5) * 40).toInt()
-        val centerZ = gridZ * CAVE_GRID_SPACING + (CAVE_GRID_SPACING / 2) + ((hash1D(domeSeed xor 0x1A2BL) - 0.5) * 40).toInt()
+        val domeSeed = CryoWorldGenConfig.getDomeSeed(gridX, gridZ)
+        val (centerX, centerZ) = CryoWorldGenConfig.getCaveCenter(gridX, gridZ)
 
         // Paramètres de déformation angulaire unique pour CETTE caverne
         val phi1 = hash1D(domeSeed xor 0x7A8BL) * 6.2831853
@@ -123,13 +124,12 @@ class PillaredIceCaveFeature(codec: Codec<NoneFeatureConfiguration>) :
         val amp2 = 0.08 + hash1D(domeSeed xor 0x2222L) * 0.06
         val amp3 = 0.04 + hash1D(domeSeed xor 0x3333L) * 0.04
 
-        val radX = 90.0 + hash1D(domeSeed xor 0x3C4DL) * 30.0
-        val radZ = 80.0 + hash1D(domeSeed xor 0x5E6FL) * 30.0
+        val (radX, radZ) = CryoWorldGenConfig.getCaveRadii(domeSeed)
 
-        // Quick distance check (max radius ~120 blocks * 1.35 max deformation + 16 chunk margin = 180 blocks)
+        // Quick distance check (max radius ~105 blocks * 1.35 max deformation + 16 chunk margin = 158 blocks)
         val cdx = (chunkMidX - centerX).toDouble()
         val cdz = (chunkMidZ - centerZ).toDouble()
-        if (cdx * cdx + cdz * cdz > 180.0 * 180.0) return false
+        if (cdx * cdx + cdz * cdz > 165.0 * 165.0) return false
 
         // ── PRÉ-CALCUL DES GOURS POUR CETTE CAVERNE (DÉTERMINISTE PAR domeSeed) ──────────────
         val gourBasins = buildGourBasins(centerX, centerZ, domeSeed, radX, radZ)
@@ -403,6 +403,10 @@ class PillaredIceCaveFeature(codec: Codec<NoneFeatureConfiguration>) :
             }
         }
 
+        if (placedAny) {
+            CryoAwakening.LOGGER.info("[CryoAwakening] Successfully generated PillaredIceCave slice in chunk [${chunkX}, ${chunkZ}] (Cave center: [$centerX, $centerZ], Y: ${BASE_EDGE_FLOOR_Y})")
+        }
+
         return placedAny
     }
 
@@ -604,11 +608,5 @@ class PillaredIceCaveFeature(codec: Codec<NoneFeatureConfiguration>) :
         return (n and 0x7FFFFFFFL).toDouble() / 0x7FFFFFFFL.toDouble()
     }
 
-    private fun hash1D(seed: Long): Double {
-        var n = seed
-        n = n xor (n shl 21)
-        n = n xor (n ushr 35)
-        n = n xor (n shl 4)
-        return (n and 0x7FFFFFFFL).toDouble() / 0x7FFFFFFFL.toDouble()
-    }
+    private fun hash1D(seed: Long): Double = CryoWorldGenConfig.hash1D(seed)
 }

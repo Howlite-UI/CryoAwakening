@@ -54,9 +54,7 @@ object ModBiomes {
                 )
             }
 
-        // 2. Injection de notre cathédrale monumentale à la fin des étapes sous-terraines (Step UNDERGROUND_DECORATION)
-        // Cela garantit que notre cathédrale s'exécute APRÈS les étapes de structures/décorations vanilla
-        // et vaporise tous les blocs parasites en les remplaçant par la voûte en roche.
+        // 2. Injection de notre cathédrale monumentale dans les étapes sous-terraines
         BiomeModifications.addFeature(
             BiomeSelectors.foundInOverworld(),
             GenerationStep.Decoration.UNDERGROUND_DECORATION,

@@ -36,7 +36,7 @@ class StylizedWindTrailParticle(
 ) : SingleQuadParticle(level, x, y, z, sprites.first()) {
 
     companion object {
-        private const val TRAIL_CAPACITY = 18
+        private const val TRAIL_CAPACITY = 45
         private const val SUB_STEPS = 32
     }
 
@@ -52,7 +52,7 @@ class StylizedWindTrailParticle(
 
     private val phaseX: Float = random.nextFloat() * (2f * PI.toFloat())
     private val phaseZ: Float = random.nextFloat() * (2f * PI.toFloat())
-    private val baseYSpeed: Double = ySpeed.coerceAtLeast(0.12)
+    private val baseYSpeed: Double = ySpeed.coerceAtLeast(0.005)
 
     // Loop-the-loop 3D ascendant (~30% des traînées)
     private val hasLoop: Boolean = random.nextFloat() < 0.30f
@@ -70,8 +70,8 @@ class StylizedWindTrailParticle(
 
         hasPhysics = false
 
-        // Durée de vie longue pour s'élever haut (80 à 120 ticks)
-        lifetime = 80 + random.nextInt(40)
+        // Durée de vie longue pour s'élever haut (140 à 200 ticks)
+        lifetime = 140 + random.nextInt(61)
 
         quadSize = 0.040f + random.nextFloat() * 0.010f
 
@@ -148,9 +148,9 @@ class StylizedWindTrailParticle(
 
         pushNode(x, y, z, xo, yo, zo)
 
-        // Amortissement horizontal doux pour laisser l'entonnoir s'évaser largement
-        xd *= 0.965
-        zd *= 0.965
+        // Amortissement horizontal très doux pour laisser le vent tourner loin
+        xd *= 0.992
+        zd *= 0.992
 
         val lifeRatio = age.toFloat() / lifetime.toFloat()
         if (lifeRatio > 0.80f) {
@@ -159,7 +159,7 @@ class StylizedWindTrailParticle(
     }
 
     override fun getBoundingBox(): AABB =
-        AABB(x - 8.0, y, z - 8.0, x + 8.0, y + 25.0, z + 8.0)
+        AABB(x - 40.0, y - 10.0, z - 40.0, x + 40.0, y + 25.0, z + 40.0)
 
     private fun getInterpolatedPos(s: Float, partialTick: Float): Vec3 {
         val total = trailNodes.size

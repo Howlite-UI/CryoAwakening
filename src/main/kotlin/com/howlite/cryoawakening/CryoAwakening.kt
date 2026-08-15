@@ -9,7 +9,7 @@ import com.howlite.cryoawakening.worldgen.biome.ModBiomes
 object CryoAwakening : ModInitializer {
 	const val MOD_ID: String = "cryo-awakening"
 
-	private val LOGGER = LoggerFactory.getLogger(MOD_ID)
+	val LOGGER = LoggerFactory.getLogger(MOD_ID)
 
 	override fun onInitialize() {
 		ModParticleTypes.register()
