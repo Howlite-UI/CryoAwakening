@@ -210,6 +210,7 @@ object ModBlocks {
             output.accept(CRYO_VENT_ITEM)
             output.accept(CRYO_TOMB_ITEM)
             output.accept(BISMUTH_ORE_SHIVERING_SHALE_ITEM)
+            output.accept(com.howlite.cryoawakening.item.ModItems.RAW_BISMUTH)
             output.accept(FROZEN_FLYSCH_ITEM)
             output.accept(BLUE_FROZEN_FLYSCH_ITEM)
             output.accept(SHIVERING_SHALE_STONE_ITEM)

@@ -14,6 +14,10 @@ repositories {
 		name = "Modrinth"
 		url = uri("https://api.modrinth.com/maven")
 	}
+	maven {
+		name = "GeckoLib"
+		url = uri("https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/")
+	}
 }
 
 loom {
@@ -41,6 +45,9 @@ dependencies {
 	// Fabric API
 	implementation("net.fabricmc.fabric-api:fabric-api:${providers.gradleProperty("fabric_api_version").get()}")
 	implementation("net.fabricmc:fabric-language-kotlin:${providers.gradleProperty("fabric_kotlin_version").get()}")
+
+	// GeckoLib (Modrinth Maven)
+	implementation("maven.modrinth:geckolib:${providers.gradleProperty("geckolib_version").get()}")
 }
 
 tasks.processResources {

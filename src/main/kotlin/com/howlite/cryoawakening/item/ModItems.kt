@@ -23,6 +23,10 @@ object ModItems {
     private fun itemKey(name: String): ResourceKey<Item> =
         ResourceKey.create(Registries.ITEM, CryoAwakening.id(name))
 
+    // --- Minerais & Matériaux ---
+    val RAW_BISMUTH_KEY: ResourceKey<Item> = itemKey("raw_bismuth")
+    val RAW_BISMUTH: Item = Item(Item.Properties().setId(RAW_BISMUTH_KEY))
+
     private fun createArmor(name: String, material: ArmorMaterial, armorType: ArmorType): Pair<ResourceKey<Item>, Item> {
         val key = itemKey(name)
         val item = Item(
@@ -35,7 +39,9 @@ object ModItems {
 
     // --- Set 1 : Fossilized (Tier 1) ---
     val FOSSILIZED_HELMET_KEY: ResourceKey<Item> = itemKey("fossilized_helmet")
-    val FOSSILIZED_HELMET: Item = Item(Item.Properties().setId(FOSSILIZED_HELMET_KEY).humanoidArmor(ModArmorMaterials.FOSSILIZED, ArmorType.HELMET))
+    val FOSSILIZED_HELMET: Item = GeoArmorItem(
+        Item.Properties().setId(FOSSILIZED_HELMET_KEY).humanoidArmor(ModArmorMaterials.FOSSILIZED, ArmorType.HELMET)
+    )
 
     val FOSSILIZED_CHESTPLATE_KEY: ResourceKey<Item> = itemKey("fossilized_chestplate")
     val FOSSILIZED_CHESTPLATE: Item = Item(Item.Properties().setId(FOSSILIZED_CHESTPLATE_KEY).humanoidArmor(ModArmorMaterials.FOSSILIZED, ArmorType.CHESTPLATE))
@@ -116,6 +122,9 @@ object ModItems {
      * Enregistre tous les items d'armure dans le registre BuiltInRegistries.ITEM
      */
     fun register() {
+        // Minerais & Matériaux
+        Registry.register(BuiltInRegistries.ITEM, RAW_BISMUTH_KEY, RAW_BISMUTH)
+
         // Set Fossilized
         Registry.register(BuiltInRegistries.ITEM, FOSSILIZED_HELMET_KEY, FOSSILIZED_HELMET)
         Registry.register(BuiltInRegistries.ITEM, FOSSILIZED_CHESTPLATE_KEY, FOSSILIZED_CHESTPLATE)

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "cryo-awakening:item/raw_bismuth"
+  }
+}

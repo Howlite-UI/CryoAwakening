@@ -4,7 +4,6 @@ import com.howlite.cryoawakening.item.ModItems
 import com.howlite.cryoawakening.item.ModItems.ArmorTier
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents
 import net.minecraft.core.particles.ParticleTypes
-import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
@@ -14,22 +13,28 @@ import net.minecraft.world.effect.MobEffects
 import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.monster.Enemy
+import net.minecraft.world.entity.projectile.Projectile
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.Vec3
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Gestionnaire d'événement de combat pour la mécanique "Posture Fossile" (Full Set Bonus).
  *
  * Logique :
- * Lorsqu'un joueur accroupi portant un set complet subit des dégâts physiques et que
+ * Lorsqu'un joueur accroupi portant un set complet subit des dégâts et que
  * son plastron n'est pas en cooldown :
  * 1. Les dégâts sont annulés à 100% (comportement bouclier).
  * 2. Un cooldown de 60 ticks (3s) est appliqué sur le plastron.
- * 3. Des sons de blocage/ossement sont joués.
+ * 3. Des sons de parade/ossement sont joués.
  * 4. Des effets spéciaux se déclenchent selon le tier :
  *    - FOSSILIZED (Tier 1) : Parade basique.
  *    - PRIMORDIAL (Tier 2) : Lenteur II appliquée à l'attaquant pendant 3 secondes.
- *    - APEX_GLACIAL (Tier 3) : Onde de choc répulsive (AoE Knockback) sur les ennemis à 5 blocs + particules de flocons de neige.
+ *    - APEX_GLACIAL (Tier 3) :
+ *        * Onde de choc répulsive (AoE Knockback 5 blocs sur les ennemis).
+ *        * Barrière de renvoi façon Z de Mel (League of Legends) : intercepte et renvoie tous les projectiles
+ *          vers l'attaquant à pleine vitesse avec effets résonnants et traînée de particules.
  */
 object FossilPostureCombatHandler {
 
@@ -67,7 +72,7 @@ object FossilPostureCombatHandler {
 
             val level = player.level()
 
-            // B. Jouer les sons combinés (Shield Block + Skeleton Hurt)
+            // B. Jouer les sons combinés de base (Shield Block + Skeleton Hurt)
             level.playSound(
                 null,
                 player.x, player.y, player.z,
@@ -102,8 +107,9 @@ object FossilPostureCombatHandler {
                 }
 
                 ArmorTier.APEX_GLACIAL -> {
-                    // Tier 3 : Onde de choc répulsive AoE dans un rayon de 5 blocs
                     val box = AABB.ofSize(player.position(), APEX_AOE_RADIUS * 2, APEX_AOE_RADIUS * 2, APEX_AOE_RADIUS * 2)
+
+                    // 1. Onde de choc répulsive AoE sur les entités hostiles dans un rayon de 5 blocs
                     val hostiles = level.getEntitiesOfClass(LivingEntity::class.java, box) { target ->
                         (target is Enemy) && (target != player) && target.isAlive && (player.distanceTo(target) <= APEX_AOE_RADIUS)
                     }
@@ -114,12 +120,91 @@ object FossilPostureCombatHandler {
                             pushDir = Vec3(0.0, 0.0, 1.0)
                         }
                         val normalized = pushDir.normalize()
-                        // Projection puissante vers l'arrière avec une légère élévation verticale
                         target.deltaMovement = Vec3(normalized.x * 1.65, 0.45, normalized.z * 1.65)
                         target.hurtMarked = true
                     }
 
-                    // Anneau circulaire de particules de flocons de neige (ParticleTypes.SNOWFLAKE)
+                    // 2. Mécanique de Renvoi de Projectiles (Style Z de Mel - League of Legends)
+                    val incomingDirect = source.directEntity
+                    val nearbyProjectiles = level.getEntitiesOfClass(Projectile::class.java, box) { proj ->
+                        proj.isAlive && proj.owner != player
+                    }.toMutableList()
+
+                    if (incomingDirect is Projectile && !nearbyProjectiles.contains(incomingDirect)) {
+                        nearbyProjectiles.add(incomingDirect)
+                    }
+
+                    var reflectedAny = false
+                    for (proj in nearbyProjectiles) {
+                        reflectedAny = true
+                        val originalShooter = source.entity ?: proj.owner
+
+                        // Calcul de la cible du renvoi (la tête du tireur s'il est vivant, sinon vers la ligne de visée du joueur)
+                        val targetPos = if (originalShooter != null && originalShooter.isAlive) {
+                            originalShooter.eyePosition
+                        } else {
+                            proj.position().add(player.lookAngle.scale(15.0))
+                        }
+
+                        var dir = targetPos.subtract(proj.position())
+                        if (dir.lengthSqr() < 1e-4) {
+                            dir = player.lookAngle
+                        }
+
+                        // Vitesse amplifiée pour punir le tireur
+                        val currentSpeed = proj.deltaMovement.length()
+                        val reflectedSpeed = max(currentSpeed * 1.35, 1.85)
+                        val normalizedDir = dir.normalize()
+                        val reflectedVelocity = normalizedDir.scale(reflectedSpeed)
+
+                        // Redirection et réassignation du projectile au joueur
+                        proj.deltaMovement = reflectedVelocity
+                        proj.owner = player
+                        proj.hurtMarked = true
+
+                        // Effets de traînée de renvoi de projectile
+                        val dist = min(dir.length(), 14.0)
+                        val steps = (dist * 2.5).toInt().coerceAtLeast(4)
+                        for (i in 0 until steps) {
+                            val progress = i.toDouble() / steps.toDouble()
+                            val px = proj.x + dir.x * progress
+                            val py = proj.y + dir.y * progress
+                            val pz = proj.z + dir.z * progress
+                            level.sendParticles(ParticleTypes.SNOWFLAKE, px, py, pz, 1, 0.02, 0.02, 0.02, 0.01)
+                            level.sendParticles(ParticleTypes.ELECTRIC_SPARK, px, py, pz, 1, 0.0, 0.0, 0.0, 0.0)
+                        }
+
+                        // Son d'impact et de résonance du renvoi cristallin
+                        level.playSound(
+                            null,
+                            proj.x, proj.y, proj.z,
+                            SoundEvents.AMETHYST_BLOCK_RESONATE,
+                            SoundSource.PLAYERS,
+                            1.2f,
+                            1.6f
+                        )
+                        level.playSound(
+                            null,
+                            proj.x, proj.y, proj.z,
+                            SoundEvents.PLAYER_ATTACK_SWEEP,
+                            SoundSource.PLAYERS,
+                            1.0f,
+                            1.4f
+                        )
+                    }
+
+                    if (reflectedAny) {
+                        level.playSound(
+                            null,
+                            player.x, player.y, player.z,
+                            SoundEvents.SHIELD_BLOCK,
+                            SoundSource.PLAYERS,
+                            1.4f,
+                            1.75f
+                        )
+                    }
+
+                    // 3. Anneau circulaire de particules de flocons de neige (ParticleTypes.SNOWFLAKE)
                     val particleCount = 48
                     for (i in 0 until particleCount) {
                         val angle = 2.0 * Math.PI * i / particleCount
@@ -132,15 +217,31 @@ object FossilPostureCombatHandler {
                             0.05, 0.1, 0.05,
                             0.02
                         )
+                        if (i % 3 == 0) {
+                            level.sendParticles(
+                                ParticleTypes.ELECTRIC_SPARK,
+                                px, player.y + 0.25, pz,
+                                1,
+                                0.0, 0.05, 0.0,
+                                0.02
+                            )
+                        }
                     }
 
-                    // Explosion centrale de flocons autour du joueur
+                    // 4. Explosion centrale de flocons et étincelles autour du joueur
                     level.sendParticles(
                         ParticleTypes.SNOWFLAKE,
                         player.x, player.y + 1.0, player.z,
-                        30,
+                        35,
                         1.2, 0.5, 1.2,
                         0.08
+                    )
+                    level.sendParticles(
+                        ParticleTypes.ELECTRIC_SPARK,
+                        player.x, player.y + 1.0, player.z,
+                        15,
+                        0.8, 0.4, 0.8,
+                        0.05
                     )
                 }
             }

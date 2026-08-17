@@ -7,6 +7,7 @@
 
   "block.cryo-awakening.bismuth_ore_shivering_shale": "Minerai de Bismuth (Schiste Frissonnant)",
   "item.cryo-awakening.bismuth_ore_shivering_shale": "Minerai de Bismuth (Schiste Frissonnant)",
+  "item.cryo-awakening.raw_bismuth": "Bismuth Brut",
 
   "block.cryo-awakening.frozen_flysch": "Flysch Gelé",
   "item.cryo-awakening.frozen_flysch": "Flysch Gelé",
@@ -37,6 +38,21 @@
 
   "block.cryo-awakening.blue_ice_sheet": "Nappe de Glace Bleue",
   "item.cryo-awakening.blue_ice_sheet": "Nappe de Glace Bleue",
+
+  "item.cryo-awakening.fossilized_helmet": "Casque Fossilisé",
+  "item.cryo-awakening.fossilized_chestplate": "Plastron Fossilisé",
+  "item.cryo-awakening.fossilized_leggings": "Jambières Fossilisées",
+  "item.cryo-awakening.fossilized_boots": "Bottes Fossilisées",
+
+  "item.cryo-awakening.primordial_helmet": "Casque Primordial",
+  "item.cryo-awakening.primordial_chestplate": "Plastron Primordial",
+  "item.cryo-awakening.primordial_leggings": "Jambières Primordiales",
+  "item.cryo-awakening.primordial_boots": "Bottes Primordiales",
+
+  "item.cryo-awakening.apex_glacial_helmet": "Casque Apex Glacial",
+  "item.cryo-awakening.apex_glacial_chestplate": "Plastron Apex Glacial",
+  "item.cryo-awakening.apex_glacial_leggings": "Jambières Apex Glacial",
+  "item.cryo-awakening.apex_glacial_boots": "Bottes Apex Glacial",
 
   "itemGroup.cryo-awakening.cryo_awakening": "Cryo Awakening"
 }

@@ -4,6 +4,9 @@ import com.howlite.cryoawakening.ModBlocks
 import com.howlite.cryoawakening.ModParticleTypes
 import com.howlite.cryoawakening.client.particle.StylizedWindTrailParticle
 import com.howlite.cryoawakening.client.render.CryoTombBlockEntityRenderer
+import com.howlite.cryoawakening.client.render.armor.FossilizedHelmetRenderProvider
+import com.howlite.cryoawakening.item.GeoArmorItem
+import com.howlite.cryoawakening.item.ModItems
 import com.howlite.cryoawakening.worldgen.CryoWorldGenConfig
 import com.howlite.cryoawakening.worldgen.biome.ModBiomes
 import net.fabricmc.api.ClientModInitializer
@@ -18,6 +21,12 @@ import kotlin.math.atan2
 
 object CryoAwakeningClient : ClientModInitializer {
 	override fun onInitializeClient() {
+		// Enregistrement des renderers d'armures GeckoLib
+		GeoArmorItem.registerRenderProvider(
+			ModItems.FOSSILIZED_HELMET,
+			FossilizedHelmetRenderProvider
+		)
+
 		// Enregistrement du renderer de la Cryo-Tomb (affiche le mob capturé dans la glace)
 		BlockEntityRenderers.register(
 			ModBlocks.CRYO_TOMB_BLOCK_ENTITY_TYPE,

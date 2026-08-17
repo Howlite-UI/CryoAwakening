@@ -1,5 +1,6 @@
 package com.howlite.cryoawakening.client.render
 
+import com.geckolib.constant.dataticket.DataTicket
 import com.howlite.cryoawakening.block.entity.CryoTombBlockEntity
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Minecraft
@@ -25,6 +26,9 @@ class CryoTombRenderState : BlockEntityRenderState() {
     var thawProgress: Int = 0
     var entityTypeId: Identifier = Identifier.fromNamespaceAndPath("minecraft", "zombie")
     var light: Int = 15728880
+
+    private val geckolibDataMap: MutableMap<DataTicket<*>, Any> = HashMap()
+    override fun getDataMap(): MutableMap<DataTicket<*>, Any> = geckolibDataMap
 }
 
 /**
