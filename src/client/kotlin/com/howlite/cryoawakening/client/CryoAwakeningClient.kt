@@ -5,6 +5,8 @@ import com.howlite.cryoawakening.ModParticleTypes
 import com.howlite.cryoawakening.client.particle.StylizedWindTrailParticle
 import com.howlite.cryoawakening.client.render.CryoTombBlockEntityRenderer
 import com.howlite.cryoawakening.client.render.armor.FossilizedHelmetRenderProvider
+import com.howlite.cryoawakening.client.render.entity.GlaciopodRenderer
+import com.howlite.cryoawakening.entity.ModEntities
 import com.howlite.cryoawakening.item.GeoArmorItem
 import com.howlite.cryoawakening.item.ModItems
 import com.howlite.cryoawakening.worldgen.CryoWorldGenConfig
@@ -12,6 +14,7 @@ import com.howlite.cryoawakening.worldgen.biome.ModBiomes
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry
+import net.minecraft.client.renderer.entity.EntityRenderers
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers
 import net.minecraft.core.BlockPos
 import kotlin.math.cos
@@ -21,6 +24,12 @@ import kotlin.math.atan2
 
 object CryoAwakeningClient : ClientModInitializer {
 	override fun onInitializeClient() {
+		// Enregistrement du renderer du Glaciopod (cloporte géant articulé procédural)
+		EntityRenderers.register(
+			ModEntities.GLACIOPOD,
+			::GlaciopodRenderer
+		)
+
 		// Enregistrement des renderers d'armures GeckoLib
 		GeoArmorItem.registerRenderProvider(
 			ModItems.FOSSILIZED_HELMET,

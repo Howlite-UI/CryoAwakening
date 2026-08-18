@@ -18,6 +18,7 @@ object CryoAwakening : ModInitializer {
 		ModSounds.register()
 		ModBlocks.register()
 		ModItems.register()
+		com.howlite.cryoawakening.entity.ModEntities.register()
 		FossilPostureCombatHandler.register()
 		ModFeatures.register()  // WorldGen : Features custom (PillaredIceCave, etc.)
 		ModBiomes.register()    // WorldGen : Biomes custom + BiomeModifications (CryoCaverns, etc.)
