@@ -54,5 +54,10 @@
   "item.cryo-awakening.apex_glacial_leggings": "Apex Glacial Leggings",
   "item.cryo-awakening.apex_glacial_boots": "Apex Glacial Boots",
 
+  "entity.cryo-awakening.glaciopod": "Glaciopod",
+  "entity.cryo-awakening.gawker": "Gawker",
+  "item.cryo-awakening.gawker_spawn_egg": "Gawker Spawn Egg",
+  "item.cryo-awakening.gawker_fur": "Gawker Fur",
+
   "itemGroup.cryo-awakening.cryo_awakening": "Cryo Awakening"
 }

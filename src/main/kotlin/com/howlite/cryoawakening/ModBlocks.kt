@@ -226,6 +226,10 @@ object ModBlocks {
             com.howlite.cryoawakening.item.ModItems.ALL_ARMOR_ITEMS.forEach { armorItem ->
                 output.accept(armorItem)
             }
+
+            // Entités & Mobs
+            output.accept(com.howlite.cryoawakening.item.ModItems.GAWKER_SPAWN_EGG)
+            output.accept(com.howlite.cryoawakening.item.ModItems.GAWKER_FUR)
         }
         .build()
 

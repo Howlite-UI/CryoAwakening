@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "cryo-awakening:item/gawker_fur"
+  }
+}

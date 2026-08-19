@@ -1,6 +1,7 @@
 package com.howlite.cryoawakening.item
 
 import com.howlite.cryoawakening.CryoAwakening
+import com.howlite.cryoawakening.entity.ModEntities
 import net.minecraft.core.Registry
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
@@ -8,6 +9,7 @@ import net.minecraft.resources.ResourceKey
 import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.Item
+import net.minecraft.world.item.SpawnEggItem
 import net.minecraft.world.item.equipment.ArmorMaterial
 import net.minecraft.world.item.equipment.ArmorType
 
@@ -26,6 +28,17 @@ object ModItems {
     // --- Minerais & Matériaux ---
     val RAW_BISMUTH_KEY: ResourceKey<Item> = itemKey("raw_bismuth")
     val RAW_BISMUTH: Item = Item(Item.Properties().setId(RAW_BISMUTH_KEY))
+
+    // --- Items Gawker ---
+    val GAWKER_FUR_KEY: ResourceKey<Item> = itemKey("gawker_fur")
+    val GAWKER_FUR: Item = Item(Item.Properties().setId(GAWKER_FUR_KEY))
+
+    val GAWKER_SPAWN_EGG_KEY: ResourceKey<Item> = itemKey("gawker_spawn_egg")
+    val GAWKER_SPAWN_EGG: Item = SpawnEggItem(
+        Item.Properties()
+            .setId(GAWKER_SPAWN_EGG_KEY)
+            .spawnEgg(ModEntities.GAWKER)
+    )
 
     private fun createArmor(name: String, material: ArmorMaterial, armorType: ArmorType): Pair<ResourceKey<Item>, Item> {
         val key = itemKey(name)
@@ -124,6 +137,8 @@ object ModItems {
     fun register() {
         // Minerais & Matériaux
         Registry.register(BuiltInRegistries.ITEM, RAW_BISMUTH_KEY, RAW_BISMUTH)
+        Registry.register(BuiltInRegistries.ITEM, GAWKER_FUR_KEY, GAWKER_FUR)
+        Registry.register(BuiltInRegistries.ITEM, GAWKER_SPAWN_EGG_KEY, GAWKER_SPAWN_EGG)
 
         // Set Fossilized
         Registry.register(BuiltInRegistries.ITEM, FOSSILIZED_HELMET_KEY, FOSSILIZED_HELMET)

@@ -5,6 +5,7 @@ import com.howlite.cryoawakening.ModParticleTypes
 import com.howlite.cryoawakening.client.particle.StylizedWindTrailParticle
 import com.howlite.cryoawakening.client.render.CryoTombBlockEntityRenderer
 import com.howlite.cryoawakening.client.render.armor.FossilizedHelmetRenderProvider
+import com.howlite.cryoawakening.client.render.entity.GawkerRenderer
 import com.howlite.cryoawakening.client.render.entity.GlaciopodRenderer
 import com.howlite.cryoawakening.entity.ModEntities
 import com.howlite.cryoawakening.item.GeoArmorItem
@@ -28,6 +29,12 @@ object CryoAwakeningClient : ClientModInitializer {
 		EntityRenderers.register(
 			ModEntities.GLACIOPOD,
 			::GlaciopodRenderer
+		)
+
+		// Enregistrement du renderer du Gawker (créature curieuse duveteuse)
+		EntityRenderers.register(
+			ModEntities.GAWKER,
+			::GawkerRenderer
 		)
 
 		// Enregistrement des renderers d'armures GeckoLib
