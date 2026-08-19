@@ -32,6 +32,18 @@ class GawkerRenderer(
 
         val ATTACK_PROGRESS: DataTicket<Float> =
             DataTicket.create("gawker_attack_progress", Float::class.javaObjectType)
+
+        val IS_CARRIED: DataTicket<Boolean> =
+            DataTicket.create("gawker_is_carried", Boolean::class.javaObjectType)
+
+        val IS_THROWN: DataTicket<Boolean> =
+            DataTicket.create("gawker_is_thrown", Boolean::class.javaObjectType)
+
+        val FLIGHT_TICKS: DataTicket<Int> =
+            DataTicket.create("gawker_flight_ticks", Int::class.javaObjectType)
+
+        val POWDER_CHARGE: DataTicket<Int> =
+            DataTicket.create("gawker_powder_charge", Int::class.javaObjectType)
     }
 
     override fun addRenderData(
@@ -56,6 +68,10 @@ class GawkerRenderer(
         state.addGeckolibData(HEAD_PITCH, headPitch)
         state.addGeckolibData(HURT_PROGRESS, hurtProgress)
         state.addGeckolibData(ATTACK_PROGRESS, attackProgress)
+        state.addGeckolibData(IS_CARRIED, animatable.isCarried)
+        state.addGeckolibData(IS_THROWN, animatable.isThrown)
+        state.addGeckolibData(FLIGHT_TICKS, animatable.flightTicks)
+        state.addGeckolibData(POWDER_CHARGE, animatable.powderCharge)
     }
 
     override fun adjustModelBonesForRender(

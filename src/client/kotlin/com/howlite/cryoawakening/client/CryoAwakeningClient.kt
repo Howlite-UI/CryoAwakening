@@ -37,6 +37,9 @@ object CryoAwakeningClient : ClientModInitializer {
 			::GawkerRenderer
 		)
 
+		// Enregistrement du gestionnaire de portage et lancer client du Gawker
+		com.howlite.cryoawakening.client.event.GawkerClientCarryHandler.register()
+
 		// Enregistrement des renderers d'armures GeckoLib
 		GeoArmorItem.registerRenderProvider(
 			ModItems.FOSSILIZED_HELMET,

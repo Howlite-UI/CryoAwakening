@@ -3,7 +3,9 @@
 	"package": "com.howlite.cryoawakening.client.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
-		"ExampleClientMixin"
+		"ExampleClientMixin",
+		"PlayerModelMixin",
+		"ItemInHandRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
