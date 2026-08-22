@@ -739,7 +739,8 @@ class GaleBoomerangEntity(
                     if (state.`is`(Blocks.FIRE) || state.`is`(Blocks.SOUL_FIRE)) {
                         serverLevel.destroyBlock(bpos, false)
                     } else if (state.block is CampfireBlock && state.getValue(CampfireBlock.LIT)) {
-                        CampfireBlock.dowse(getThrower(), serverLevel, bpos, state)
+                        serverLevel.setBlock(bpos, state.setValue(CampfireBlock.LIT, false), 11)
+                        CampfireBlock.dowse(getThrower() ?: this, serverLevel, bpos, state)
                     }
                 }
             }
@@ -792,6 +793,7 @@ class GaleBoomerangEntity(
         when (block) {
             is CampfireBlock -> {
                 if (state.getValue(CampfireBlock.LIT)) {
+                    serverLevel.setBlock(pos, state.setValue(CampfireBlock.LIT, false), 11)
                     CampfireBlock.dowse(thrower ?: this, serverLevel, pos, state)
                     activatedBlocks.add(pos)
                     serverLevel.playSound(null, pos, SoundEvents.GENERIC_EXTINGUISH_FIRE, SoundSource.BLOCKS, 1.0f, 1.0f)
