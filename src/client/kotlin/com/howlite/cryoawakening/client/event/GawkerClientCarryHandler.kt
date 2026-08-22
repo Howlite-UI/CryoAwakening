@@ -53,18 +53,6 @@ object GawkerClientCarryHandler {
                 if (readyForNewClick && client.options.keyUse.isDown) {
                     chargeTicks = min(chargeTicks + 1, MAX_CHARGE_TICKS)
 
-                    val percent = (chargeTicks.toFloat() / MAX_CHARGE_TICKS * 10).toInt()
-                    val force = 0.8f + (chargeTicks.toFloat() / MAX_CHARGE_TICKS) * 1.4f
-
-                    val bar = "■".repeat(percent) + "░".repeat(10 - percent)
-                    val forceFormatted = String.format("%.1f", force)
-
-                    // Affichage HUD sur l'Action Bar uniquement pendant la charge
-                    client.gui.hud.setOverlayMessage(
-                        Component.literal("§b❄ Lancer le Gawker : §f[§b$bar§f] §7(${forceFormatted}x)"),
-                        false
-                    )
-
                     // Son d'armement à tonalité montante
                     if (chargeTicks % 6 == 1) {
                         player.playSound(
@@ -88,4 +76,9 @@ object GawkerClientCarryHandler {
             wasCarryingLastTick = isCarryingGawker
         }
     }
+
+    fun isCharging(): Boolean = chargeTicks > 0
+
+    fun getChargeProgress(): Float =
+        (chargeTicks.toFloat() / MAX_CHARGE_TICKS).coerceIn(0.0f, 1.0f)
 }

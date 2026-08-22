@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " F ",
+    "BFB",
+    " B "
+  ],
+  "key": {
+    "F": {
+      "item": "cryo-awakening:gawker_fur"
+    },
+    "B": {
+      "item": "cryo-awakening:raw_bismuth"
+    }
+  },
+  "result": {
+    "count": 1,
+    "id": "cryo-awakening:gale_boomerang"
+  }
+}

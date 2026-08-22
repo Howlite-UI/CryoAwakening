@@ -33,6 +33,18 @@ object ModItems {
     val GAWKER_FUR_KEY: ResourceKey<Item> = itemKey("gawker_fur")
     val GAWKER_FUR: Item = Item(Item.Properties().setId(GAWKER_FUR_KEY))
 
+    val GAWK_BOMB_KEY: ResourceKey<Item> = itemKey("gawk_bomb")
+    val GAWK_BOMB: Item = GawkBombItem(Item.Properties().setId(GAWK_BOMB_KEY).stacksTo(16))
+
+    val GALE_BOOMERANG_KEY: ResourceKey<Item> = itemKey("gale_boomerang")
+    val GALE_BOOMERANG: Item = GaleBoomerangItem(
+        Item.Properties()
+            .setId(GALE_BOOMERANG_KEY)
+            .stacksTo(1)
+            .durability(384)
+            .enchantable(15)
+    )
+
     val GAWKER_SPAWN_EGG_KEY: ResourceKey<Item> = itemKey("gawker_spawn_egg")
     val GAWKER_SPAWN_EGG: Item = SpawnEggItem(
         Item.Properties()
@@ -138,6 +150,8 @@ object ModItems {
         // Minerais & Matériaux
         Registry.register(BuiltInRegistries.ITEM, RAW_BISMUTH_KEY, RAW_BISMUTH)
         Registry.register(BuiltInRegistries.ITEM, GAWKER_FUR_KEY, GAWKER_FUR)
+        Registry.register(BuiltInRegistries.ITEM, GAWK_BOMB_KEY, GAWK_BOMB)
+        Registry.register(BuiltInRegistries.ITEM, GALE_BOOMERANG_KEY, GALE_BOOMERANG)
         Registry.register(BuiltInRegistries.ITEM, GAWKER_SPAWN_EGG_KEY, GAWKER_SPAWN_EGG)
 
         // Set Fossilized

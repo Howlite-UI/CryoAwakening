@@ -1,0 +1,21 @@
+{
+  "description": {
+    "translate": "enchantment.cryo-awakening.hawkeye"
+  },
+  "supported_items": "#cryo-awakening:enchantable/boomerang",
+  "primary_items": "#cryo-awakening:enchantable/boomerang",
+  "weight": 5,
+  "max_level": 5,
+  "min_cost": {
+    "base": 1,
+    "per_level_above_first": 6
+  },
+  "max_cost": {
+    "base": 50,
+    "per_level_above_first": 6
+  },
+  "anvil_cost": 2,
+  "slots": [
+    "mainhand"
+  ]
+}

@@ -206,7 +206,7 @@ object ModBlocks {
     val CRYO_AWAKENING_TAB: CreativeModeTab = CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
         .icon { ItemStack(CRYO_VENT_ITEM) }
         .title(Component.translatable("itemGroup.cryo-awakening.cryo_awakening"))
-        .displayItems { _, output ->
+        .displayItems { itemDisplayParameters, output ->
             output.accept(CRYO_VENT_ITEM)
             output.accept(CRYO_TOMB_ITEM)
             output.accept(BISMUTH_ORE_SHIVERING_SHALE_ITEM)
@@ -230,6 +230,34 @@ object ModBlocks {
             // Entités & Mobs
             output.accept(com.howlite.cryoawakening.item.ModItems.GAWKER_SPAWN_EGG)
             output.accept(com.howlite.cryoawakening.item.ModItems.GAWKER_FUR)
+            output.accept(com.howlite.cryoawakening.item.ModItems.GAWK_BOMB)
+            output.accept(com.howlite.cryoawakening.item.ModItems.GALE_BOOMERANG)
+
+            // Livres enchantés du Gale Boomerang
+            val enchantRegistry = itemDisplayParameters.holders().lookup(Registries.ENCHANTMENT).orElse(null)
+            if (enchantRegistry != null) {
+                val allEnchants = listOf(
+                    Pair(com.howlite.cryoawakening.enchantment.ModEnchantments.HEAVYWEIGHT, 3),
+                    Pair(com.howlite.cryoawakening.enchantment.ModEnchantments.ZEPHYR, 3),
+                    Pair(com.howlite.cryoawakening.enchantment.ModEnchantments.RICOCHET, 4),
+                    Pair(com.howlite.cryoawakening.enchantment.ModEnchantments.HAWKEYE, 5),
+                    Pair(com.howlite.cryoawakening.enchantment.ModEnchantments.SOAR, 3),
+                    Pair(com.howlite.cryoawakening.enchantment.ModEnchantments.FROSTWIND, 2),
+                    Pair(com.howlite.cryoawakening.enchantment.ModEnchantments.ORBIT, 3),
+                    Pair(com.howlite.cryoawakening.enchantment.ModEnchantments.RETRIEVAL, 1),
+                    Pair(com.howlite.cryoawakening.enchantment.ModEnchantments.GALE_VORTEX, 3)
+                )
+                for ((key, maxLvl) in allEnchants) {
+                    val holder = enchantRegistry.get(key).orElse(null) ?: continue
+                    for (lvl in 1..maxLvl) {
+                        output.accept(
+                            net.minecraft.world.item.enchantment.EnchantmentHelper.createBook(
+                                net.minecraft.world.item.enchantment.EnchantmentInstance(holder, lvl)
+                            )
+                        )
+                    }
+                }
+            }
         }
         .build()
 

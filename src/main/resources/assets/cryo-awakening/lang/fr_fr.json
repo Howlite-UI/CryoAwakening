@@ -58,6 +58,20 @@
   "entity.cryo-awakening.gawker": "Gawker",
   "item.cryo-awakening.gawker_spawn_egg": "Œuf d'apparition de Gawker",
   "item.cryo-awakening.gawker_fur": "Fourrure de Gawker",
+  "item.cryo-awakening.gawk_bomb": "Gawk-Bomb",
+  "entity.cryo-awakening.gawk_bomb": "Gawk-Bomb",
+  "item.cryo-awakening.gale_boomerang": "Boomerang Tornade",
+  "entity.cryo-awakening.gale_boomerang": "Boomerang Tornade",
+
+  "enchantment.cryo-awakening.heavyweight": "Poids Lourd",
+  "enchantment.cryo-awakening.zephyr": "Zéphyr",
+  "enchantment.cryo-awakening.ricochet": "Ricochet",
+  "enchantment.cryo-awakening.soar": "Ascendance",
+  "enchantment.cryo-awakening.frostwind": "Souffle Glacial",
+  "enchantment.cryo-awakening.orbit": "Orbite",
+  "enchantment.cryo-awakening.retrieval": "Récupération",
+  "enchantment.cryo-awakening.gale_vortex": "Vortex Tornade",
+  "enchantment.cryo-awakening.hawkeye": "Œil de Faucon",
 
   "itemGroup.cryo-awakening.cryo_awakening": "Cryo Awakening"
 }

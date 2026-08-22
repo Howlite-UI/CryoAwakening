@@ -1,12 +1,15 @@
 package com.howlite.cryoawakening.client
 
+import com.howlite.cryoawakening.CryoAwakening
 import com.howlite.cryoawakening.ModBlocks
 import com.howlite.cryoawakening.ModParticleTypes
 import com.howlite.cryoawakening.client.particle.StylizedWindTrailParticle
 import com.howlite.cryoawakening.client.render.CryoTombBlockEntityRenderer
 import com.howlite.cryoawakening.client.render.armor.FossilizedHelmetRenderProvider
+import com.howlite.cryoawakening.client.render.entity.GawkBombRenderer
 import com.howlite.cryoawakening.client.render.entity.GawkerRenderer
 import com.howlite.cryoawakening.client.render.entity.GlaciopodRenderer
+import com.howlite.cryoawakening.client.render.entity.GaleBoomerangRenderer
 import com.howlite.cryoawakening.entity.ModEntities
 import com.howlite.cryoawakening.item.GeoArmorItem
 import com.howlite.cryoawakening.item.ModItems
@@ -37,8 +40,37 @@ object CryoAwakeningClient : ClientModInitializer {
 			::GawkerRenderer
 		)
 
+		// Enregistrement du renderer de la Gawk-Bomb (bombe / mine GeckoLib)
+		EntityRenderers.register(
+			ModEntities.GAWK_BOMB,
+			::GawkBombRenderer
+		)
+
+		// Enregistrement du renderer du Gale Boomerang (projectile 3D GeckoLib)
+		EntityRenderers.register(
+			ModEntities.GALE_BOOMERANG,
+			::GaleBoomerangRenderer
+		)
+
 		// Enregistrement du gestionnaire de portage et lancer client du Gawker
 		com.howlite.cryoawakening.client.event.GawkerClientCarryHandler.register()
+
+		// Enregistrement du gestionnaire de ciblage et verrouillage multi-cibles du Gale Boomerang
+		com.howlite.cryoawakening.client.event.BoomerangClientTargetHandler.register()
+
+		// Enregistrement de l'élément HUD de la jauge de lancer au-dessus du crosshair
+		net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry.attachElementAfter(
+			net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements.CROSSHAIR,
+			CryoAwakening.id("throw_bar"),
+			com.howlite.cryoawakening.client.render.gui.ThrowBarHudElement
+		)
+
+		// Enregistrement des réticules de verrouillage Zelda TP au-dessus des mobs
+		net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry.attachElementAfter(
+			CryoAwakening.id("throw_bar"),
+			CryoAwakening.id("boomerang_targets"),
+			com.howlite.cryoawakening.client.render.gui.BoomerangTargetHudElement
+		)
 
 		// Enregistrement des renderers d'armures GeckoLib
 		GeoArmorItem.registerRenderProvider(

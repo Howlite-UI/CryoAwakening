@@ -58,6 +58,20 @@
   "entity.cryo-awakening.gawker": "Gawker",
   "item.cryo-awakening.gawker_spawn_egg": "Gawker Spawn Egg",
   "item.cryo-awakening.gawker_fur": "Gawker Fur",
+  "item.cryo-awakening.gawk_bomb": "Gawk-Bomb",
+  "entity.cryo-awakening.gawk_bomb": "Gawk-Bomb",
+  "item.cryo-awakening.gale_boomerang": "Gale Boomerang",
+  "entity.cryo-awakening.gale_boomerang": "Gale Boomerang",
+
+  "enchantment.cryo-awakening.heavyweight": "Heavyweight",
+  "enchantment.cryo-awakening.zephyr": "Zephyr",
+  "enchantment.cryo-awakening.ricochet": "Ricochet",
+  "enchantment.cryo-awakening.soar": "Soar",
+  "enchantment.cryo-awakening.frostwind": "Frostwind",
+  "enchantment.cryo-awakening.orbit": "Orbit",
+  "enchantment.cryo-awakening.retrieval": "Retrieval",
+  "enchantment.cryo-awakening.gale_vortex": "Gale Vortex",
+  "enchantment.cryo-awakening.hawkeye": "Hawkeye",
 
   "itemGroup.cryo-awakening.cryo_awakening": "Cryo Awakening"
 }

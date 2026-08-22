@@ -148,13 +148,14 @@ class GawkerModel : GeoModel<GawkerEntity>() {
             }
         }
 
-        // 4. Base du corps : léger rebond de pas + vibrations si gavé
+        // 4. Base du corps : léger rebond de pas + vibrations si gavé + rotation synchronisée en vol
         val bodyBounce = if (!isCarried && !isThrown) abs(sin(walkPos * 1.4f)) * walkSpeed * 0.2f else 0.0f
         val bodyOpt = boneSnapshots.get("body")
         if (bodyOpt.isPresent) {
             val body = bodyOpt.get()
+            val tumbleRoll = if (isThrown) flightTicks * 0.35f else 0.0f
             body.setTranslation(shakeX, bodyBounce + shakeY, shakeZ)
-            body.setRotation(0.0f, 0.0f, shakeRotZ)
+            body.setRotation(0.0f, 0.0f, tumbleRoll + shakeRotZ)
         }
 
         // 5. Fourrure latérale : ondulation douce et flottement

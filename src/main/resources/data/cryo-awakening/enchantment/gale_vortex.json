@@ -1,0 +1,22 @@
+{
+  "description": {
+    "translate": "enchantment.cryo-awakening.gale_vortex"
+  },
+  "supported_items": "#cryo-awakening:enchantable/boomerang",
+  "primary_items": "#cryo-awakening:enchantable/boomerang",
+  "weight": 3,
+  "max_level": 3,
+  "min_cost": {
+    "base": 6,
+    "per_level_above_first": 10
+  },
+  "max_cost": {
+    "base": 60,
+    "per_level_above_first": 10
+  },
+  "anvil_cost": 4,
+  "slots": [
+    "mainhand"
+  ],
+  "exclusive_set": "#cryo-awakening:exclusive_set/boomerang_element"
+}

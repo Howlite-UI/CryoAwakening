@@ -1,0 +1,22 @@
+{
+  "description": {
+    "translate": "enchantment.cryo-awakening.zephyr"
+  },
+  "supported_items": "#cryo-awakening:enchantable/boomerang",
+  "primary_items": "#cryo-awakening:enchantable/boomerang",
+  "weight": 5,
+  "max_level": 3,
+  "min_cost": {
+    "base": 1,
+    "per_level_above_first": 9
+  },
+  "max_cost": {
+    "base": 50,
+    "per_level_above_first": 9
+  },
+  "anvil_cost": 4,
+  "slots": [
+    "mainhand"
+  ],
+  "exclusive_set": "#cryo-awakening:exclusive_set/boomerang_physics"
+}

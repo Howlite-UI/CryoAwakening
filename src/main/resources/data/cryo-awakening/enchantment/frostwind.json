@@ -1,0 +1,22 @@
+{
+  "description": {
+    "translate": "enchantment.cryo-awakening.frostwind"
+  },
+  "supported_items": "#cryo-awakening:enchantable/boomerang",
+  "primary_items": "#cryo-awakening:enchantable/boomerang",
+  "weight": 2,
+  "max_level": 2,
+  "min_cost": {
+    "base": 6,
+    "per_level_above_first": 10
+  },
+  "max_cost": {
+    "base": 60,
+    "per_level_above_first": 10
+  },
+  "anvil_cost": 5,
+  "slots": [
+    "mainhand"
+  ],
+  "exclusive_set": "#cryo-awakening:exclusive_set/boomerang_element"
+}
