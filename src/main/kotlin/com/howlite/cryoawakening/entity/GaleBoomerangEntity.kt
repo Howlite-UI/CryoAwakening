@@ -25,8 +25,16 @@ import net.minecraft.world.entity.projectile.Projectile
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.ClipContext
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.block.BellBlock
 import net.minecraft.world.level.block.Blocks
+import net.minecraft.world.level.block.ButtonBlock
 import net.minecraft.world.level.block.CampfireBlock
+import net.minecraft.world.level.block.CandleBlock
+import net.minecraft.world.level.block.ChorusFlowerBlock
+import net.minecraft.world.level.block.LeverBlock
+import net.minecraft.world.level.block.PointedDripstoneBlock
+import net.minecraft.world.level.block.TargetBlock
+import net.minecraft.world.level.block.state.properties.BlockStateProperties
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.HitResult
 import net.minecraft.world.phys.Vec3
@@ -118,6 +126,9 @@ class GaleBoomerangEntity(
     // Entités déjà touchées
     private val hitEntities = HashSet<UUID>()
 
+    // Blocs et mécanismes actionnés pendant ce lancer
+    private val activatedBlocks = HashSet<BlockPos>()
+
     override fun defineSynchedData(builder: SynchedEntityData.Builder) {
         super.defineSynchedData(builder)
         builder.define(BOOMERANG_STATE, BoomerangState.LAUNCHED.id)
@@ -167,6 +178,7 @@ class GaleBoomerangEntity(
         this.targetEntityIds.clear()
         this.targetPositions.clear()
         this.hitEntities.clear()
+        this.activatedBlocks.clear()
         this.carriedItems.clear()
         this.carriedXp = 0
         this.isOrbiting = false
@@ -221,6 +233,9 @@ class GaleBoomerangEntity(
         if (retrievalLevel > 0) {
             collectAllNearbyItemsAndXp(serverLevel)
         }
+
+        // Interaction avec les mécanismes (Boutons, Leviers, Cloches, Cibles, etc.)
+        checkBlockInteractions(serverLevel)
 
         // Gestion des phases de vol
         when (boomerangState) {
@@ -727,6 +742,109 @@ class GaleBoomerangEntity(
                         CampfireBlock.dowse(getThrower(), serverLevel, bpos, state)
                     }
                 }
+            }
+        }
+    }
+
+    private fun checkBlockInteractions(serverLevel: ServerLevel) {
+        val thrower = getThrower()
+        val currentPos = position()
+        val prevPos = Vec3(xo, yo, zo)
+
+        val hitResult = serverLevel.clip(
+            ClipContext(prevPos, currentPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this)
+        )
+
+        val posList = mutableListOf<BlockPos>()
+        if (hitResult.type == HitResult.Type.BLOCK) {
+            posList.add(hitResult.blockPos)
+        }
+
+        val box = boundingBox.inflate(0.8)
+        val minX = box.minX.toInt()
+        val maxX = box.maxX.toInt()
+        val minY = (box.minY - 0.8).toInt()
+        val maxY = box.maxY.toInt()
+        val minZ = box.minZ.toInt()
+        val maxZ = box.maxZ.toInt()
+
+        for (x in minX..maxX) {
+            for (y in minY..maxY) {
+                for (z in minZ..maxZ) {
+                    val bp = BlockPos(x, y, z)
+                    if (!posList.contains(bp)) {
+                        posList.add(bp)
+                    }
+                }
+            }
+        }
+
+        for (pos in posList) {
+            interactWithBlock(serverLevel, pos, thrower)
+        }
+    }
+
+    private fun interactWithBlock(serverLevel: ServerLevel, pos: BlockPos, thrower: Player?) {
+        if (activatedBlocks.contains(pos)) return
+        val state = serverLevel.getBlockState(pos)
+        val block = state.block
+
+        when (block) {
+            is CampfireBlock -> {
+                if (state.getValue(CampfireBlock.LIT)) {
+                    CampfireBlock.dowse(thrower ?: this, serverLevel, pos, state)
+                    activatedBlocks.add(pos)
+                    serverLevel.playSound(null, pos, SoundEvents.GENERIC_EXTINGUISH_FIRE, SoundSource.BLOCKS, 1.0f, 1.0f)
+                }
+            }
+            is ButtonBlock -> {
+                if (!state.getValue(ButtonBlock.POWERED)) {
+                    block.press(state, serverLevel, pos, thrower)
+                    activatedBlocks.add(pos)
+                    serverLevel.playSound(null, pos, SoundEvents.WOODEN_BUTTON_CLICK_ON, SoundSource.BLOCKS, 0.8f, 1.0f)
+                }
+            }
+            is LeverBlock -> {
+                block.pull(state, serverLevel, pos, thrower)
+                activatedBlocks.add(pos)
+                serverLevel.playSound(null, pos, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.8f, 1.0f)
+            }
+            is BellBlock -> {
+                block.attemptToRing(this, serverLevel, pos, null)
+                activatedBlocks.add(pos)
+            }
+            is TargetBlock -> {
+                if (state.hasProperty(BlockStateProperties.POWER)) {
+                    val newState = state.setValue(BlockStateProperties.POWER, 15)
+                    serverLevel.setBlock(pos, newState, 3)
+                    serverLevel.scheduleTick(pos, block, 8)
+                    activatedBlocks.add(pos)
+                    serverLevel.playSound(null, pos, SoundEvents.ARROW_HIT, SoundSource.BLOCKS, 1.0f, 1.2f)
+                }
+            }
+            is CandleBlock -> {
+                if (state.getValue(CandleBlock.LIT)) {
+                    CandleBlock.extinguish(null, state, serverLevel, pos)
+                    serverLevel.playSound(null, pos, SoundEvents.CANDLE_EXTINGUISH, SoundSource.BLOCKS, 1.0f, 1.0f)
+                }
+            }
+            is net.minecraft.world.level.block.CandleCakeBlock -> {
+                if (state.getValue(net.minecraft.world.level.block.CandleCakeBlock.LIT)) {
+                    net.minecraft.world.level.block.CandleCakeBlock.extinguish(null, state, serverLevel, pos)
+                    serverLevel.playSound(null, pos, SoundEvents.CANDLE_EXTINGUISH, SoundSource.BLOCKS, 1.0f, 1.0f)
+                }
+            }
+            is net.minecraft.world.level.block.FireBlock, is net.minecraft.world.level.block.SoulFireBlock -> {
+                serverLevel.destroyBlock(pos, false)
+                serverLevel.playSound(null, pos, SoundEvents.GENERIC_EXTINGUISH_FIRE, SoundSource.BLOCKS, 0.8f, 1.2f)
+            }
+            is PointedDripstoneBlock -> {
+                serverLevel.destroyBlock(pos, true, this)
+                activatedBlocks.add(pos)
+            }
+            is ChorusFlowerBlock -> {
+                serverLevel.destroyBlock(pos, true, this)
+                activatedBlocks.add(pos)
             }
         }
     }
