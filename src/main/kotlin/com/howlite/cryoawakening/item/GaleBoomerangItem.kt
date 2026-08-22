@@ -1,5 +1,7 @@
 package com.howlite.cryoawakening.item
 
+import net.minecraft.ChatFormatting
+import net.minecraft.network.chat.CommonComponents
 import net.minecraft.network.chat.Component
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
@@ -53,13 +55,12 @@ class GaleBoomerangItem(properties: Properties) : Item(properties) {
         stack: ItemStack,
         context: TooltipContext,
         display: TooltipDisplay,
-        builder: Consumer<Component>,
-        tooltipFlag: TooltipFlag
+        builder: java.util.function.Consumer<net.minecraft.network.chat.Component>,
+        tooltipFlag: net.minecraft.world.item.TooltipFlag
     ) {
-        builder.accept(Component.literal("§b🌀 Boomerang (Zelda: TP)"))
-        builder.accept(Component.literal("§8▪ §7Maintenir Clic Droit : §fCharger & Verrouiller jusqu'à 5 cibles"))
-        builder.accept(Component.literal("§8▪ §7Relâcher : §fAttaquer les cibles en séquence"))
-        builder.accept(Component.literal("§8▪ §7Ciblage d'item : §aRapporte les items verrouillés au joueur"))
+        builder.accept(net.minecraft.network.chat.CommonComponents.EMPTY)
+        builder.accept(net.minecraft.network.chat.Component.translatable("item.cryo-awakening.gale_boomerang.when_thrown").withStyle(net.minecraft.ChatFormatting.GRAY))
+        builder.accept(net.minecraft.network.chat.Component.translatable("item.cryo-awakening.gale_boomerang.throw_damage").withStyle(net.minecraft.ChatFormatting.DARK_GREEN))
         super.appendHoverText(stack, context, display, builder, tooltipFlag)
     }
 }

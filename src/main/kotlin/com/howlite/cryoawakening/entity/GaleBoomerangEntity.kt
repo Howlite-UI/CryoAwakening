@@ -1,9 +1,5 @@
 package com.howlite.cryoawakening.entity
 
-import com.geckolib.animatable.GeoEntity
-import com.geckolib.animatable.instance.AnimatableInstanceCache
-import com.geckolib.animatable.manager.AnimatableManager
-import com.geckolib.util.GeckoLibUtil
 import com.howlite.cryoawakening.enchantment.ModEnchantments
 import net.minecraft.core.BlockPos
 import net.minecraft.network.syncher.EntityDataAccessor
@@ -49,9 +45,7 @@ import kotlin.math.sin
 class GaleBoomerangEntity(
     entityType: EntityType<out PathfinderMob>,
     level: Level
-) : PathfinderMob(entityType, level), GeoEntity {
-
-    private val geoCache: AnimatableInstanceCache = GeckoLibUtil.createInstanceCache(this)
+) : PathfinderMob(entityType, level) {
 
     enum class BoomerangState(val id: Int) {
         LAUNCHED(0),
@@ -147,7 +141,7 @@ class GaleBoomerangEntity(
         stack: ItemStack = ItemStack.EMPTY
     ) {
         this.throwerUuid = thrower.uuid
-        this.throwForce = force.coerceIn(0.5f, 2.0f)
+        this.throwForce = force.coerceIn(0.35f, 1.5f)
         this.usedHand = hand
         this.boomerangStack = stack.copy()
         this.boomerangState = BoomerangState.LAUNCHED
@@ -189,25 +183,25 @@ class GaleBoomerangEntity(
         }
 
         this.isFreeFlight = targetEntityIds.isEmpty()
-        this.maxFreeFlightTicks = (16 + (force * 10) + (zephyrLevel * 4) + (hawkeyeLevel * 6)).toInt()
+        this.maxFreeFlightTicks = (8 + (throwForce * 18) + (zephyrLevel * 4) + (hawkeyeLevel * 6)).toInt()
 
-        // Calcul de la vitesse initiale selon Zephyr (+30%/niv) et Heavyweight (-30%)
+        // Calcul de la vitesse initiale selon la charge, Zephyr (+30%/niv) et Heavyweight (-30%)
         val speedMod = (1.0f + (zephyrLevel * 0.30f) - (if (heavyweightLevel > 0) 0.30f else 0.0f)).coerceAtLeast(0.35f)
-        val initialSpeed = 0.70 * speedMod * force
+        val initialSpeed = (0.35 + (throwForce * 0.55)) * speedMod
         this.deltaMovement = if (targetPositions.isNotEmpty()) {
             targetPositions[0].subtract(position()).normalize().scale(initialSpeed)
         } else {
             launchDirection.scale(initialSpeed)
         }
 
-        // Son de lancer
+        // Son de lancer modulé en puissance selon la charge
         level().playSound(
             null,
             thrower.blockPosition(),
             SoundEvents.TRIDENT_THROW.value(),
             SoundSource.PLAYERS,
-            1.0f,
-            1.1f + (force * 0.2f)
+            0.6f + (throwForce * 0.4f),
+            0.9f + (throwForce * 0.4f)
         )
     }
 
@@ -246,7 +240,7 @@ class GaleBoomerangEntity(
     // =========================================================================
     private fun tickLaunched(serverLevel: ServerLevel) {
         val speedMod = (1.0f + (zephyrLevel * 0.30f) - (if (heavyweightLevel > 0) 0.30f else 0.0f)).coerceAtLeast(0.35f)
-        val speed = 0.70 * speedMod * throwForce
+        val speed = (0.35 + (throwForce * 0.55)) * speedMod
 
         // Enchantement Frostwind : congélation de l'eau sous la trajectoire
         if (frostwindLevel > 0) {
@@ -485,7 +479,7 @@ class GaleBoomerangEntity(
         val toPlayer = destPos.subtract(position())
         val dist = toPlayer.length()
         val speedMod = (1.0f + (zephyrLevel * 0.30f) - (if (heavyweightLevel > 0) 0.30f else 0.0f)).coerceAtLeast(0.35f)
-        val returnSpeed = 0.85 * speedMod * throwForce
+        val returnSpeed = (0.40 + (throwForce * 0.55)) * speedMod
 
         // Enchantement Orbit : nombre de tours proportionnel au niveau (Niv 1: ~2 tours, Niv 2: ~4 tours, Niv 3: ~6 tours)
         if (orbitLevel > 0 && !hasCompletedOrbit && thrower != null && thrower.isAlive) {
@@ -540,8 +534,8 @@ class GaleBoomerangEntity(
             return
         }
 
-        // Homing direct vers le joueur
-        deltaMovement = toPlayer.normalize().scale(returnSpeed)
+        // Déplacement guidé fluide vers le joueur
+        deltaMovement = if (dist > 0.01) toPlayer.normalize().scale(returnSpeed) else Vec3.ZERO
 
         // Timeout de sécurité (10 secondes)
         if (flightTicks > 200) {
@@ -561,8 +555,9 @@ class GaleBoomerangEntity(
         }
 
         // Heavyweight : +25% de dégâts bruts par niveau
+        // Dégâts proportionnels à la charge : 2.5 dégâts (faible charge) jusqu'à 8.0 dégâts (pleine charge)
         val damageMultiplier = 1.0f + (heavyweightLevel * 0.25f)
-        val baseDamage = 6.0f * damageMultiplier * throwForce
+        val baseDamage = (2.5f + (throwForce * 5.5f)) * damageMultiplier
         target.hurtServer(serverLevel, dmgSource, baseDamage)
 
         // Heavyweight : fort recul + étourdissement (Slowness IV & Weakness) + brise-bouclier
@@ -760,12 +755,6 @@ class GaleBoomerangEntity(
     var carriedItemCount: Int
         get() = entityData.get(CARRIED_ITEM_COUNT)
         set(value) = entityData.set(CARRIED_ITEM_COUNT, value)
-
-    override fun registerControllers(controllers: AnimatableManager.ControllerRegistrar) {
-        // Procédural
-    }
-
-    override fun getAnimatableInstanceCache(): AnimatableInstanceCache = geoCache
 
     override fun hurtServer(serverLevel: ServerLevel, damageSource: DamageSource, amount: Float): Boolean = false
 

@@ -137,7 +137,7 @@ object BoomerangClientTargetHandler {
                 // Relâchement du clic droit : lancer du boomerang avec les cibles enregistrées
                 if (chargeTicks > 0) {
                     val chargeRatio = (chargeTicks.toFloat() / currentMaxChargeTicks.toFloat()).coerceIn(0.0f, 1.0f)
-                    val force = 0.8f + chargeRatio * 1.2f
+                    val force = 0.35f + (chargeRatio * 0.65f)
                     ClientPlayNetworking.send(ThrowBoomerangPayload(force, markedTargetIds.toList()))
                 }
 

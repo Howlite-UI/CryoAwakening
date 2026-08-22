@@ -62,6 +62,8 @@
   "entity.cryo-awakening.gawk_bomb": "Gawk-Bomb",
   "item.cryo-awakening.gale_boomerang": "Gale Boomerang",
   "entity.cryo-awakening.gale_boomerang": "Gale Boomerang",
+  "item.cryo-awakening.gale_boomerang.when_thrown": "When Thrown:",
+  "item.cryo-awakening.gale_boomerang.throw_damage": " 8 Attack Damage",
 
   "enchantment.cryo-awakening.heavyweight": "Heavyweight",
   "enchantment.cryo-awakening.zephyr": "Zephyr",

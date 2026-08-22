@@ -62,6 +62,8 @@
   "entity.cryo-awakening.gawk_bomb": "Gawk-Bomb",
   "item.cryo-awakening.gale_boomerang": "Boomerang Tornade",
   "entity.cryo-awakening.gale_boomerang": "Boomerang Tornade",
+  "item.cryo-awakening.gale_boomerang.when_thrown": "Lors du lancer :",
+  "item.cryo-awakening.gale_boomerang.throw_damage": " 8 Dégâts d'attaque",
 
   "enchantment.cryo-awakening.heavyweight": "Poids Lourd",
   "enchantment.cryo-awakening.zephyr": "Zéphyr",

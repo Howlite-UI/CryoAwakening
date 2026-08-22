@@ -7,9 +7,13 @@ import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
 import net.minecraft.resources.ResourceKey
 import net.minecraft.world.entity.EquipmentSlot
+import net.minecraft.world.entity.EquipmentSlotGroup
+import net.minecraft.world.entity.ai.attributes.AttributeModifier
+import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.SpawnEggItem
+import net.minecraft.world.item.component.ItemAttributeModifiers
 import net.minecraft.world.item.equipment.ArmorMaterial
 import net.minecraft.world.item.equipment.ArmorType
 
@@ -36,6 +40,19 @@ object ModItems {
     val GAWK_BOMB_KEY: ResourceKey<Item> = itemKey("gawk_bomb")
     val GAWK_BOMB: Item = GawkBombItem(Item.Properties().setId(GAWK_BOMB_KEY).stacksTo(16))
 
+    val GALE_BOOMERANG_ATTRIBUTES: ItemAttributeModifiers = ItemAttributeModifiers.builder()
+        .add(
+            Attributes.ATTACK_DAMAGE,
+            AttributeModifier(Item.BASE_ATTACK_DAMAGE_ID, 4.0, AttributeModifier.Operation.ADD_VALUE),
+            EquipmentSlotGroup.MAINHAND
+        )
+        .add(
+            Attributes.ATTACK_SPEED,
+            AttributeModifier(Item.BASE_ATTACK_SPEED_ID, -2.4, AttributeModifier.Operation.ADD_VALUE),
+            EquipmentSlotGroup.MAINHAND
+        )
+        .build()
+
     val GALE_BOOMERANG_KEY: ResourceKey<Item> = itemKey("gale_boomerang")
     val GALE_BOOMERANG: Item = GaleBoomerangItem(
         Item.Properties()
@@ -43,6 +60,7 @@ object ModItems {
             .stacksTo(1)
             .durability(384)
             .enchantable(15)
+            .attributes(GALE_BOOMERANG_ATTRIBUTES)
     )
 
     val GAWKER_SPAWN_EGG_KEY: ResourceKey<Item> = itemKey("gawker_spawn_egg")
