@@ -70,6 +70,30 @@ object ModItems {
             .spawnEgg(ModEntities.GAWKER)
     )
 
+    // --- Items Lumesh & Flore ---
+    val LUMESH_SEED_KEY: ResourceKey<Item> = itemKey("lumesh_seed")
+    val LUMESH_SEED: Item = Item(Item.Properties().setId(LUMESH_SEED_KEY).stacksTo(64))
+
+    val ORANGE_LUMESH_SLICE_KEY: ResourceKey<Item> = itemKey("orange_lumesh_slice")
+    val ORANGE_LUMESH_SLICE: Item = Item(
+        Item.Properties()
+            .setId(ORANGE_LUMESH_SLICE_KEY)
+            .food(net.minecraft.world.food.FoodProperties(4, 0.6f, false))
+    )
+
+    val ORANGE_LUMESH_HULL_KEY: ResourceKey<Item> = itemKey("orange_lumesh_hull")
+    val ORANGE_LUMESH_HULL: Item = Item(Item.Properties().setId(ORANGE_LUMESH_HULL_KEY).stacksTo(64))
+
+    val YELLOW_LUMESH_SLICE_KEY: ResourceKey<Item> = itemKey("yellow_lumesh_slice")
+    val YELLOW_LUMESH_SLICE: Item = Item(
+        Item.Properties()
+            .setId(YELLOW_LUMESH_SLICE_KEY)
+            .food(net.minecraft.world.food.FoodProperties(4, 0.6f, false))
+    )
+
+    val YELLOW_LUMESH_HULL_KEY: ResourceKey<Item> = itemKey("yellow_lumesh_hull")
+    val YELLOW_LUMESH_HULL: Item = Item(Item.Properties().setId(YELLOW_LUMESH_HULL_KEY).stacksTo(64))
+
     private fun createArmor(name: String, material: ArmorMaterial, armorType: ArmorType): Pair<ResourceKey<Item>, Item> {
         val key = itemKey(name)
         val item = Item(
@@ -171,6 +195,13 @@ object ModItems {
         Registry.register(BuiltInRegistries.ITEM, GAWK_BOMB_KEY, GAWK_BOMB)
         Registry.register(BuiltInRegistries.ITEM, GALE_BOOMERANG_KEY, GALE_BOOMERANG)
         Registry.register(BuiltInRegistries.ITEM, GAWKER_SPAWN_EGG_KEY, GAWKER_SPAWN_EGG)
+
+        // Items Lumesh & Flore
+        Registry.register(BuiltInRegistries.ITEM, LUMESH_SEED_KEY, LUMESH_SEED)
+        Registry.register(BuiltInRegistries.ITEM, ORANGE_LUMESH_SLICE_KEY, ORANGE_LUMESH_SLICE)
+        Registry.register(BuiltInRegistries.ITEM, ORANGE_LUMESH_HULL_KEY, ORANGE_LUMESH_HULL)
+        Registry.register(BuiltInRegistries.ITEM, YELLOW_LUMESH_SLICE_KEY, YELLOW_LUMESH_SLICE)
+        Registry.register(BuiltInRegistries.ITEM, YELLOW_LUMESH_HULL_KEY, YELLOW_LUMESH_HULL)
 
         // Set Fossilized
         Registry.register(BuiltInRegistries.ITEM, FOSSILIZED_HELMET_KEY, FOSSILIZED_HELMET)

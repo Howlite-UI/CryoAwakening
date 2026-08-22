@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/button_pressed",
+  "textures": {
+    "texture": "cryo-awakening:block/lilac_woodset/ancient_lilac_plank"
+  }
+}

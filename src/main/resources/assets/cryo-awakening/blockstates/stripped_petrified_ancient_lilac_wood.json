@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "cryo-awakening:block/stripped_petrified_ancient_lilac_wood"
+    },
+    "axis=z": {
+      "model": "cryo-awakening:block/stripped_petrified_ancient_lilac_wood",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "cryo-awakening:block/stripped_petrified_ancient_lilac_wood",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

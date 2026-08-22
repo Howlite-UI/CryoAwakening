@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "cryo-awakening:block/lilac_woodset/ancient_lilac_plank",
+    "top": "cryo-awakening:block/lilac_woodset/ancient_lilac_plank",
+    "side": "cryo-awakening:block/lilac_woodset/ancient_lilac_plank"
+  }
+}

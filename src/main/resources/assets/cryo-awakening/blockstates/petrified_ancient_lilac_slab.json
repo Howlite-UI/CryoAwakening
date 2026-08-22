@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "cryo-awakening:block/petrified_ancient_lilac_slab"
+    },
+    "type=top": {
+      "model": "cryo-awakening:block/petrified_ancient_lilac_slab_top"
+    },
+    "type=double": {
+      "model": "cryo-awakening:block/petrified_ancient_lilac_planks"
+    }
+  }
+}

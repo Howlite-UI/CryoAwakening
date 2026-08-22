@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "cryo-awakening:block/yellow_lumesh_top",
+    "bottom": "cryo-awakening:block/yellow_lumesh_bot",
+    "side": "cryo-awakening:block/yellow_lumesh_side"
+  }
+}

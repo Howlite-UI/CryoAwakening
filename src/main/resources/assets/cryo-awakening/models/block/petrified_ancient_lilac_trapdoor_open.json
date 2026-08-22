@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/template_orientable_trapdoor_open",
+  "textures": {
+    "texture": "cryo-awakening:block/lilac_woodset/petrified_ancient_lilac_trapdoor"
+  }
+}

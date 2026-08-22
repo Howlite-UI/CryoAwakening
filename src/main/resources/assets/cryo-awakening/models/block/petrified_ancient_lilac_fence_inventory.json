@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/fence_inventory",
+  "textures": {
+    "texture": "cryo-awakening:block/lilac_woodset/petrified_ancient_lilac_plank"
+  }
+}

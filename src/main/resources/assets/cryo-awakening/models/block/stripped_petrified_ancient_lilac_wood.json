@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "cryo-awakening:block/lilac_woodset/petrified_ancient_lilac_striped_log_side"
+  }
+}

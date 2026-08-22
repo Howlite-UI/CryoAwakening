@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/door_top_left",
+  "textures": {
+    "top": "cryo-awakening:block/lilac_woodset/petrified_ancient_lilac_door_top",
+    "bottom": "cryo-awakening:block/lilac_woodset/petrified_ancient_lilac_door_bottom"
+  }
+}

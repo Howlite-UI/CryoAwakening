@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "cryo-awakening:block/small_lichen_bush"
+  }
+}

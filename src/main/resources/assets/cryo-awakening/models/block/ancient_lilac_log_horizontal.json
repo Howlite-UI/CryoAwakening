@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column_horizontal",
+  "textures": {
+    "side": "cryo-awakening:block/lilac_woodset/ancient_lilac_log_side",
+    "end": "cryo-awakening:block/lilac_woodset/ancient_lilac_log_top"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/pressure_plate_up",
+  "textures": {
+    "texture": "cryo-awakening:block/lilac_woodset/petrified_ancient_lilac_plank"
+  }
+}

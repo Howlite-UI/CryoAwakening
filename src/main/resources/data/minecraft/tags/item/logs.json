@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "cryo-awakening:ancient_lilac_log",
+    "cryo-awakening:stripped_ancient_lilac_log",
+    "cryo-awakening:ancient_lilac_wood",
+    "cryo-awakening:stripped_ancient_lilac_wood",
+    "cryo-awakening:petrified_ancient_lilac_log",
+    "cryo-awakening:stripped_petrified_ancient_lilac_log",
+    "cryo-awakening:petrified_ancient_lilac_wood",
+    "cryo-awakening:stripped_petrified_ancient_lilac_wood"
+  ]
+}

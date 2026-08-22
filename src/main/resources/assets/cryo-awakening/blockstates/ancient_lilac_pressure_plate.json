@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "powered=false": {
+      "model": "cryo-awakening:block/ancient_lilac_pressure_plate"
+    },
+    "powered=true": {
+      "model": "cryo-awakening:block/ancient_lilac_pressure_plate_down"
+    }
+  }
+}

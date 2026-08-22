@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/template_fence_gate_wall_open",
+  "textures": {
+    "texture": "cryo-awakening:block/lilac_woodset/ancient_lilac_plank"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "cryo-awakening:block/petrified_ancient_lilac_log"
+    },
+    "axis=z": {
+      "model": "cryo-awakening:block/petrified_ancient_lilac_log_horizontal",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "cryo-awakening:block/petrified_ancient_lilac_log_horizontal",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

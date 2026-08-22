@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "cryo-awakening:block/rimecrust_lichen"
+      },
+      {
+        "model": "cryo-awakening:block/rimecrust_lichen",
+        "y": 90
+      },
+      {
+        "model": "cryo-awakening:block/rimecrust_lichen",
+        "y": 180
+      },
+      {
+        "model": "cryo-awakening:block/rimecrust_lichen",
+        "y": 270
+      }
+    ]
+  }
+}
