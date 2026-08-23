@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "cryo-awakening:block/rimebloom"
+      },
+      {
+        "model": "cryo-awakening:block/rimebloom",
+        "y": 90
+      },
+      {
+        "model": "cryo-awakening:block/rimebloom",
+        "y": 180
+      },
+      {
+        "model": "cryo-awakening:block/rimebloom",
+        "y": 270
+      }
+    ]
+  }
+}

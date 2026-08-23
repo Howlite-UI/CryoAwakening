@@ -33,6 +33,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockBehaviour
 import net.minecraft.world.level.block.state.properties.BlockSetType
 import net.minecraft.world.level.block.state.properties.WoodType
+import net.minecraft.world.level.material.PushReaction
 
 object ModBlocks {
 
@@ -148,19 +149,61 @@ object ModBlocks {
 
     val SMALL_LICHEN_BUSH_KEY: ResourceKey<Block> = blockKey("small_lichen_bush")
     val SMALL_LICHEN_BUSH_ITEM_KEY: ResourceKey<Item> = itemKey("small_lichen_bush")
-    val SMALL_LICHEN_BUSH: Block = com.howlite.cryoawakening.block.LichenBushBlock(BlockBehaviour.Properties.of().setId(SMALL_LICHEN_BUSH_KEY).noCollision().instabreak().sound(SoundType.GRASS))
+    val SMALL_LICHEN_BUSH: Block = com.howlite.cryoawakening.block.LichenBushBlock(
+        BlockBehaviour.Properties.of()
+            .setId(SMALL_LICHEN_BUSH_KEY)
+            .noCollision()
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .pushReaction(PushReaction.DESTROY)
+    )
     val SMALL_LICHEN_BUSH_ITEM: Item = BlockItem(SMALL_LICHEN_BUSH, Item.Properties().setId(SMALL_LICHEN_BUSH_ITEM_KEY))
+
+    val RIMEBLOOM_KEY: ResourceKey<Block> = blockKey("rimebloom")
+    val RIMEBLOOM_ITEM_KEY: ResourceKey<Item> = itemKey("rimebloom")
+    val RIMEBLOOM: Block = Block(BlockBehaviour.Properties.of().setId(RIMEBLOOM_KEY).strength(0.6f).sound(SoundType.GRAVEL))
+    val RIMEBLOOM_ITEM: Item = BlockItem(RIMEBLOOM, Item.Properties().setId(RIMEBLOOM_ITEM_KEY))
+
+    val RIMEBLOOM_GRASS_KEY: ResourceKey<Block> = blockKey("rimebloom_grass")
+    val RIMEBLOOM_GRASS_ITEM_KEY: ResourceKey<Item> = itemKey("rimebloom_grass")
+    val RIMEBLOOM_GRASS: Block = Block(BlockBehaviour.Properties.of().setId(RIMEBLOOM_GRASS_KEY).strength(0.7f).sound(SoundType.GRASS))
+    val RIMEBLOOM_GRASS_ITEM: Item = BlockItem(RIMEBLOOM_GRASS, Item.Properties().setId(RIMEBLOOM_GRASS_ITEM_KEY))
 
     // --- 4. Lumesh (Fruits / Blocs Luminescents) ---
     val ORANGE_LUMESH_KEY: ResourceKey<Block> = blockKey("orange_lumesh")
     val ORANGE_LUMESH_ITEM_KEY: ResourceKey<Item> = itemKey("orange_lumesh")
-    val ORANGE_LUMESH: Block = Block(BlockBehaviour.Properties.of().setId(ORANGE_LUMESH_KEY).strength(1.0f).lightLevel { 12 }.sound(SoundType.WOOD))
+    val ORANGE_LUMESH: Block = Block(
+        BlockBehaviour.Properties.of()
+            .setId(ORANGE_LUMESH_KEY)
+            .strength(1.0f)
+            .lightLevel { 12 }
+            .sound(SoundType.WOOD)
+            .pushReaction(PushReaction.DESTROY)
+    )
     val ORANGE_LUMESH_ITEM: Item = BlockItem(ORANGE_LUMESH, Item.Properties().setId(ORANGE_LUMESH_ITEM_KEY))
 
     val YELLOW_LUMESH_KEY: ResourceKey<Block> = blockKey("yellow_lumesh")
     val YELLOW_LUMESH_ITEM_KEY: ResourceKey<Item> = itemKey("yellow_lumesh")
-    val YELLOW_LUMESH: Block = Block(BlockBehaviour.Properties.of().setId(YELLOW_LUMESH_KEY).strength(1.0f).lightLevel { 12 }.sound(SoundType.WOOD))
+    val YELLOW_LUMESH: Block = Block(
+        BlockBehaviour.Properties.of()
+            .setId(YELLOW_LUMESH_KEY)
+            .strength(1.0f)
+            .lightLevel { 12 }
+            .sound(SoundType.WOOD)
+            .pushReaction(PushReaction.DESTROY)
+    )
     val YELLOW_LUMESH_ITEM: Item = BlockItem(YELLOW_LUMESH, Item.Properties().setId(YELLOW_LUMESH_ITEM_KEY))
+
+    val LUMESH_STEM_KEY: ResourceKey<Block> = blockKey("lumesh_stem")
+    val LUMESH_STEM: Block = com.howlite.cryoawakening.block.LumeshStemBlock(
+        BlockBehaviour.Properties.of()
+            .setId(LUMESH_STEM_KEY)
+            .noCollision()
+            .instabreak()
+            .randomTicks()
+            .sound(SoundType.GRASS)
+            .pushReaction(PushReaction.DESTROY)
+    )
 
     // --- 5. Ancient Lilac Woodset ---
     val ANCIENT_LILAC_LOG_KEY: ResourceKey<Block> = blockKey("ancient_lilac_log")
@@ -230,12 +273,20 @@ object ModBlocks {
 
     val ANCIENT_LILAC_LEAVES_KEY: ResourceKey<Block> = blockKey("ancient_lilac_leaves")
     val ANCIENT_LILAC_LEAVES_ITEM_KEY: ResourceKey<Item> = itemKey("ancient_lilac_leaves")
-    val ANCIENT_LILAC_LEAVES: Block = net.minecraft.world.level.block.TintedParticleLeavesBlock(0.05f, BlockBehaviour.Properties.of().setId(ANCIENT_LILAC_LEAVES_KEY).strength(0.2f).sound(SoundType.GRASS).noOcclusion())
+    val ANCIENT_LILAC_LEAVES: Block = com.howlite.cryoawakening.block.ModLeavesBlock(BlockBehaviour.Properties.of().setId(ANCIENT_LILAC_LEAVES_KEY).strength(0.2f).sound(SoundType.GRASS).noOcclusion())
     val ANCIENT_LILAC_LEAVES_ITEM: Item = BlockItem(ANCIENT_LILAC_LEAVES, Item.Properties().setId(ANCIENT_LILAC_LEAVES_ITEM_KEY))
 
     val ANCIENT_LILAC_SAPLING_KEY: ResourceKey<Block> = blockKey("ancient_lilac_sapling")
     val ANCIENT_LILAC_SAPLING_ITEM_KEY: ResourceKey<Item> = itemKey("ancient_lilac_sapling")
-    val ANCIENT_LILAC_SAPLING: Block = com.howlite.cryoawakening.block.ModSaplingBlock(BlockBehaviour.Properties.of().setId(ANCIENT_LILAC_SAPLING_KEY).noCollision().instabreak().sound(SoundType.GRASS))
+    val ANCIENT_LILAC_SAPLING: Block = com.howlite.cryoawakening.block.ModSaplingBlock(
+        BlockBehaviour.Properties.of()
+            .setId(ANCIENT_LILAC_SAPLING_KEY)
+            .noCollision()
+            .instabreak()
+            .randomTicks()
+            .sound(SoundType.GRASS)
+            .pushReaction(PushReaction.DESTROY)
+    )
     val ANCIENT_LILAC_SAPLING_ITEM: Item = BlockItem(ANCIENT_LILAC_SAPLING, Item.Properties().setId(ANCIENT_LILAC_SAPLING_ITEM_KEY))
 
     // --- 6. Petrified Ancient Lilac Woodset ---
@@ -333,6 +384,8 @@ object ModBlocks {
             // Sols de caverne & Flore
             output.accept(RIMECRUST_ITEM)
             output.accept(RIMECRUST_LICHEN_ITEM)
+            output.accept(RIMEBLOOM_ITEM)
+            output.accept(RIMEBLOOM_GRASS_ITEM)
             output.accept(SMALL_LICHEN_BUSH_ITEM)
 
             // Lumesh (Blocs, Graines, Fruits)
@@ -434,11 +487,14 @@ object ModBlocks {
         // Sols & Flore
         registerBlock(RIMECRUST_KEY, RIMECRUST, RIMECRUST_ITEM_KEY, RIMECRUST_ITEM)
         registerBlock(RIMECRUST_LICHEN_KEY, RIMECRUST_LICHEN, RIMECRUST_LICHEN_ITEM_KEY, RIMECRUST_LICHEN_ITEM)
+        registerBlock(RIMEBLOOM_KEY, RIMEBLOOM, RIMEBLOOM_ITEM_KEY, RIMEBLOOM_ITEM)
+        registerBlock(RIMEBLOOM_GRASS_KEY, RIMEBLOOM_GRASS, RIMEBLOOM_GRASS_ITEM_KEY, RIMEBLOOM_GRASS_ITEM)
         registerBlock(SMALL_LICHEN_BUSH_KEY, SMALL_LICHEN_BUSH, SMALL_LICHEN_BUSH_ITEM_KEY, SMALL_LICHEN_BUSH_ITEM)
 
         // Lumesh
         registerBlock(ORANGE_LUMESH_KEY, ORANGE_LUMESH, ORANGE_LUMESH_ITEM_KEY, ORANGE_LUMESH_ITEM)
         registerBlock(YELLOW_LUMESH_KEY, YELLOW_LUMESH, YELLOW_LUMESH_ITEM_KEY, YELLOW_LUMESH_ITEM)
+        Registry.register(BuiltInRegistries.BLOCK, LUMESH_STEM_KEY, LUMESH_STEM)
 
         // Ancient Lilac
         registerBlock(ANCIENT_LILAC_LOG_KEY, ANCIENT_LILAC_LOG, ANCIENT_LILAC_LOG_ITEM_KEY, ANCIENT_LILAC_LOG_ITEM)

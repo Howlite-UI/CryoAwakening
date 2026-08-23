@@ -2,6 +2,8 @@
   "replace": false,
   "values": [
     "cryo-awakening:rimecrust",
-    "cryo-awakening:rimecrust_lichen"
+    "cryo-awakening:rimecrust_lichen",
+    "cryo-awakening:rimebloom",
+    "cryo-awakening:rimebloom_grass"
   ]
 }

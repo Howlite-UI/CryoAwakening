@@ -72,7 +72,10 @@ object ModItems {
 
     // --- Items Lumesh & Flore ---
     val LUMESH_SEED_KEY: ResourceKey<Item> = itemKey("lumesh_seed")
-    val LUMESH_SEED: Item = Item(Item.Properties().setId(LUMESH_SEED_KEY).stacksTo(64))
+    val LUMESH_SEED: Item = net.minecraft.world.item.BlockItem(
+        com.howlite.cryoawakening.ModBlocks.LUMESH_STEM,
+        Item.Properties().setId(LUMESH_SEED_KEY).stacksTo(64)
+    )
 
     val ORANGE_LUMESH_SLICE_KEY: ResourceKey<Item> = itemKey("orange_lumesh_slice")
     val ORANGE_LUMESH_SLICE: Item = Item(

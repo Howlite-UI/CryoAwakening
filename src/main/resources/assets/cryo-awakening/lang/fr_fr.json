@@ -128,5 +128,11 @@
   "block.cryo-awakening.petrified_ancient_lilac_pressure_plate": "Plaque de Pression de Lilas Ancien Pétrifié",
   "item.cryo-awakening.petrified_ancient_lilac_pressure_plate": "Plaque de Pression de Lilas Ancien Pétrifié",
   "block.cryo-awakening.petrified_ancient_lilac_button": "Bouton de Lilas Ancien Pétrifié",
-  "item.cryo-awakening.petrified_ancient_lilac_button": "Bouton de Lilas Ancien Pétrifié"
+  "item.cryo-awakening.petrified_ancient_lilac_button": "Bouton de Lilas Ancien Pétrifié",
+  "block.cryo-awakening.rimebloom": "Rimebloom",
+  "item.cryo-awakening.rimebloom": "Rimebloom",
+  "block.cryo-awakening.rimebloom_grass": "Herbe de Rimebloom",
+  "item.cryo-awakening.rimebloom_grass": "Herbe de Rimebloom",
+  "block.cryo-awakening.lumesh_stem": "Tige de Lumesh",
+  "item.cryo-awakening.lumesh_stem": "Tige de Lumesh"
 }
