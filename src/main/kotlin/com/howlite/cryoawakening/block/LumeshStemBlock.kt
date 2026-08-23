@@ -12,13 +12,19 @@ import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.BonemealableBlock
 import net.minecraft.world.level.block.BushBlock
+import net.minecraft.world.level.block.EntityBlock
+import net.minecraft.world.level.block.entity.BlockEntity
+import net.minecraft.world.level.block.state.BlockBehaviour
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.block.state.StateDefinition
 import net.minecraft.world.level.block.state.properties.IntegerProperty
 import net.minecraft.world.phys.shapes.CollisionContext
 import net.minecraft.world.phys.shapes.VoxelShape
 
-class LumeshStemBlock(properties: Properties) : BushBlock(properties), BonemealableBlock {
+class LumeshStemBlock(properties: BlockBehaviour.Properties) : BushBlock(properties), BonemealableBlock, EntityBlock {
+
+    override fun newBlockEntity(pos: BlockPos, state: BlockState): BlockEntity =
+        com.howlite.cryoawakening.block.entity.LumeshStemBlockEntity(pos, state)
 
     companion object {
         const val MAX_AGE = 4

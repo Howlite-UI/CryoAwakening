@@ -7,9 +7,11 @@ import com.howlite.cryoawakening.block.ModButtonBlock
 import com.howlite.cryoawakening.block.ModDoorBlock
 import com.howlite.cryoawakening.block.ModPressurePlateBlock
 import com.howlite.cryoawakening.block.ModStairBlock
+import com.howlite.cryoawakening.block.LumeshStemBlock
 import com.howlite.cryoawakening.block.ModTrapDoorBlock
 import com.howlite.cryoawakening.block.entity.CryoTombBlockEntity
 import com.howlite.cryoawakening.block.entity.CryoVentBlockEntity
+import com.howlite.cryoawakening.block.entity.LumeshStemBlockEntity
 import net.fabricmc.fabric.api.`object`.builder.v1.block.entity.FabricBlockEntityTypeBuilder
 import net.fabricmc.fabric.api.registry.StrippableBlockRegistry
 import net.minecraft.core.Registry
@@ -195,7 +197,7 @@ object ModBlocks {
     val YELLOW_LUMESH_ITEM: Item = BlockItem(YELLOW_LUMESH, Item.Properties().setId(YELLOW_LUMESH_ITEM_KEY))
 
     val LUMESH_STEM_KEY: ResourceKey<Block> = blockKey("lumesh_stem")
-    val LUMESH_STEM: Block = com.howlite.cryoawakening.block.LumeshStemBlock(
+    val LUMESH_STEM: LumeshStemBlock = LumeshStemBlock(
         BlockBehaviour.Properties.of()
             .setId(LUMESH_STEM_KEY)
             .noCollision()
@@ -204,6 +206,9 @@ object ModBlocks {
             .sound(SoundType.GRASS)
             .pushReaction(PushReaction.DESTROY)
     )
+
+    val LUMESH_STEM_BLOCK_ENTITY_TYPE: BlockEntityType<LumeshStemBlockEntity> =
+        FabricBlockEntityTypeBuilder.create(::LumeshStemBlockEntity, LUMESH_STEM).build()
 
     // --- 5. Ancient Lilac Woodset ---
     val ANCIENT_LILAC_LOG_KEY: ResourceKey<Block> = blockKey("ancient_lilac_log")
@@ -544,6 +549,11 @@ object ModBlocks {
             BuiltInRegistries.BLOCK_ENTITY_TYPE,
             CryoAwakening.id("cryo_tomb"),
             CRYO_TOMB_BLOCK_ENTITY_TYPE
+        )
+        Registry.register(
+            BuiltInRegistries.BLOCK_ENTITY_TYPE,
+            CryoAwakening.id("lumesh_stem"),
+            LUMESH_STEM_BLOCK_ENTITY_TYPE
         )
 
         // Onglet Créatif Mod

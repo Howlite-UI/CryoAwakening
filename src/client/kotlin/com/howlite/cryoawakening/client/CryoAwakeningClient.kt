@@ -5,6 +5,7 @@ import com.howlite.cryoawakening.ModBlocks
 import com.howlite.cryoawakening.ModParticleTypes
 import com.howlite.cryoawakening.client.particle.StylizedWindTrailParticle
 import com.howlite.cryoawakening.client.render.CryoTombBlockEntityRenderer
+import com.howlite.cryoawakening.client.render.LumeshStemBlockEntityRenderer
 import com.howlite.cryoawakening.client.render.armor.FossilizedHelmetRenderProvider
 import com.howlite.cryoawakening.client.render.entity.GawkBombRenderer
 import com.howlite.cryoawakening.client.render.entity.GawkerRenderer
@@ -82,6 +83,12 @@ object CryoAwakeningClient : ClientModInitializer {
 		BlockEntityRenderers.register(
 			ModBlocks.CRYO_TOMB_BLOCK_ENTITY_TYPE,
 			::CryoTombBlockEntityRenderer
+		)
+
+		// Enregistrement du renderer animé des feuilles de la plante Lumesh
+		BlockEntityRenderers.register(
+			ModBlocks.LUMESH_STEM_BLOCK_ENTITY_TYPE,
+			::LumeshStemBlockEntityRenderer
 		)
 
 		// Enregistrement de la factory de particule StylizedWindTrailParticle
