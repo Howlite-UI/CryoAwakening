@@ -5,6 +5,7 @@ import com.geckolib.animatable.instance.AnimatableInstanceCache
 import com.geckolib.animatable.manager.AnimatableManager
 import com.geckolib.util.GeckoLibUtil
 import com.howlite.cryoawakening.item.ModItems
+import net.minecraft.core.particles.ColorParticleOption
 import net.minecraft.core.particles.ParticleTypes
 import net.minecraft.network.syncher.EntityDataAccessor
 import net.minecraft.network.syncher.EntityDataSerializers
@@ -74,6 +75,10 @@ class GawkerEntity(
         get() = entityData.get(POWDER_CHARGE)
         set(value) = entityData.set(POWDER_CHARGE, value.coerceIn(0, 3))
 
+    var drossCharge: Int
+        get() = entityData.get(DROSS_CHARGE)
+        set(value) = entityData.set(DROSS_CHARGE, value.coerceIn(0, 3))
+
     var throwerUuid: UUID? = null
     var flightTicks: Int = 0
 
@@ -82,6 +87,7 @@ class GawkerEntity(
         builder.define(CARRIER_ID, -1)
         builder.define(IS_THROWN, false)
         builder.define(POWDER_CHARGE, 0)
+        builder.define(DROSS_CHARGE, 0)
     }
 
     override fun registerGoals() {
@@ -97,14 +103,14 @@ class GawkerEntity(
     }
 
     private fun isTemptingItem(stack: ItemStack): Boolean {
-        return stack.`is`(ModItems.RAW_BISMUTH) || stack.`is`(Items.GUNPOWDER)
+        return stack.`is`(ModItems.RAW_BISMUTH) || stack.`is`(Items.GUNPOWDER) || stack.`is`(ModItems.BISMUTH_DROSS)
     }
 
     override fun mobInteract(player: Player, hand: InteractionHand): InteractionResult {
         val heldItem = player.getItemInHand(hand)
 
         // 1. Gavage à la poudre à canon (Gunpowder) : jusqu'à 3 charges
-        if (heldItem.`is`(Items.GUNPOWDER) && !isThrown) {
+        if (heldItem.`is`(Items.GUNPOWDER) && !isThrown && drossCharge == 0) {
             if (powderCharge < 3) {
                 if (!player.abilities.instabuild) {
                     heldItem.shrink(1)
@@ -135,6 +141,44 @@ class GawkerEntity(
                     val pos = position().add(0.0, 0.35, 0.0)
                     serverLevel.sendParticles(ParticleTypes.SMOKE, pos.x, pos.y, pos.z, 12, 0.15, 0.15, 0.15, 0.05)
                     serverLevel.sendParticles(ParticleTypes.FLAME, pos.x, pos.y, pos.z, 6, 0.1, 0.1, 0.1, 0.02)
+                }
+
+                return InteractionResult.SUCCESS
+            }
+        }
+
+        // 1b. Gavage au Bismuth Dross (Feu d'artifice) : jusqu'à 3 charges
+        if (heldItem.`is`(ModItems.BISMUTH_DROSS) && !isThrown && powderCharge == 0) {
+            if (drossCharge < 3) {
+                if (!player.abilities.instabuild) {
+                    heldItem.shrink(1)
+                }
+                drossCharge++
+
+                val pitch = 1.0f + (drossCharge * 0.25f)
+                level().playSound(
+                    null,
+                    blockPosition(),
+                    SoundEvents.FIREWORK_ROCKET_LAUNCH,
+                    SoundSource.NEUTRAL,
+                    1.0f,
+                    pitch
+                )
+                level().playSound(
+                    null,
+                    blockPosition(),
+                    SoundEvents.GENERIC_EAT.value(),
+                    SoundSource.NEUTRAL,
+                    1.0f,
+                    1.3f
+                )
+
+                // Particules d'étincelles féeriques et de feu d'artifice au gavage
+                if (level() is ServerLevel) {
+                    val serverLevel = level() as ServerLevel
+                    val pos = position().add(0.0, 0.35, 0.0)
+                    serverLevel.sendParticles(ParticleTypes.FIREWORK, pos.x, pos.y, pos.z, 16, 0.2, 0.2, 0.2, 0.08)
+                    serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK, pos.x, pos.y, pos.z, 8, 0.15, 0.15, 0.15, 0.05)
                 }
 
                 return InteractionResult.SUCCESS
@@ -212,6 +256,20 @@ class GawkerEntity(
             }
         }
 
+        // Étincelles féeriques continues si chargé au Bismuth Dross (Feu d'artifice)
+        if (drossCharge > 0) {
+            val freq = (4 - drossCharge).coerceAtLeast(1)
+            if (tickCount % freq == 0) {
+                val pos = position().add(0.0, 0.35, 0.0)
+                if (level().isClientSide) {
+                    level().addParticle(ParticleTypes.FIREWORK, pos.x, pos.y, pos.z, (random.nextDouble() - 0.5) * 0.08, 0.03 * drossCharge, (random.nextDouble() - 0.5) * 0.08)
+                    if (drossCharge == 3 && tickCount % 3 == 0) {
+                        level().addParticle(ColorParticleOption.create(ParticleTypes.FLASH, 1.0f, 0.85f, 0.2f), pos.x, pos.y, pos.z, 0.0, 0.0, 0.0)
+                    }
+                }
+            }
+        }
+
         // 1. Gestion du portage au-dessus de la tête
         if (isCarried) {
             val carrier = level().getEntity(carrierId) as? LivingEntity
@@ -241,12 +299,18 @@ class GawkerEntity(
             flightTicks++
 
             if (level().isClientSide) {
-                // Traînée de particules de givre pendant le vol
                 val pos = position().add(0.0, 0.25, 0.0)
-                level().addParticle(ParticleTypes.SNOWFLAKE, pos.x, pos.y, pos.z, -deltaMovement.x * 0.15, 0.05, -deltaMovement.z * 0.15)
-                level().addParticle(ParticleTypes.ITEM_SNOWBALL, pos.x, pos.y, pos.z, 0.0, 0.0, 0.0)
-                if (powderCharge > 0) {
-                    level().addParticle(ParticleTypes.SMOKE, pos.x, pos.y, pos.z, 0.0, 0.05, 0.0)
+                if (drossCharge > 0) {
+                    // Traînée féerique de feu d'artifice
+                    level().addParticle(ParticleTypes.FIREWORK, pos.x, pos.y, pos.z, -deltaMovement.x * 0.2, 0.05, -deltaMovement.z * 0.2)
+                    level().addParticle(ParticleTypes.ELECTRIC_SPARK, pos.x, pos.y, pos.z, 0.0, 0.02, 0.0)
+                } else {
+                    // Traînée de particules de givre pendant le vol
+                    level().addParticle(ParticleTypes.SNOWFLAKE, pos.x, pos.y, pos.z, -deltaMovement.x * 0.15, 0.05, -deltaMovement.z * 0.15)
+                    level().addParticle(ParticleTypes.ITEM_SNOWBALL, pos.x, pos.y, pos.z, 0.0, 0.0, 0.0)
+                    if (powderCharge > 0) {
+                        level().addParticle(ParticleTypes.SMOKE, pos.x, pos.y, pos.z, 0.0, 0.05, 0.0)
+                    }
                 }
             } else {
                 // Trajectoire balistique avec gravité
@@ -259,10 +323,75 @@ class GawkerEntity(
                 }.firstOrNull()
 
                 if (horizontalCollision || verticalCollision || onGround() || hitEntity != null || flightTicks > 120) {
-                    explodeFrost()
+                    if (drossCharge > 0) {
+                        explodeFirework()
+                    } else {
+                        explodeFrost()
+                    }
                 }
             }
         }
+    }
+
+    /**
+     * Déclenche une explosion de feu d'artifice spectaculaire au contact d'un bloc ou d'une entité.
+     * Les dégâts, la propulsion verticale et les gerbes de couleurs sont amplifiés par le niveau de charge (DrossCharge).
+     */
+    fun explodeFirework() {
+        if (level().isClientSide) return
+        val serverLevel = level() as? ServerLevel ?: return
+        val center = position().add(0.0, 0.35, 0.0)
+
+        val charge = drossCharge
+        val radius = 4.0 + (charge * 0.9) // 4.0, 4.9, 5.8, 6.7 blocs
+        val sparkCount = 60 + (charge * 35)
+
+        // Effets spectaculaires de Feux d'artifice !
+        serverLevel.sendParticles(ParticleTypes.FIREWORK, center.x, center.y, center.z, sparkCount, radius * 0.4, 1.2, radius * 0.4, 0.25)
+        serverLevel.sendParticles(ColorParticleOption.create(ParticleTypes.FLASH, 1.0f, 0.85f, 0.2f), center.x, center.y, center.z, 1 + charge, 0.3, 0.3, 0.3, 0.0)
+        serverLevel.sendParticles(ParticleTypes.EXPLOSION_EMITTER, center.x, center.y, center.z, 1 + charge, 0.2, 0.2, 0.2, 0.0)
+        serverLevel.sendParticles(ParticleTypes.ELECTRIC_SPARK, center.x, center.y, center.z, 30 + charge * 15, 0.5, 0.5, 0.5, 0.1)
+
+        // Sons d'explosion de fusée et d'étincelles féeriques
+        level().playSound(null, blockPosition(), SoundEvents.FIREWORK_ROCKET_LARGE_BLAST, SoundSource.HOSTILE, 1.5f + charge * 0.3f, 0.9f)
+        level().playSound(null, blockPosition(), SoundEvents.FIREWORK_ROCKET_TWINKLE, SoundSource.HOSTILE, 1.5f + charge * 0.3f, 1.1f)
+        level().playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 1.0f + charge * 0.2f, 1.3f)
+
+        // Dégâts et projection aérienne spectaculaire (comme un feu d'artifice propulsé dans le ciel !)
+        val victims = serverLevel.getEntitiesOfClass(
+            LivingEntity::class.java,
+            AABB(center.x - radius, center.y - radius, center.z - radius, center.x + radius, center.y + radius, center.z + radius)
+        )
+
+        for (target in victims) {
+            if (target == this) continue
+            val dist = target.position().distanceTo(center)
+            if (dist <= radius) {
+                val factor = (1.0 - (dist / radius)).coerceIn(0.0, 1.0)
+                val baseDmg = 4.0 + (charge * 2.0)
+                val maxDmgAdd = 6.0 + (charge * 3.0)
+                val damage = (factor * maxDmgAdd + baseDmg).toFloat()
+
+                val thrower = throwerUuid?.let { serverLevel.getEntity(it) as? LivingEntity }
+                target.hurtServer(serverLevel, target.damageSources().explosion(this, thrower), damage)
+
+                // Effet de lumière/brillance et propulsion vers le haut
+                target.addEffect(MobEffectInstance(MobEffects.GLOWING, 100 + charge * 60, 0))
+
+                val dir = target.position().subtract(center).normalize()
+                val upForce = 0.6 + (charge * 0.35)
+                val knockForce = 0.7f + (charge * 0.3f)
+                target.push(dir.x * factor * knockForce, upForce * factor, dir.z * factor * knockForce)
+                target.hurtMarked = true
+            }
+        }
+
+        // Lâche une fourrure et des résidus de bismuth
+        spawnAtLocation(serverLevel, ModItems.GAWKER_FUR)
+        if (serverLevel.random.nextFloat() < 0.4f + charge * 0.2f) {
+            spawnAtLocation(serverLevel, ModItems.BISMUTH_DROSS)
+        }
+        discard()
     }
 
     /**
@@ -350,6 +479,7 @@ class GawkerEntity(
         output.putInt("CarrierId", carrierId)
         output.putBoolean("IsThrown", isThrown)
         output.putInt("PowderCharge", powderCharge)
+        output.putInt("DrossCharge", drossCharge)
         throwerUuid?.let { output.putString("ThrowerUuid", it.toString()) }
     }
 
@@ -359,6 +489,7 @@ class GawkerEntity(
         entityData.set(CARRIER_ID, cid)
         isThrown = input.getBooleanOr("IsThrown", false)
         powderCharge = input.getIntOr("PowderCharge", 0)
+        drossCharge = input.getIntOr("DrossCharge", 0)
         val throwerStr = input.getStringOr("ThrowerUuid", "")
         if (throwerStr.isNotEmpty()) {
             try {
@@ -385,6 +516,9 @@ class GawkerEntity(
             SynchedEntityData.defineId(GawkerEntity::class.java, EntityDataSerializers.BOOLEAN)
 
         val POWDER_CHARGE: EntityDataAccessor<Int> =
+            SynchedEntityData.defineId(GawkerEntity::class.java, EntityDataSerializers.INT)
+
+        val DROSS_CHARGE: EntityDataAccessor<Int> =
             SynchedEntityData.defineId(GawkerEntity::class.java, EntityDataSerializers.INT)
 
         fun createAttributes(): AttributeSupplier.Builder {

@@ -137,5 +137,12 @@
   "item.cryo-awakening.lumesh_stem": "Tige de Lumesh",
   "block.cryo-awakening.petrified_lilac_leaves": "Feuilles de Lilas Pétrifié",
   "item.cryo-awakening.petrified_lilac_leaves": "Feuilles de Lilas Pétrifié",
-  "item.cryo-awakening.fossilized_lilac_leaf": "Feuille de Lilas Fossilisée"
+  "item.cryo-awakening.fossilized_lilac_leaf": "Feuille de Lilas Fossilisée",
+  "block.cryo-awakening.tellurium_ore": "Minerai de Tellure",
+  "item.cryo-awakening.tellurium_ore": "Minerai de Tellure",
+  "item.cryo-awakening.raw_tellurium": "Tellure Brut",
+  "item.cryo-awakening.tellurobismuthite_ingot": "Lingot de Tellurobismuthite",
+  "item.cryo-awakening.wrench": "Clé à Molette",
+  "item.cryo-awakening.bismuth_dross": "Scorie de Bismuth",
+  "item.cryo-awakening.dross_glass_lens": "Lentille en Verre de Scorie"
 }

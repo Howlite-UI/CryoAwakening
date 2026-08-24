@@ -1,19 +1,15 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
+  "key": {
+    "F": "cryo-awakening:gawker_fur",
+    "P": "minecraft:gunpowder"
+  },
   "pattern": [
     " F ",
     "FPF",
     " F "
   ],
-  "key": {
-    "F": {
-      "item": "cryo-awakening:gawker_fur"
-    },
-    "P": {
-      "item": "minecraft:gunpowder"
-    }
-  },
   "result": {
     "count": 4,
     "id": "cryo-awakening:gawk_bomb"

@@ -33,6 +33,21 @@ object ModItems {
     val RAW_BISMUTH_KEY: ResourceKey<Item> = itemKey("raw_bismuth")
     val RAW_BISMUTH: Item = Item(Item.Properties().setId(RAW_BISMUTH_KEY))
 
+    val RAW_TELLURIUM_KEY: ResourceKey<Item> = itemKey("raw_tellurium")
+    val RAW_TELLURIUM: Item = Item(Item.Properties().setId(RAW_TELLURIUM_KEY))
+
+    val TELLUROBISMUTHITE_INGOT_KEY: ResourceKey<Item> = itemKey("tellurobismuthite_ingot")
+    val TELLUROBISMUTHITE_INGOT: Item = Item(Item.Properties().setId(TELLUROBISMUTHITE_INGOT_KEY))
+
+    val BISMUTH_DROSS_KEY: ResourceKey<Item> = itemKey("bismuth_dross")
+    val BISMUTH_DROSS: Item = Item(Item.Properties().setId(BISMUTH_DROSS_KEY))
+
+    val DROSS_GLASS_LENS_KEY: ResourceKey<Item> = itemKey("dross_glass_lens")
+    val DROSS_GLASS_LENS: Item = Item(Item.Properties().setId(DROSS_GLASS_LENS_KEY))
+
+    val WRENCH_KEY: ResourceKey<Item> = itemKey("wrench")
+    val WRENCH: Item = Item(Item.Properties().setId(WRENCH_KEY).stacksTo(1).durability(256))
+
     val FOSSILIZED_LILAC_LEAF_KEY: ResourceKey<Item> = itemKey("fossilized_lilac_leaf")
     val FOSSILIZED_LILAC_LEAF: Item = Item(Item.Properties().setId(FOSSILIZED_LILAC_LEAF_KEY))
 
@@ -197,6 +212,11 @@ object ModItems {
     fun register() {
         // Minerais & Matériaux
         Registry.register(BuiltInRegistries.ITEM, RAW_BISMUTH_KEY, RAW_BISMUTH)
+        Registry.register(BuiltInRegistries.ITEM, RAW_TELLURIUM_KEY, RAW_TELLURIUM)
+        Registry.register(BuiltInRegistries.ITEM, TELLUROBISMUTHITE_INGOT_KEY, TELLUROBISMUTHITE_INGOT)
+        Registry.register(BuiltInRegistries.ITEM, BISMUTH_DROSS_KEY, BISMUTH_DROSS)
+        Registry.register(BuiltInRegistries.ITEM, DROSS_GLASS_LENS_KEY, DROSS_GLASS_LENS)
+        Registry.register(BuiltInRegistries.ITEM, WRENCH_KEY, WRENCH)
         Registry.register(BuiltInRegistries.ITEM, FOSSILIZED_LILAC_LEAF_KEY, FOSSILIZED_LILAC_LEAF)
         Registry.register(BuiltInRegistries.ITEM, GAWKER_FUR_KEY, GAWKER_FUR)
         Registry.register(BuiltInRegistries.ITEM, GAWK_BOMB_KEY, GAWK_BOMB)

@@ -137,5 +137,12 @@
   "item.cryo-awakening.lumesh_stem": "Lumesh Stem",
   "block.cryo-awakening.petrified_lilac_leaves": "Petrified Lilac Leaves",
   "item.cryo-awakening.petrified_lilac_leaves": "Petrified Lilac Leaves",
-  "item.cryo-awakening.fossilized_lilac_leaf": "Fossilized Lilac Leaf"
+  "item.cryo-awakening.fossilized_lilac_leaf": "Fossilized Lilac Leaf",
+  "block.cryo-awakening.tellurium_ore": "Tellurium Ore",
+  "item.cryo-awakening.tellurium_ore": "Tellurium Ore",
+  "item.cryo-awakening.raw_tellurium": "Raw Tellurium",
+  "item.cryo-awakening.tellurobismuthite_ingot": "Tellurobismuthite Ingot",
+  "item.cryo-awakening.wrench": "Wrench",
+  "item.cryo-awakening.bismuth_dross": "Bismuth Dross",
+  "item.cryo-awakening.dross_glass_lens": "Dross Glass Lens"
 }

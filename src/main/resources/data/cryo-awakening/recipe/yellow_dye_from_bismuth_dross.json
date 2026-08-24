@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "group": "yellow_dye",
+  "category": "misc",
+  "ingredients": [
+    "cryo-awakening:bismuth_dross"
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:yellow_dye"
+  }
+}

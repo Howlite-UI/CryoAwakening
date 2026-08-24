@@ -71,7 +71,7 @@ class GawkerRenderer(
         state.addGeckolibData(IS_CARRIED, animatable.isCarried)
         state.addGeckolibData(IS_THROWN, animatable.isThrown)
         state.addGeckolibData(FLIGHT_TICKS, animatable.flightTicks)
-        state.addGeckolibData(POWDER_CHARGE, animatable.powderCharge)
+        state.addGeckolibData(POWDER_CHARGE, maxOf(animatable.powderCharge, animatable.drossCharge))
     }
 
     override fun adjustModelBonesForRender(
