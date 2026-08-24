@@ -8,10 +8,12 @@ import com.howlite.cryoawakening.block.ModDoorBlock
 import com.howlite.cryoawakening.block.ModPressurePlateBlock
 import com.howlite.cryoawakening.block.ModStairBlock
 import com.howlite.cryoawakening.block.LumeshStemBlock
+import com.howlite.cryoawakening.block.PetrifiedLilacLeavesBlock
 import com.howlite.cryoawakening.block.ModTrapDoorBlock
 import com.howlite.cryoawakening.block.entity.CryoTombBlockEntity
 import com.howlite.cryoawakening.block.entity.CryoVentBlockEntity
 import com.howlite.cryoawakening.block.entity.LumeshStemBlockEntity
+import com.howlite.cryoawakening.block.entity.PetrifiedLilacLeavesBlockEntity
 import net.fabricmc.fabric.api.`object`.builder.v1.block.entity.FabricBlockEntityTypeBuilder
 import net.fabricmc.fabric.api.registry.StrippableBlockRegistry
 import net.minecraft.core.Registry
@@ -360,6 +362,14 @@ object ModBlocks {
     val PETRIFIED_ANCIENT_LILAC_BUTTON: Block = ModButtonBlock(BlockSetType.OAK, 30, BlockBehaviour.Properties.of().setId(PETRIFIED_ANCIENT_LILAC_BUTTON_KEY).strength(0.8f).sound(SoundType.STONE))
     val PETRIFIED_ANCIENT_LILAC_BUTTON_ITEM: Item = BlockItem(PETRIFIED_ANCIENT_LILAC_BUTTON, Item.Properties().setId(PETRIFIED_ANCIENT_LILAC_BUTTON_ITEM_KEY))
 
+    val PETRIFIED_LILAC_LEAVES_KEY: ResourceKey<Block> = blockKey("petrified_lilac_leaves")
+    val PETRIFIED_LILAC_LEAVES_ITEM_KEY: ResourceKey<Item> = itemKey("petrified_lilac_leaves")
+    val PETRIFIED_LILAC_LEAVES: Block = PetrifiedLilacLeavesBlock(BlockBehaviour.Properties.of().setId(PETRIFIED_LILAC_LEAVES_KEY).strength(0.2f).sound(SoundType.GRASS).noOcclusion())
+    val PETRIFIED_LILAC_LEAVES_ITEM: Item = BlockItem(PETRIFIED_LILAC_LEAVES, Item.Properties().setId(PETRIFIED_LILAC_LEAVES_ITEM_KEY))
+
+    val PETRIFIED_LILAC_LEAVES_BLOCK_ENTITY_TYPE: BlockEntityType<PetrifiedLilacLeavesBlockEntity> =
+        FabricBlockEntityTypeBuilder.create(::PetrifiedLilacLeavesBlockEntity, PETRIFIED_LILAC_LEAVES).build()
+
     // --- Onglet Créatif Dédié "Cryo Awakening" ---
     val CRYO_AWAKENING_TAB_KEY: ResourceKey<CreativeModeTab> = ResourceKey.create(
         Registries.CREATIVE_MODE_TAB,
@@ -433,6 +443,8 @@ object ModBlocks {
             output.accept(PETRIFIED_ANCIENT_LILAC_TRAPDOOR_ITEM)
             output.accept(PETRIFIED_ANCIENT_LILAC_PRESSURE_PLATE_ITEM)
             output.accept(PETRIFIED_ANCIENT_LILAC_BUTTON_ITEM)
+            output.accept(PETRIFIED_LILAC_LEAVES_ITEM)
+            output.accept(com.howlite.cryoawakening.item.ModItems.FOSSILIZED_LILAC_LEAF)
 
             // Armures Cryo Awakening
             com.howlite.cryoawakening.item.ModItems.ALL_ARMOR_ITEMS.forEach { armorItem ->
@@ -532,6 +544,7 @@ object ModBlocks {
         registerBlock(PETRIFIED_ANCIENT_LILAC_TRAPDOOR_KEY, PETRIFIED_ANCIENT_LILAC_TRAPDOOR, PETRIFIED_ANCIENT_LILAC_TRAPDOOR_ITEM_KEY, PETRIFIED_ANCIENT_LILAC_TRAPDOOR_ITEM)
         registerBlock(PETRIFIED_ANCIENT_LILAC_PRESSURE_PLATE_KEY, PETRIFIED_ANCIENT_LILAC_PRESSURE_PLATE, PETRIFIED_ANCIENT_LILAC_PRESSURE_PLATE_ITEM_KEY, PETRIFIED_ANCIENT_LILAC_PRESSURE_PLATE_ITEM)
         registerBlock(PETRIFIED_ANCIENT_LILAC_BUTTON_KEY, PETRIFIED_ANCIENT_LILAC_BUTTON, PETRIFIED_ANCIENT_LILAC_BUTTON_ITEM_KEY, PETRIFIED_ANCIENT_LILAC_BUTTON_ITEM)
+        registerBlock(PETRIFIED_LILAC_LEAVES_KEY, PETRIFIED_LILAC_LEAVES, PETRIFIED_LILAC_LEAVES_ITEM_KEY, PETRIFIED_LILAC_LEAVES_ITEM)
 
         // Strippable Logs & Woods (Écorçage à la hache)
         StrippableBlockRegistry.register(ANCIENT_LILAC_LOG, STRIPPED_ANCIENT_LILAC_LOG)
@@ -554,6 +567,11 @@ object ModBlocks {
             BuiltInRegistries.BLOCK_ENTITY_TYPE,
             CryoAwakening.id("lumesh_stem"),
             LUMESH_STEM_BLOCK_ENTITY_TYPE
+        )
+        Registry.register(
+            BuiltInRegistries.BLOCK_ENTITY_TYPE,
+            CryoAwakening.id("petrified_lilac_leaves"),
+            PETRIFIED_LILAC_LEAVES_BLOCK_ENTITY_TYPE
         )
 
         // Onglet Créatif Mod

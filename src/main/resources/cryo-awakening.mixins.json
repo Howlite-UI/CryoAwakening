@@ -6,7 +6,8 @@
 		"ExampleMixin",
 		"OverworldBiomeBuilderMixin",
 		"MultiNoiseBiomeSourceMixin",
-		"InventoryMixin"
+		"InventoryMixin",
+		"BrushItemMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

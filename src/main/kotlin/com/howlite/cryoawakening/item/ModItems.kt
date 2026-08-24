@@ -33,6 +33,9 @@ object ModItems {
     val RAW_BISMUTH_KEY: ResourceKey<Item> = itemKey("raw_bismuth")
     val RAW_BISMUTH: Item = Item(Item.Properties().setId(RAW_BISMUTH_KEY))
 
+    val FOSSILIZED_LILAC_LEAF_KEY: ResourceKey<Item> = itemKey("fossilized_lilac_leaf")
+    val FOSSILIZED_LILAC_LEAF: Item = Item(Item.Properties().setId(FOSSILIZED_LILAC_LEAF_KEY))
+
     // --- Items Gawker ---
     val GAWKER_FUR_KEY: ResourceKey<Item> = itemKey("gawker_fur")
     val GAWKER_FUR: Item = Item(Item.Properties().setId(GAWKER_FUR_KEY))
@@ -194,6 +197,7 @@ object ModItems {
     fun register() {
         // Minerais & Matériaux
         Registry.register(BuiltInRegistries.ITEM, RAW_BISMUTH_KEY, RAW_BISMUTH)
+        Registry.register(BuiltInRegistries.ITEM, FOSSILIZED_LILAC_LEAF_KEY, FOSSILIZED_LILAC_LEAF)
         Registry.register(BuiltInRegistries.ITEM, GAWKER_FUR_KEY, GAWKER_FUR)
         Registry.register(BuiltInRegistries.ITEM, GAWK_BOMB_KEY, GAWK_BOMB)
         Registry.register(BuiltInRegistries.ITEM, GALE_BOOMERANG_KEY, GALE_BOOMERANG)

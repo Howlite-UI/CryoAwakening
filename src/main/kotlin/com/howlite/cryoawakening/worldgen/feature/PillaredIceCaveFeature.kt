@@ -308,7 +308,7 @@ class PillaredIceCaveFeature(codec: Codec<NoneFeatureConfiguration>) :
                                 // 3. Lac de Blue Ice central
                                 dOvoid < (0.25 + floorReliefN * 0.03) -> BLUE_ICE
 
-                                // 3. Bordure du lac (blocs de transition)
+                                // 3. Bordure du lac & sol rocheux avec patchs organiques de Rimecrust et Lichen
                                 else -> {
                                     val defaultBase = if (dOvoid >= 0.80) GABBRO_STONE else SHIVERING_SHALE
                                     val baseMat = getStrataBlock(wx, wy, wz, isBaseShell = false, defaultMat = defaultBase)
@@ -316,7 +316,15 @@ class PillaredIceCaveFeature(codec: Codec<NoneFeatureConfiguration>) :
                                     when {
                                         lakeEdge && baseMat == GABBRO_STONE    -> BLUE_ICE_SHEET_GABBRO_STONE
                                         lakeEdge && baseMat == SHIVERING_SHALE -> BLUE_ICE_SHEET_SHIVERING_SHALE_STONE
-                                        else                                    -> baseMat
+                                        else -> {
+                                            // Majorité de Rimecrust Lichen (~62%), transition Rimecrust (~18%) et zones vides de roche brute (~20%)
+                                            val patchNoise = sin(wx * 0.07 + phi1) * cos(wz * 0.07 + phi2) + 0.5 * sin((wx - wz) * 0.12 + phi3)
+                                            when {
+                                                patchNoise > -0.20 -> ModBlocks.RIMECRUST_LICHEN.defaultBlockState()
+                                                patchNoise > -0.50 -> ModBlocks.RIMECRUST.defaultBlockState()
+                                                else               -> baseMat
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -384,7 +392,19 @@ class PillaredIceCaveFeature(codec: Codec<NoneFeatureConfiguration>) :
                     }
                 }
 
-                // Décoration : Stalactites de glace courtes au plafond (1 à 3 blocs)
+                // 1. Décoration au sol : Small Lichen Bush sur les plaques de Rimecrust Lichen
+                val groundBlock = world.getBlockState(BlockPos(wx, floorY, wz))
+                if (groundBlock.`is`(ModBlocks.RIMECRUST_LICHEN)) {
+                    val bushPos = BlockPos(wx, floorY + 1, wz)
+                    if (world.isEmptyBlock(bushPos)) {
+                        val bushNoise = hash2D(wx, wz, domeSeed xor 0x8899L)
+                        if (bushNoise < 0.35) { // 35% de chance d'apparition de buisson de lichen
+                            world.setBlock(bushPos, ModBlocks.SMALL_LICHEN_BUSH.defaultBlockState(), PLACE_FLAG)
+                        }
+                    }
+                }
+
+                // 2. Décoration plafond : Stalactites de glace courtes au plafond (1 à 3 blocs)
                 val isPillarCeil = hasPillar && !isStalagmite && (topR > 0.0)
                 if (!isPillarCeil && clearance > 6) {
                     val icicleN = hash2D(wx, wz, 505L)
@@ -403,11 +423,177 @@ class PillaredIceCaveFeature(codec: Codec<NoneFeatureConfiguration>) :
             }
         }
 
+        // ── GÉNÉRATION DU ROCHER GLACÉ DE SURFACE (INDICATEUR DE SURFACE & CRYO-VENTS) ──────────────
+        val placedSurface = generateSurfaceRockOutcropping(world, cxMin, cxMax, czMin, czMax, centerX, centerZ, domeSeed)
+        if (placedSurface) {
+            placedAny = true
+        }
+
         if (placedAny) {
             CryoAwakening.LOGGER.info("[CryoAwakening] Successfully generated PillaredIceCave slice in chunk [${chunkX}, ${chunkZ}] (Cave center: [$centerX, $centerZ], Y: ${BASE_EDGE_FLOOR_Y})")
         }
 
         return placedAny
+    }
+
+    // ── FORMATION GÉOLOGIQUE DE SURFACE : ROCHER GLACÉ & CRYO-VENTS ────────────────────────────
+
+    /**
+     * Génère une formation géologique rocheuse et glacée à la surface de l'Overworld,
+     * directement au-dessus de la cathédrale de glace.
+     *
+     * Comporte :
+     *  - Un pic rocheux déchiqueté en Gabbro, Shivering Shale, Frozen Flysch, Blue Ice et minerai de Bismuth.
+     *  - 1 ou 2 Cryo-Vents positionnés au fond de craquelures/fissures, soufflant du vent vers le ciel.
+     *  - Une bordure givrée en Rimecrust, Lichen et Ice Sheets marquant le terrain alentour.
+     */
+    private fun generateSurfaceRockOutcropping(
+        world: WorldGenLevel,
+        cxMin: Int,
+        cxMax: Int,
+        czMin: Int,
+        czMax: Int,
+        centerX: Int,
+        centerZ: Int,
+        domeSeed: Long
+    ): Boolean {
+        val surfOffsetX = ((hash1D(domeSeed xor 0x8888L) - 0.5) * 12.0).toInt()
+        val surfOffsetZ = ((hash1D(domeSeed xor 0x9999L) - 0.5) * 12.0).toInt()
+        val surfCenterX = centerX + surfOffsetX
+        val surfCenterZ = centerZ + surfOffsetZ
+
+        // Dimensions resserrées en largeur (aiguille / pic plus élancé : 7 à 10 blocs de rayon)
+        val surfRadX = 7.5 + hash1D(domeSeed xor 0xAAAAL) * 2.5
+        val surfRadZ = 7.0 + hash1D(domeSeed xor 0xBBBBL) * 2.5
+        val maxRadius = maxOf(surfRadX, surfRadZ) + 4.0
+
+        if (cxMax < surfCenterX - maxRadius || cxMin > surfCenterX + maxRadius ||
+            czMax < surfCenterZ - maxRadius || czMin > surfCenterZ + maxRadius) {
+            return false
+        }
+
+        // Positions des 1 ou 2 Cryo-Vents dans les fissures
+        val vent1X = surfCenterX + ((hash1D(domeSeed xor 0x1122L) - 0.5) * 4.0).toInt()
+        val vent1Z = surfCenterZ + ((hash1D(domeSeed xor 0x3344L) - 0.5) * 4.0).toInt()
+
+        val vent2X = surfCenterX + ((hash1D(domeSeed xor 0x5566L) - 0.5) * 6.0).toInt()
+        val vent2Z = surfCenterZ + ((hash1D(domeSeed xor 0x7788L) - 0.5) * 6.0).toInt()
+
+        val hasVent2 = hash1D(domeSeed xor 0x99AAL) > 0.30
+
+        var placedSurface = false
+
+        for (wx in cxMin..cxMax) {
+            for (wz in czMin..czMax) {
+                val dx = (wx - surfCenterX) / surfRadX
+                val dz = (wz - surfCenterZ) / surfRadZ
+                val dSq = dx * dx + dz * dz
+
+                val theta = atan2(dz, dx)
+                val deform = 1.0 +
+                    0.25 * sin(3.0 * theta + hash1D(domeSeed xor 0x1234L) * 6.28) +
+                    0.15 * cos(2.0 * theta + hash1D(domeSeed xor 0x5678L) * 6.28) +
+                    0.10 * sin(5.0 * theta + hash1D(domeSeed xor 0x9ABCL) * 6.28)
+
+                val dNorm = sqrt(dSq) / deform
+                if (dNorm > 1.25) continue
+
+                val baseSurfY = world.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR_WG, wx, wz)
+                if (baseSurfY < 40 || baseSurfY > 250) continue
+
+                // 1. Bordure périphérique subtile (plaques de glace légères)
+                if (dNorm > 1.0) {
+                    val frostNoise = hash2D(wx, wz, domeSeed xor 0xDEEFL)
+                    if (frostNoise > 0.65) {
+                        val topPos = BlockPos(wx, baseSurfY, wz)
+                        if (world.isEmptyBlock(topPos) && !world.isEmptyBlock(topPos.below())) {
+                            world.setBlock(topPos, ModBlocks.ICE_SHEET.defaultBlockState(), PLACE_FLAG)
+                            placedSurface = true
+                        }
+                    }
+                    continue
+                }
+
+                // 2. Relief du pic rocheux (hauteur augmentée : 13 à 18 blocs de haut)
+                val peakMaxHeight = 13.0 + hash1D(domeSeed xor 0xCCCCL) * 5.0
+                val cragNoise = (sin(wx * 0.5) * cos(wz * 0.5) * 2.2 + hash2D(wx, wz, domeSeed) * 2.5).toFloat()
+                val elevation = ((1.0 - dNorm) * peakMaxHeight + cragNoise).toInt().coerceAtLeast(1)
+
+                // 3. Fissures et Craquelures pour les Cryo-Vents
+                val isNearVent1 = (abs(wx - vent1X) <= 1 && abs(wz - vent1Z) <= 1)
+                val isExactVent1 = (wx == vent1X && wz == vent1Z)
+
+                val isNearVent2 = hasVent2 && (abs(wx - vent2X) <= 1 && abs(wz - vent2Z) <= 1)
+                val isExactVent2 = hasVent2 && (wx == vent2X && wz == vent2Z)
+
+                val crack1 = abs(sin((wx - vent1X) * 0.45 + (wz - vent1Z) * 0.75)) < 0.22 && dNorm < 0.70
+                val crack2 = hasVent2 && abs(cos((wx - vent2X) * 0.70 - (wz - vent2Z) * 0.40)) < 0.22 && dNorm < 0.70
+
+                val isFissure = isNearVent1 || isNearVent2 || crack1 || crack2
+
+                val rockTopY = if (isFissure) {
+                    baseSurfY + 1
+                } else {
+                    baseSurfY + elevation
+                }
+
+                // 4. Construction verticale (ancrage sous-terrain jusqu'au sommet du pic rocheux)
+                for (wy in (baseSurfY - 6)..rockTopY) {
+                    val blockPos = BlockPos(wx, wy, wz)
+
+                    if (isExactVent1 && wy == baseSurfY + 1) {
+                        world.setBlock(blockPos, ModBlocks.CRYO_VENT.defaultBlockState(), PLACE_FLAG)
+                        for (airY in (wy + 1)..(baseSurfY + elevation + 4)) {
+                            world.setBlock(BlockPos(wx, airY, wz), AIR, PLACE_FLAG)
+                        }
+                        placedSurface = true
+                        continue
+                    }
+
+                    if (isExactVent2 && wy == baseSurfY + 1) {
+                        world.setBlock(blockPos, ModBlocks.CRYO_VENT.defaultBlockState(), PLACE_FLAG)
+                        for (airY in (wy + 1)..(baseSurfY + elevation + 4)) {
+                            world.setBlock(BlockPos(wx, airY, wz), AIR, PLACE_FLAG)
+                        }
+                        placedSurface = true
+                        continue
+                    }
+
+                    // Palette géologique pure (Gabbro, Shivering Shale, Flysch, Blue Ice, Packed Ice)
+                    val blockState = when {
+                        wy < baseSurfY - 2 -> GABBRO_STONE
+                        else -> {
+                            val strata = (wx * 0.7 + wy * 1.4 - wz * 0.6 + sin(wx * 0.3) * 3.0).toInt()
+                            val strataMod = Math.floorMod(strata, 16)
+                            when (strataMod) {
+                                in 0..3   -> GABBRO_STONE
+                                in 4..7   -> SHIVERING_SHALE
+                                in 8..10  -> BLUE_FROZEN_FLYSCH
+                                in 11..12 -> BLUE_ICE
+                                in 13..14 -> PACKED_ICE
+                                else      -> FROZEN_FLYSCH
+                            }
+                        }
+                    }
+
+                    world.setBlock(blockPos, blockState, PLACE_FLAG)
+                    placedSurface = true
+                }
+
+                // 5. Feuilles de glace givrées sur les aspérités supérieures
+                if (!isFissure) {
+                    val abovePos = BlockPos(wx, rockTopY + 1, wz)
+                    if (world.isEmptyBlock(abovePos)) {
+                        val frostTopNoise = hash2D(wx, wz, domeSeed xor 0x3333L)
+                        if (frostTopNoise > 0.70) {
+                            world.setBlock(abovePos, ModBlocks.ICE_SHEET.defaultBlockState(), PLACE_FLAG)
+                        }
+                    }
+                }
+            }
+        }
+
+        return placedSurface
     }
 
     // ── GOURS : CASCADES DE BASSINS RIMSTONE (CHAQUE BASSIN = PISCINE INDIVIDUELLE) ────────────────
