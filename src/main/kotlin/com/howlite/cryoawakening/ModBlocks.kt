@@ -401,6 +401,7 @@ object ModBlocks {
             output.accept(com.howlite.cryoawakening.item.ModItems.TELLUROBISMUTHITE_INGOT)
             output.accept(com.howlite.cryoawakening.item.ModItems.BISMUTH_DROSS)
             output.accept(com.howlite.cryoawakening.item.ModItems.DROSS_GLASS_LENS)
+            output.accept(com.howlite.cryoawakening.item.ModItems.KALEIDOSCOPE)
             output.accept(com.howlite.cryoawakening.item.ModItems.WRENCH)
             output.accept(FROZEN_FLYSCH_ITEM)
             output.accept(BLUE_FROZEN_FLYSCH_ITEM)

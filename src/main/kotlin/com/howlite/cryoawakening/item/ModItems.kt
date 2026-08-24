@@ -45,6 +45,9 @@ object ModItems {
     val DROSS_GLASS_LENS_KEY: ResourceKey<Item> = itemKey("dross_glass_lens")
     val DROSS_GLASS_LENS: Item = Item(Item.Properties().setId(DROSS_GLASS_LENS_KEY))
 
+    val KALEIDOSCOPE_KEY: ResourceKey<Item> = itemKey("kaleidoscope")
+    val KALEIDOSCOPE: Item = KaleidoscopeItem(Item.Properties().setId(KALEIDOSCOPE_KEY).stacksTo(1))
+
     val WRENCH_KEY: ResourceKey<Item> = itemKey("wrench")
     val WRENCH: Item = Item(Item.Properties().setId(WRENCH_KEY).stacksTo(1).durability(256))
 
@@ -216,6 +219,7 @@ object ModItems {
         Registry.register(BuiltInRegistries.ITEM, TELLUROBISMUTHITE_INGOT_KEY, TELLUROBISMUTHITE_INGOT)
         Registry.register(BuiltInRegistries.ITEM, BISMUTH_DROSS_KEY, BISMUTH_DROSS)
         Registry.register(BuiltInRegistries.ITEM, DROSS_GLASS_LENS_KEY, DROSS_GLASS_LENS)
+        Registry.register(BuiltInRegistries.ITEM, KALEIDOSCOPE_KEY, KALEIDOSCOPE)
         Registry.register(BuiltInRegistries.ITEM, WRENCH_KEY, WRENCH)
         Registry.register(BuiltInRegistries.ITEM, FOSSILIZED_LILAC_LEAF_KEY, FOSSILIZED_LILAC_LEAF)
         Registry.register(BuiltInRegistries.ITEM, GAWKER_FUR_KEY, GAWKER_FUR)
