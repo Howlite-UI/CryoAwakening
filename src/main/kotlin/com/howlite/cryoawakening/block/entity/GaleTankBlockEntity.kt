@@ -1,6 +1,7 @@
 package com.howlite.cryoawakening.block.entity
 
 import com.howlite.cryoawakening.ModBlocks
+import com.howlite.cryoawakening.ModParticleTypes
 import com.howlite.cryoawakening.block.GaleTankBlock
 import com.howlite.cryoawakening.energy.IWindHolder
 import com.howlite.cryoawakening.energy.WindStorage
@@ -11,6 +12,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.protocol.Packet
 import net.minecraft.network.protocol.game.ClientGamePacketListener
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket
+import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf
@@ -55,5 +57,44 @@ class GaleTankBlockEntity(pos: BlockPos, state: BlockState) :
         tag.putInt("wind_amount", storage.wind)
         tag.putInt("wind_capacity", storage.capacity)
         return tag
+    }
+
+    fun clientTick(level: Level, pos: BlockPos, state: BlockState) {
+        val storage = getWindStorage(null) ?: windStorage
+        val wind = storage.wind
+        val capacity = storage.capacity
+        if (wind <= 0 || capacity <= 0) return
+
+        val fillRatio = (wind.toFloat() / capacity.toFloat()).coerceIn(0.0f, 1.0f)
+        if (fillRatio < 0.01f) return
+
+        val cx = pos.x.toDouble() + 0.5
+        val cz = pos.z.toDouble() + 0.5
+        val baseY = pos.y.toDouble() + 0.35
+
+        // Cadence légère et épurée (1 particule tous les 3 à 5 ticks selon le remplissage)
+        val spawnChance = 0.12f + 0.30f * fillRatio
+        if (level.random.nextFloat() >= spawnChance) return
+
+        // Angle de départ de la spirale
+        val startAngle = level.random.nextDouble() * Math.PI * 2.0
+        val baseRadius = 0.12
+
+        val px = cx + kotlin.math.cos(startAngle) * baseRadius
+        val py = baseY
+        val pz = cz + kotlin.math.sin(startAngle) * baseRadius
+
+        // Vitesse angulaire proportionnelle au remplissage
+        val rotSpeed = 0.14 + 0.14 * fillRatio.toDouble()
+        val vx = -kotlin.math.sin(startAngle) * rotSpeed
+        val vy = 0.040 + 0.025 * fillRatio.toDouble()
+        val vz = kotlin.math.cos(startAngle) * rotSpeed
+
+        level.addParticle(
+            ModParticleTypes.STYLIZED_WIND,
+            true, true,
+            px, py, pz,
+            vx, vy, vz
+        )
     }
 }

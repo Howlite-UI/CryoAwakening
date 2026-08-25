@@ -19,6 +19,8 @@ import net.minecraft.world.level.block.EntityBlock
 import net.minecraft.world.level.block.Mirror
 import net.minecraft.world.level.block.Rotation
 import net.minecraft.world.level.block.entity.BlockEntity
+import net.minecraft.world.level.block.entity.BlockEntityTicker
+import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.block.state.StateDefinition
 import net.minecraft.world.level.block.state.properties.BlockStateProperties
@@ -45,6 +47,20 @@ class GaleTankBlock(properties: Properties) : Block(properties), EntityBlock {
 
     override fun newBlockEntity(pos: BlockPos, state: BlockState): BlockEntity =
         GaleTankBlockEntity(pos, state)
+
+    override fun <T : BlockEntity> getTicker(
+        level: Level,
+        state: BlockState,
+        blockEntityType: BlockEntityType<T>
+    ): BlockEntityTicker<T>? {
+        return if (level.isClientSide) {
+            BlockEntityTicker { lvl, pos, st, be ->
+                if (be is GaleTankBlockEntity && st.getValue(HALF) == DoubleBlockHalf.LOWER) {
+                    be.clientTick(lvl, pos, st)
+                }
+            }
+        } else null
+    }
 
     override fun getStateForPlacement(context: BlockPlaceContext): BlockState? {
         val pos = context.clickedPos

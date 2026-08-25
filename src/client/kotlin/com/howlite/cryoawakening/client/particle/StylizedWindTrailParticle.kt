@@ -1,5 +1,6 @@
 package com.howlite.cryoawakening.client.particle
 
+import com.howlite.cryoawakening.block.GaleTankBlock
 import net.fabricmc.fabric.api.client.particle.v1.FabricSpriteSet
 import net.minecraft.client.Camera
 import net.minecraft.client.multiplayer.ClientLevel
@@ -7,10 +8,12 @@ import net.minecraft.client.particle.Particle
 import net.minecraft.client.particle.ParticleProvider
 import net.minecraft.client.particle.SingleQuadParticle
 import net.minecraft.client.renderer.state.level.QuadParticleRenderState
+import net.minecraft.core.BlockPos
 import net.minecraft.core.particles.SimpleParticleType
 import net.minecraft.util.ARGB
 import net.minecraft.util.Mth
 import net.minecraft.util.RandomSource
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.Vec3
 import org.joml.Quaternionf
@@ -62,6 +65,11 @@ class StylizedWindTrailParticle(
     private var loopAngle: Float = 0f
     private var loopAxisX: Float = 1f
     private var loopAxisZ: Float = 0f
+
+    // État de spirale pour tornade en réservoir
+    private var tankAngle: Double = 0.0
+    private var tankAngularSpeed: Double = 0.52
+    private var isTankInitialized: Boolean = false
 
     init {
         xd = xSpeed
@@ -116,7 +124,57 @@ class StylizedWindTrailParticle(
             }
         }
 
-        if (!isLooping) {
+        val bpos = BlockPos.containing(x, y, z)
+        val bstate = level.getBlockState(bpos)
+        val isInsideTank = bstate.block is GaleTankBlock
+
+        if (isInsideTank) {
+            val tankCenterX = bpos.x.toDouble() + 0.5
+            val tankCenterZ = bpos.z.toDouble() + 0.5
+
+            if (!isTankInitialized) {
+                isTankInitialized = true
+                tankAngle = atan2(z - tankCenterZ, x - tankCenterX)
+                tankAngularSpeed = (kotlin.math.sqrt(xd * xd + zd * zd) * 3.5).coerceIn(0.42, 0.85)
+            }
+
+            val half = bstate.getValue(GaleTankBlock.HALF)
+            val lowerY = if (half == DoubleBlockHalf.UPPER) (bpos.y - 1).toDouble() else bpos.y.toDouble()
+            val relativeY = (y - (lowerY + 0.30)).coerceAtLeast(0.0)
+
+            // Progression le long du réservoir (0.0 en bas -> 1.0 au sommet)
+            val progress = (relativeY / 1.40).coerceIn(0.0, 1.0)
+
+            // Évasement hélicoïdal en entonnoir (rayon 0.12 en bas -> 0.30 en haut)
+            val radius = 0.12 + 0.18 * progress
+
+            // Incrémentation de l'angle pour enrouler la spirale en 3D
+            tankAngle += tankAngularSpeed
+
+            val targetX = tankCenterX + cos(tankAngle) * radius
+            val targetZ = tankCenterZ + sin(tankAngle) * radius
+
+            xd = targetX - x
+            zd = targetZ - z
+            yd = yd.coerceIn(0.040, 0.075)
+
+            x = targetX
+            y += yd
+            z = targetZ
+
+            pushNode(x, y, z, xo, yo, zo)
+
+            if (age > 28 || relativeY > 1.55) {
+                remove()
+                return
+            }
+
+            val lifeRatio = age.toFloat() / 28f
+            if (lifeRatio > 0.70f) {
+                setAlpha(Mth.lerp((lifeRatio - 0.70f) / 0.30f, 0.95f, 0.0f))
+            }
+            return
+        } else if (!isLooping) {
             // Poussée continue radiale vers l'extérieur pour former l’entonnoir en V
             val funnelPush = 0.0032
             xd += cos(funnelAngle.toDouble()) * funnelPush
