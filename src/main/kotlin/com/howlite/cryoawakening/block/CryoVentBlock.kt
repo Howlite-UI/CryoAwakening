@@ -1,8 +1,12 @@
 package com.howlite.cryoawakening.block
 
 import com.howlite.cryoawakening.block.entity.CryoVentBlockEntity
+import com.howlite.cryoawakening.item.WrenchItem
 import net.minecraft.core.BlockPos
+import net.minecraft.network.chat.Component
 import net.minecraft.util.RandomSource
+import net.minecraft.world.InteractionResult
+import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.EntityBlock
@@ -10,6 +14,7 @@ import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.entity.BlockEntityTicker
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
+import net.minecraft.world.phys.BlockHitResult
 
 class CryoVentBlock(properties: Properties) : Block(properties), EntityBlock {
 
@@ -28,7 +33,13 @@ class CryoVentBlock(properties: Properties) : Block(properties), EntityBlock {
                     CryoVentBlockEntity.clientTick(l, p, s, be)
                 }
             }
-        } else null
+        } else {
+            BlockEntityTicker<T> { l, p, s, be ->
+                if (be is CryoVentBlockEntity) {
+                    CryoVentBlockEntity.serverTick(l, p, s, be)
+                }
+            }
+        }
     }
 
     override fun animateTick(
@@ -37,7 +48,6 @@ class CryoVentBlock(properties: Properties) : Block(properties), EntityBlock {
         pos: BlockPos,
         random: RandomSource
     ) {
-        // L'émission des particules est gérée exclusivement par CryoVentBlockEntity.clientTick
-        // afin de garantir un nombre de particules très épuré et lisible à toutes les distances.
+        // Géré par CryoVentBlockEntity.clientTick
     }
 }

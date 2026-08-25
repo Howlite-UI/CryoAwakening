@@ -49,7 +49,10 @@ object ModItems {
     val KALEIDOSCOPE: Item = KaleidoscopeItem(Item.Properties().setId(KALEIDOSCOPE_KEY).stacksTo(1))
 
     val WRENCH_KEY: ResourceKey<Item> = itemKey("wrench")
-    val WRENCH: Item = Item(Item.Properties().setId(WRENCH_KEY).stacksTo(1).durability(256))
+    val WRENCH: Item = WrenchItem(Item.Properties().setId(WRENCH_KEY).stacksTo(1).durability(256))
+
+    val GALE_MONOCLE_KEY: ResourceKey<Item> = itemKey("gale_monocle")
+    val GALE_MONOCLE: Item = GaleMonocleItem(Item.Properties().setId(GALE_MONOCLE_KEY).stacksTo(1))
 
     val FOSSILIZED_LILAC_LEAF_KEY: ResourceKey<Item> = itemKey("fossilized_lilac_leaf")
     val FOSSILIZED_LILAC_LEAF: Item = Item(Item.Properties().setId(FOSSILIZED_LILAC_LEAF_KEY))
@@ -221,6 +224,7 @@ object ModItems {
         Registry.register(BuiltInRegistries.ITEM, DROSS_GLASS_LENS_KEY, DROSS_GLASS_LENS)
         Registry.register(BuiltInRegistries.ITEM, KALEIDOSCOPE_KEY, KALEIDOSCOPE)
         Registry.register(BuiltInRegistries.ITEM, WRENCH_KEY, WRENCH)
+        Registry.register(BuiltInRegistries.ITEM, GALE_MONOCLE_KEY, GALE_MONOCLE)
         Registry.register(BuiltInRegistries.ITEM, FOSSILIZED_LILAC_LEAF_KEY, FOSSILIZED_LILAC_LEAF)
         Registry.register(BuiltInRegistries.ITEM, GAWKER_FUR_KEY, GAWKER_FUR)
         Registry.register(BuiltInRegistries.ITEM, GAWK_BOMB_KEY, GAWK_BOMB)

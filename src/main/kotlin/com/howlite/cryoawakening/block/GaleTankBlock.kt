@@ -1,8 +1,11 @@
 package com.howlite.cryoawakening.block
 
+import com.howlite.cryoawakening.block.entity.GaleTankBlockEntity
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
+import net.minecraft.network.chat.Component
 import net.minecraft.util.RandomSource
+import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
@@ -12,14 +15,17 @@ import net.minecraft.world.level.LevelReader
 import net.minecraft.world.level.ScheduledTickAccess
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.Blocks
+import net.minecraft.world.level.block.EntityBlock
 import net.minecraft.world.level.block.Mirror
 import net.minecraft.world.level.block.Rotation
+import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.block.state.StateDefinition
 import net.minecraft.world.level.block.state.properties.BlockStateProperties
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf
 import net.minecraft.world.level.block.state.properties.EnumProperty
 import net.minecraft.world.level.material.Fluids
+import net.minecraft.world.phys.BlockHitResult
 
 /**
  * GaleTankBlock
@@ -27,7 +33,7 @@ import net.minecraft.world.level.material.Fluids
  * Réservoir de bourrasque double-bloc (2 blocs de haut, comme une porte ou une haute plante).
  * Partie basse (half=lower) et partie haute (half=upper).
  */
-class GaleTankBlock(properties: Properties) : Block(properties) {
+class GaleTankBlock(properties: Properties) : Block(properties), EntityBlock {
 
     init {
         registerDefaultState(
@@ -36,6 +42,9 @@ class GaleTankBlock(properties: Properties) : Block(properties) {
                 .setValue(HALF, DoubleBlockHalf.LOWER)
         )
     }
+
+    override fun newBlockEntity(pos: BlockPos, state: BlockState): BlockEntity =
+        GaleTankBlockEntity(pos, state)
 
     override fun getStateForPlacement(context: BlockPlaceContext): BlockState? {
         val pos = context.clickedPos

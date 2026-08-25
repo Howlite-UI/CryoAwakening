@@ -1,87 +1,115 @@
 {
-  "variants": {
-    "shape=north_south": {
-      "model": "cryo-awakening:block/gale_pipe_straight"
+  "multipart": [
+    {
+      "apply": {
+        "model": "cryo-awakening:block/gale_pipe_core"
+      }
     },
-    "shape=east_west": {
-      "model": "cryo-awakening:block/gale_pipe_straight",
-      "y": 90
+    {
+      "when": {
+        "north": "normal"
+      },
+      "apply": {
+        "model": "cryo-awakening:block/gale_pipe_arm"
+      }
     },
-    "shape=up_down": {
-      "model": "cryo-awakening:block/gale_pipe_straight",
-      "x": 90
+    {
+      "when": {
+        "north": "extract"
+      },
+      "apply": {
+        "model": "cryo-awakening:block/gale_pipe_out"
+      }
     },
-    "shape=down_north": {
-      "model": "cryo-awakening:block/gale_pipe_elbow"
+    {
+      "when": {
+        "south": "normal"
+      },
+      "apply": {
+        "model": "cryo-awakening:block/gale_pipe_arm",
+        "y": 180
+      }
     },
-    "shape=down_east": {
-      "model": "cryo-awakening:block/gale_pipe_elbow",
-      "y": 90
+    {
+      "when": {
+        "south": "extract"
+      },
+      "apply": {
+        "model": "cryo-awakening:block/gale_pipe_out",
+        "y": 180
+      }
     },
-    "shape=down_south": {
-      "model": "cryo-awakening:block/gale_pipe_elbow",
-      "y": 180
+    {
+      "when": {
+        "east": "normal"
+      },
+      "apply": {
+        "model": "cryo-awakening:block/gale_pipe_arm",
+        "y": 90
+      }
     },
-    "shape=down_west": {
-      "model": "cryo-awakening:block/gale_pipe_elbow",
-      "y": 270
+    {
+      "when": {
+        "east": "extract"
+      },
+      "apply": {
+        "model": "cryo-awakening:block/gale_pipe_out",
+        "y": 90
+      }
     },
-    "shape=up_south": {
-      "model": "cryo-awakening:block/gale_pipe_elbow",
-      "x": 180
+    {
+      "when": {
+        "west": "normal"
+      },
+      "apply": {
+        "model": "cryo-awakening:block/gale_pipe_arm",
+        "y": 270
+      }
     },
-    "shape=up_west": {
-      "model": "cryo-awakening:block/gale_pipe_elbow",
-      "x": 180,
-      "y": 90
+    {
+      "when": {
+        "west": "extract"
+      },
+      "apply": {
+        "model": "cryo-awakening:block/gale_pipe_out",
+        "y": 270
+      }
     },
-    "shape=up_north": {
-      "model": "cryo-awakening:block/gale_pipe_elbow",
-      "x": 180,
-      "y": 180
+    {
+      "when": {
+        "up": "normal"
+      },
+      "apply": {
+        "model": "cryo-awakening:block/gale_pipe_arm",
+        "x": 270
+      }
     },
-    "shape=up_east": {
-      "model": "cryo-awakening:block/gale_pipe_elbow",
-      "x": 180,
-      "y": 270
+    {
+      "when": {
+        "up": "extract"
+      },
+      "apply": {
+        "model": "cryo-awakening:block/gale_pipe_out",
+        "x": 270
+      }
     },
-    "shape=north_east": {
-      "model": "cryo-awakening:block/gale_pipe_elbow_horizontal"
+    {
+      "when": {
+        "down": "normal"
+      },
+      "apply": {
+        "model": "cryo-awakening:block/gale_pipe_arm",
+        "x": 90
+      }
     },
-    "shape=south_east": {
-      "model": "cryo-awakening:block/gale_pipe_elbow_horizontal",
-      "y": 90
-    },
-    "shape=south_west": {
-      "model": "cryo-awakening:block/gale_pipe_elbow_horizontal",
-      "y": 180
-    },
-    "shape=north_west": {
-      "model": "cryo-awakening:block/gale_pipe_elbow_horizontal",
-      "y": 270
-    },
-    "shape=end_north": {
-      "model": "cryo-awakening:block/gale_pipe_end"
-    },
-    "shape=end_east": {
-      "model": "cryo-awakening:block/gale_pipe_end",
-      "y": 90
-    },
-    "shape=end_south": {
-      "model": "cryo-awakening:block/gale_pipe_end",
-      "y": 180
-    },
-    "shape=end_west": {
-      "model": "cryo-awakening:block/gale_pipe_end",
-      "y": 270
-    },
-    "shape=end_down": {
-      "model": "cryo-awakening:block/gale_pipe_end",
-      "x": 90
-    },
-    "shape=end_up": {
-      "model": "cryo-awakening:block/gale_pipe_end",
-      "x": 270
+    {
+      "when": {
+        "down": "extract"
+      },
+      "apply": {
+        "model": "cryo-awakening:block/gale_pipe_out",
+        "x": 90
+      }
     }
-  }
+  ]
 }

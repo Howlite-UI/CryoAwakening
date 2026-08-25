@@ -80,6 +80,13 @@ object CryoAwakeningClient : ClientModInitializer {
 			com.howlite.cryoawakening.client.render.gui.KaleidoscopeHudElement
 		)
 
+		// Enregistrement du HUD d'information du Monocle de Bourrasque
+		net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry.attachElementAfter(
+			CryoAwakening.id("kaleidoscope_overlay"),
+			CryoAwakening.id("monocle_data_hud"),
+			com.howlite.cryoawakening.client.render.gui.MonocleDataHudElement
+		)
+
 		// Enregistrement des renderers d'armures GeckoLib
 		GeoArmorItem.registerRenderProvider(
 			ModItems.FOSSILIZED_HELMET,

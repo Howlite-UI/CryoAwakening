@@ -14,6 +14,8 @@ import com.howlite.cryoawakening.block.PetrifiedLilacLeavesBlock
 import com.howlite.cryoawakening.block.ModTrapDoorBlock
 import com.howlite.cryoawakening.block.entity.CryoTombBlockEntity
 import com.howlite.cryoawakening.block.entity.CryoVentBlockEntity
+import com.howlite.cryoawakening.block.entity.GalePipeBlockEntity
+import com.howlite.cryoawakening.block.entity.GaleTankBlockEntity
 import com.howlite.cryoawakening.block.entity.LumeshStemBlockEntity
 import com.howlite.cryoawakening.block.entity.PetrifiedLilacLeavesBlockEntity
 import net.fabricmc.fabric.api.`object`.builder.v1.block.entity.FabricBlockEntityTypeBuilder
@@ -92,6 +94,9 @@ object ModBlocks {
     )
     val GALE_TANK_ITEM: Item = BlockItem(GALE_TANK, Item.Properties().setId(GALE_TANK_ITEM_KEY))
 
+    val GALE_TANK_BLOCK_ENTITY_TYPE: BlockEntityType<GaleTankBlockEntity> =
+        FabricBlockEntityTypeBuilder.create(::GaleTankBlockEntity, GALE_TANK).build()
+
     val GALE_PIPE_KEY: ResourceKey<Block> = blockKey("gale_pipe")
     val GALE_PIPE_ITEM_KEY: ResourceKey<Item> = itemKey("gale_pipe")
     val GALE_PIPE: Block = GalePipeBlock(
@@ -103,6 +108,9 @@ object ModBlocks {
             .noOcclusion()
     )
     val GALE_PIPE_ITEM: Item = BlockItem(GALE_PIPE, Item.Properties().setId(GALE_PIPE_ITEM_KEY))
+
+    val GALE_PIPE_BLOCK_ENTITY_TYPE: BlockEntityType<GalePipeBlockEntity> =
+        FabricBlockEntityTypeBuilder.create(::GalePipeBlockEntity, GALE_PIPE).build()
 
     val BISMUTH_ORE_SHIVERING_SHALE_KEY: ResourceKey<Block> = blockKey("bismuth_ore_shivering_shale")
     val BISMUTH_ORE_SHIVERING_SHALE_ITEM_KEY: ResourceKey<Item> = itemKey("bismuth_ore_shivering_shale")
@@ -431,6 +439,7 @@ object ModBlocks {
             output.accept(com.howlite.cryoawakening.item.ModItems.DROSS_GLASS_LENS)
             output.accept(com.howlite.cryoawakening.item.ModItems.KALEIDOSCOPE)
             output.accept(com.howlite.cryoawakening.item.ModItems.WRENCH)
+            output.accept(com.howlite.cryoawakening.item.ModItems.GALE_MONOCLE)
             output.accept(FROZEN_FLYSCH_ITEM)
             output.accept(BLUE_FROZEN_FLYSCH_ITEM)
             output.accept(SHIVERING_SHALE_STONE_ITEM)
@@ -621,6 +630,16 @@ object ModBlocks {
             BuiltInRegistries.BLOCK_ENTITY_TYPE,
             CryoAwakening.id("petrified_lilac_leaves"),
             PETRIFIED_LILAC_LEAVES_BLOCK_ENTITY_TYPE
+        )
+        Registry.register(
+            BuiltInRegistries.BLOCK_ENTITY_TYPE,
+            CryoAwakening.id("gale_tank"),
+            GALE_TANK_BLOCK_ENTITY_TYPE
+        )
+        Registry.register(
+            BuiltInRegistries.BLOCK_ENTITY_TYPE,
+            CryoAwakening.id("gale_pipe"),
+            GALE_PIPE_BLOCK_ENTITY_TYPE
         )
 
         // Onglet Créatif Mod

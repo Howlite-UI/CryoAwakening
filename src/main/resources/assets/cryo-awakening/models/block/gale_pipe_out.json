@@ -1,0 +1,133 @@
+{
+  "credit": "Made for Cryo Awakening",
+  "ambientocclusion": true,
+  "textures": {
+    "pipe": "cryo-awakening:block/gale_pipe/gale_pipe",
+    "pipe_side": "cryo-awakening:block/gale_pipe/gale_pipe_side",
+    "output": "cryo-awakening:block/gale_pipe/gale_pipe_output",
+    "bot_side": "cryo-awakening:block/gale_pipe/gale_pipe_bot_side_output",
+    "particle": "cryo-awakening:block/gale_pipe/gale_pipe"
+  },
+  "elements": [
+    {
+      "name": "arm_stem",
+      "from": [
+        4,
+        4,
+        2
+      ],
+      "to": [
+        12,
+        12,
+        4
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            4,
+            2,
+            12,
+            4
+          ],
+          "texture": "#pipe"
+        },
+        "down": {
+          "uv": [
+            4,
+            2,
+            12,
+            4
+          ],
+          "texture": "#pipe"
+        },
+        "east": {
+          "uv": [
+            2,
+            4,
+            4,
+            12
+          ],
+          "texture": "#pipe_side"
+        },
+        "west": {
+          "uv": [
+            2,
+            4,
+            4,
+            12
+          ],
+          "texture": "#pipe_side"
+        }
+      }
+    },
+    {
+      "name": "extraction_flange",
+      "from": [
+        3,
+        3,
+        0
+      ],
+      "to": [
+        13,
+        13,
+        2
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ],
+          "texture": "#output"
+        },
+        "south": {
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ],
+          "texture": "#output"
+        },
+        "up": {
+          "uv": [
+            3,
+            14,
+            13,
+            16
+          ],
+          "texture": "#bot_side"
+        },
+        "down": {
+          "uv": [
+            3,
+            14,
+            13,
+            16
+          ],
+          "texture": "#bot_side"
+        },
+        "east": {
+          "uv": [
+            3,
+            14,
+            13,
+            16
+          ],
+          "texture": "#bot_side"
+        },
+        "west": {
+          "uv": [
+            3,
+            14,
+            13,
+            16
+          ],
+          "texture": "#bot_side"
+        }
+      }
+    }
+  ]
+}
