@@ -2,6 +2,8 @@ package com.howlite.cryoawakening
 
 import com.howlite.cryoawakening.block.CryoTombBlock
 import com.howlite.cryoawakening.block.CryoVentBlock
+import com.howlite.cryoawakening.block.GalePipeBlock
+import com.howlite.cryoawakening.block.GaleTankBlock
 import com.howlite.cryoawakening.block.ModBushBlock
 import com.howlite.cryoawakening.block.ModButtonBlock
 import com.howlite.cryoawakening.block.ModDoorBlock
@@ -77,6 +79,30 @@ object ModBlocks {
 
     val CRYO_TOMB_BLOCK_ENTITY_TYPE: BlockEntityType<CryoTombBlockEntity> =
         FabricBlockEntityTypeBuilder.create(::CryoTombBlockEntity, CRYO_TOMB).build()
+
+    val GALE_TANK_KEY: ResourceKey<Block> = blockKey("gale_tank")
+    val GALE_TANK_ITEM_KEY: ResourceKey<Item> = itemKey("gale_tank")
+    val GALE_TANK: Block = GaleTankBlock(
+        BlockBehaviour.Properties.of()
+            .setId(GALE_TANK_KEY)
+            .strength(3.0f, 6.0f)
+            .sound(SoundType.METAL)
+            .requiresCorrectToolForDrops()
+            .noOcclusion()
+    )
+    val GALE_TANK_ITEM: Item = BlockItem(GALE_TANK, Item.Properties().setId(GALE_TANK_ITEM_KEY))
+
+    val GALE_PIPE_KEY: ResourceKey<Block> = blockKey("gale_pipe")
+    val GALE_PIPE_ITEM_KEY: ResourceKey<Item> = itemKey("gale_pipe")
+    val GALE_PIPE: Block = GalePipeBlock(
+        BlockBehaviour.Properties.of()
+            .setId(GALE_PIPE_KEY)
+            .strength(2.0f, 6.0f)
+            .sound(SoundType.METAL)
+            .requiresCorrectToolForDrops()
+            .noOcclusion()
+    )
+    val GALE_PIPE_ITEM: Item = BlockItem(GALE_PIPE, Item.Properties().setId(GALE_PIPE_ITEM_KEY))
 
     val BISMUTH_ORE_SHIVERING_SHALE_KEY: ResourceKey<Block> = blockKey("bismuth_ore_shivering_shale")
     val BISMUTH_ORE_SHIVERING_SHALE_ITEM_KEY: ResourceKey<Item> = itemKey("bismuth_ore_shivering_shale")
@@ -394,6 +420,8 @@ object ModBlocks {
             // Mécanismes & Glaces
             output.accept(CRYO_VENT_ITEM)
             output.accept(CRYO_TOMB_ITEM)
+            output.accept(GALE_TANK_ITEM)
+            output.accept(GALE_PIPE_ITEM)
             output.accept(BISMUTH_ORE_SHIVERING_SHALE_ITEM)
             output.accept(TELLURIUM_ORE_ITEM)
             output.accept(com.howlite.cryoawakening.item.ModItems.RAW_BISMUTH)
@@ -507,6 +535,8 @@ object ModBlocks {
         // Enregistrement des blocs et items de base
         registerBlock(CRYO_VENT_KEY, CRYO_VENT, CRYO_VENT_ITEM_KEY, CRYO_VENT_ITEM)
         registerBlock(CRYO_TOMB_KEY, CRYO_TOMB, CRYO_TOMB_ITEM_KEY, CRYO_TOMB_ITEM)
+        registerBlock(GALE_TANK_KEY, GALE_TANK, GALE_TANK_ITEM_KEY, GALE_TANK_ITEM)
+        registerBlock(GALE_PIPE_KEY, GALE_PIPE, GALE_PIPE_ITEM_KEY, GALE_PIPE_ITEM)
         registerBlock(BISMUTH_ORE_SHIVERING_SHALE_KEY, BISMUTH_ORE_SHIVERING_SHALE, BISMUTH_ORE_SHIVERING_SHALE_ITEM_KEY, BISMUTH_ORE_SHIVERING_SHALE_ITEM)
         registerBlock(TELLURIUM_ORE_KEY, TELLURIUM_ORE, TELLURIUM_ORE_ITEM_KEY, TELLURIUM_ORE_ITEM)
         registerBlock(FROZEN_FLYSCH_KEY, FROZEN_FLYSCH, FROZEN_FLYSCH_ITEM_KEY, FROZEN_FLYSCH_ITEM)

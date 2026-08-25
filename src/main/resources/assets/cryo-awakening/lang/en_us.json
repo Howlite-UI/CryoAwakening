@@ -145,5 +145,7 @@
   "item.cryo-awakening.wrench": "Wrench",
   "item.cryo-awakening.bismuth_dross": "Bismuth Dross",
   "item.cryo-awakening.dross_glass_lens": "Dross Glass Lens",
-  "item.cryo-awakening.kaleidoscope": "Kaleidoscope"
+  "item.cryo-awakening.kaleidoscope": "Kaleidoscope",
+  "block.cryo-awakening.gale_tank": "Gale Tank",
+  "block.cryo-awakening.gale_pipe": "Gale Pipe"
 }

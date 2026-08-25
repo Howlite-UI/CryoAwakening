@@ -1,0 +1,81 @@
+{
+  "credit": "Made for Cryo Awakening",
+  "ambientocclusion": true,
+  "textures": {
+    "pipe": "cryo-awakening:block/gale_pipe/gale_pipe",
+    "pipe_side": "cryo-awakening:block/gale_pipe/gale_pipe_side",
+    "inside": "cryo-awakening:block/gale_pipe/gale_pipe_inside",
+    "particle": "cryo-awakening:block/gale_pipe/gale_pipe"
+  },
+  "elements": [
+    {
+      "name": "body",
+      "from": [
+        4,
+        4,
+        0
+      ],
+      "to": [
+        12,
+        12,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ],
+          "texture": "#inside"
+        },
+        "south": {
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ],
+          "texture": "#inside"
+        },
+        "up": {
+          "uv": [
+            4,
+            0,
+            12,
+            16
+          ],
+          "texture": "#pipe"
+        },
+        "down": {
+          "uv": [
+            4,
+            0,
+            12,
+            16
+          ],
+          "texture": "#pipe"
+        },
+        "east": {
+          "uv": [
+            0,
+            4,
+            16,
+            12
+          ],
+          "texture": "#pipe_side"
+        },
+        "west": {
+          "uv": [
+            0,
+            4,
+            16,
+            12
+          ],
+          "texture": "#pipe_side"
+        }
+      }
+    }
+  ]
+}

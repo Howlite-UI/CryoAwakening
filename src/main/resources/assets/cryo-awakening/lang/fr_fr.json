@@ -145,5 +145,7 @@
   "item.cryo-awakening.wrench": "Clé à Molette",
   "item.cryo-awakening.bismuth_dross": "Scorie de Bismuth",
   "item.cryo-awakening.dross_glass_lens": "Lentille en Verre de Scorie",
-  "item.cryo-awakening.kaleidoscope": "Kaléidoscope"
+  "item.cryo-awakening.kaleidoscope": "Kaléidoscope",
+  "block.cryo-awakening.gale_tank": "Réservoir de Bourrasque",
+  "block.cryo-awakening.gale_pipe": "Tuyau de Bourrasque"
 }

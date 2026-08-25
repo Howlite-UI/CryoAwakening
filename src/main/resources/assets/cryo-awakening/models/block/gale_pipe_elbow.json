@@ -1,0 +1,37 @@
+{
+	"format_version": "1.21.11",
+	"credit": "Made for Cryo Awakening",
+	"textures": {
+		"particle": "cryo-awakening:block/gale_pipe/gale_pipe",
+		"pipe": "cryo-awakening:block/gale_pipe/gale_pipe",
+		"elbow": "cryo-awakening:block/gale_pipe/gale_pipe_elbow",
+		"inside": "cryo-awakening:block/gale_pipe/gale_pipe_inside"
+	},
+	"elements": [
+		{
+			"name": "horizontal_arm",
+			"from": [4, 4, 0],
+			"to": [12, 12, 12],
+			"faces": {
+				"north": {"uv": [4, 4, 12, 12], "texture": "#inside"},
+				"east": {"uv": [4, 4, 12, 16], "rotation": 270, "texture": "#elbow"},
+				"south": {"uv": [4, 4, 12, 12], "texture": "#pipe"},
+				"west": {"uv": [0, 4, 12, 12], "texture": "#elbow"},
+				"up": {"uv": [4, 0, 12, 12], "texture": "#pipe"},
+				"down": {"uv": [4, 0, 12, 4], "texture": "#pipe"}
+			}
+		},
+		{
+			"name": "vertical_arm",
+			"from": [4, 0, 4],
+			"to": [12, 4, 12],
+			"faces": {
+				"north": {"uv": [4, 12, 12, 16], "texture": "#pipe"},
+				"east": {"uv": [4, 12, 12, 16], "texture": "#elbow"},
+				"south": {"uv": [4, 12, 12, 16], "texture": "#pipe"},
+				"west": {"uv": [4, 12, 12, 16], "texture": "#elbow"},
+				"down": {"uv": [4, 4, 12, 12], "texture": "#inside"}
+			}
+		}
+	]
+}

@@ -1,0 +1,39 @@
+{
+	"format_version": "1.21.11",
+	"credit": "Made for Cryo Awakening",
+	"textures": {
+		"particle": "cryo-awakening:block/gale_pipe/gale_pipe",
+		"pipe": "cryo-awakening:block/gale_pipe/gale_pipe",
+		"pipe_side": "cryo-awakening:block/gale_pipe/gale_pipe_side",
+		"inside": "cryo-awakening:block/gale_pipe/gale_pipe_inside",
+		"output": "cryo-awakening:block/gale_pipe/gale_pipe_output",
+		"bot_side": "cryo-awakening:block/gale_pipe/gale_pipe_bot_side_output"
+	},
+	"elements": [
+		{
+			"name": "arm",
+			"from": [4, 4, 0],
+			"to": [12, 12, 8],
+			"faces": {
+				"north": {"uv": [4, 4, 12, 12], "texture": "#inside"},
+				"east": {"uv": [0, 4, 8, 12], "texture": "#pipe_side"},
+				"west": {"uv": [0, 4, 8, 12], "texture": "#pipe_side"},
+				"up": {"uv": [4, 0, 12, 8], "texture": "#pipe"},
+				"down": {"uv": [4, 0, 12, 8], "texture": "#pipe"}
+			}
+		},
+		{
+			"name": "flange_cap",
+			"from": [3, 3, 7],
+			"to": [13, 13, 9],
+			"faces": {
+				"north": {"uv": [3, 3, 13, 13], "texture": "#output"},
+				"east": {"uv": [3, 14, 13, 16], "rotation": 90, "texture": "#bot_side"},
+				"south": {"uv": [3, 3, 13, 13], "texture": "#output"},
+				"west": {"uv": [3, 14, 13, 16], "rotation": 270, "texture": "#bot_side"},
+				"up": {"uv": [3, 14, 13, 16], "texture": "#bot_side"},
+				"down": {"uv": [3, 14, 13, 16], "texture": "#bot_side"}
+			}
+		}
+	]
+}

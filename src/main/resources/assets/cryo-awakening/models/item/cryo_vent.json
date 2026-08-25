@@ -1,6 +1,3 @@
 {
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "cryo-awakening:block/cryo_vent"
-  }
+  "parent": "cryo-awakening:block/cryo_vent"
 }
