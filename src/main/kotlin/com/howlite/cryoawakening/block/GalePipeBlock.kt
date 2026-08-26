@@ -177,6 +177,7 @@ class GalePipeBlock(properties: Properties) : Block(properties), SimpleWaterlogg
         if (state.`is`(ModBlocks.GALE_TANK)) return true
         if (state.`is`(ModBlocks.CRYO_VENT)) return true
         if (state.`is`(ModBlocks.GALE_BELLOWS)) return true
+        if (state.`is`(ModBlocks.BREEZE_FOUNDRY)) return true
         return false
     }
 

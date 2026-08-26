@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "cryo-awakening:block/breeze_foundry_front",
+    "up": "cryo-awakening:block/breeze_foundry_top",
+    "down": "cryo-awakening:block/breeze_foundry_top",
+    "north": "cryo-awakening:block/breeze_foundry_front",
+    "south": "cryo-awakening:block/breeze_foundry_back",
+    "east": "cryo-awakening:block/breeze_foundry_side",
+    "west": "cryo-awakening:block/breeze_foundry_side"
+  }
+}

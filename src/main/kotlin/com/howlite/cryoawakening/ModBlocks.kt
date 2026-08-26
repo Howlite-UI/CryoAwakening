@@ -1,5 +1,6 @@
 package com.howlite.cryoawakening
 
+import com.howlite.cryoawakening.block.BreezeFoundryBlock
 import com.howlite.cryoawakening.block.CryoTombBlock
 import com.howlite.cryoawakening.block.CryoVentBlock
 import com.howlite.cryoawakening.block.GaleBellowsBlock
@@ -13,6 +14,7 @@ import com.howlite.cryoawakening.block.ModStairBlock
 import com.howlite.cryoawakening.block.LumeshStemBlock
 import com.howlite.cryoawakening.block.PetrifiedLilacLeavesBlock
 import com.howlite.cryoawakening.block.ModTrapDoorBlock
+import com.howlite.cryoawakening.block.entity.BreezeFoundryBlockEntity
 import com.howlite.cryoawakening.block.entity.CryoTombBlockEntity
 import com.howlite.cryoawakening.block.entity.CryoVentBlockEntity
 import com.howlite.cryoawakening.block.entity.GaleBellowsBlockEntity
@@ -127,6 +129,20 @@ object ModBlocks {
 
     val GALE_BELLOWS_BLOCK_ENTITY_TYPE: BlockEntityType<GaleBellowsBlockEntity> =
         FabricBlockEntityTypeBuilder.create(::GaleBellowsBlockEntity, GALE_BELLOWS).build()
+
+    val BREEZE_FOUNDRY_KEY: ResourceKey<Block> = blockKey("breeze_foundry")
+    val BREEZE_FOUNDRY_ITEM_KEY: ResourceKey<Item> = itemKey("breeze_foundry")
+    val BREEZE_FOUNDRY: Block = BreezeFoundryBlock(
+        BlockBehaviour.Properties.of()
+            .setId(BREEZE_FOUNDRY_KEY)
+            .strength(3.5f, 6.0f)
+            .sound(SoundType.METAL)
+            .requiresCorrectToolForDrops()
+    )
+    val BREEZE_FOUNDRY_ITEM: Item = BlockItem(BREEZE_FOUNDRY, Item.Properties().setId(BREEZE_FOUNDRY_ITEM_KEY))
+
+    val BREEZE_FOUNDRY_BLOCK_ENTITY_TYPE: BlockEntityType<BreezeFoundryBlockEntity> =
+        FabricBlockEntityTypeBuilder.create(::BreezeFoundryBlockEntity, BREEZE_FOUNDRY).build()
 
     val BISMUTH_ORE_SHIVERING_SHALE_KEY: ResourceKey<Block> = blockKey("bismuth_ore_shivering_shale")
     val BISMUTH_ORE_SHIVERING_SHALE_ITEM_KEY: ResourceKey<Item> = itemKey("bismuth_ore_shivering_shale")
@@ -447,6 +463,7 @@ object ModBlocks {
             output.accept(GALE_TANK_ITEM)
             output.accept(GALE_PIPE_ITEM)
             output.accept(GALE_BELLOWS_ITEM)
+            output.accept(BREEZE_FOUNDRY_ITEM)
             output.accept(BISMUTH_ORE_SHIVERING_SHALE_ITEM)
             output.accept(TELLURIUM_ORE_ITEM)
             output.accept(com.howlite.cryoawakening.item.ModItems.RAW_BISMUTH)
@@ -564,6 +581,7 @@ object ModBlocks {
         registerBlock(GALE_TANK_KEY, GALE_TANK, GALE_TANK_ITEM_KEY, GALE_TANK_ITEM)
         registerBlock(GALE_PIPE_KEY, GALE_PIPE, GALE_PIPE_ITEM_KEY, GALE_PIPE_ITEM)
         registerBlock(GALE_BELLOWS_KEY, GALE_BELLOWS, GALE_BELLOWS_ITEM_KEY, GALE_BELLOWS_ITEM)
+        registerBlock(BREEZE_FOUNDRY_KEY, BREEZE_FOUNDRY, BREEZE_FOUNDRY_ITEM_KEY, BREEZE_FOUNDRY_ITEM)
         registerBlock(BISMUTH_ORE_SHIVERING_SHALE_KEY, BISMUTH_ORE_SHIVERING_SHALE, BISMUTH_ORE_SHIVERING_SHALE_ITEM_KEY, BISMUTH_ORE_SHIVERING_SHALE_ITEM)
         registerBlock(TELLURIUM_ORE_KEY, TELLURIUM_ORE, TELLURIUM_ORE_ITEM_KEY, TELLURIUM_ORE_ITEM)
         registerBlock(FROZEN_FLYSCH_KEY, FROZEN_FLYSCH, FROZEN_FLYSCH_ITEM_KEY, FROZEN_FLYSCH_ITEM)
@@ -664,6 +682,14 @@ object ModBlocks {
             CryoAwakening.id("gale_bellows"),
             GALE_BELLOWS_BLOCK_ENTITY_TYPE
         )
+        Registry.register(
+            BuiltInRegistries.BLOCK_ENTITY_TYPE,
+            CryoAwakening.id("breeze_foundry"),
+            BREEZE_FOUNDRY_BLOCK_ENTITY_TYPE
+        )
+
+        // Enregistrement des menus / conteneurs
+        com.howlite.cryoawakening.screen.ModMenuTypes.register()
 
         // Onglet Créatif Mod
         Registry.register(

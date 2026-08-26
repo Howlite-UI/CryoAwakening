@@ -150,5 +150,9 @@
   "block.cryo-awakening.gale_pipe": "Tuyau de Bourrasque",
   "block.cryo-awakening.gale_bellows": "Soufflet de Bourrasque",
   "item.cryo-awakening.gale_bellows": "Soufflet de Bourrasque",
+  "block.cryo-awakening.breeze_foundry": "Fonderie de Bourrasque",
+  "item.cryo-awakening.breeze_foundry": "Fonderie de Bourrasque",
+  "container.cryo-awakening.breeze_foundry": "Fonderie de Bourrasque",
+  "gui.cryo-awakening.breeze_foundry.wind": "Énergie Vent : %s / %s V",
   "item.cryo-awakening.gale_monocle": "Monocle de Bourrasque"
 }

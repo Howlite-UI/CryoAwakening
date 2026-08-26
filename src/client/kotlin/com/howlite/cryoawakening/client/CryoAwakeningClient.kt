@@ -7,6 +7,9 @@ import com.howlite.cryoawakening.client.particle.StylizedWindTrailParticle
 import com.howlite.cryoawakening.client.render.CryoTombBlockEntityRenderer
 import com.howlite.cryoawakening.client.render.GaleBellowsBlockEntityRenderer
 import com.howlite.cryoawakening.client.render.LumeshStemBlockEntityRenderer
+import com.howlite.cryoawakening.client.render.gui.BreezeFoundryScreen
+import com.howlite.cryoawakening.screen.ModMenuTypes
+import net.minecraft.client.gui.screens.MenuScreens
 import com.howlite.cryoawakening.client.render.armor.FossilizedHelmetRenderProvider
 import com.howlite.cryoawakening.client.render.entity.GawkBombRenderer
 import com.howlite.cryoawakening.client.render.entity.GawkerRenderer
@@ -111,6 +114,9 @@ object CryoAwakeningClient : ClientModInitializer {
 			ModBlocks.GALE_BELLOWS_BLOCK_ENTITY_TYPE,
 			::GaleBellowsBlockEntityRenderer
 		)
+
+		// Enregistrement de l'écran d'interface de la Breeze Foundry
+		MenuScreens.register(ModMenuTypes.BREEZE_FOUNDRY, ::BreezeFoundryScreen)
 
 		// Enregistrement de la factory de particule StylizedWindTrailParticle
 		ParticleProviderRegistry.getInstance().register(

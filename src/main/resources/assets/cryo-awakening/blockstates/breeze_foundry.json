@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "cryo-awakening:block/breeze_foundry"
+    },
+    "facing=east": {
+      "model": "cryo-awakening:block/breeze_foundry",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "cryo-awakening:block/breeze_foundry",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "cryo-awakening:block/breeze_foundry",
+      "y": 270
+    }
+  }
+}

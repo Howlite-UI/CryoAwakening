@@ -150,5 +150,9 @@
   "block.cryo-awakening.gale_pipe": "Gale Pipe",
   "block.cryo-awakening.gale_bellows": "Gale Bellows",
   "item.cryo-awakening.gale_bellows": "Gale Bellows",
+  "block.cryo-awakening.breeze_foundry": "Breeze Foundry",
+  "item.cryo-awakening.breeze_foundry": "Breeze Foundry",
+  "container.cryo-awakening.breeze_foundry": "Breeze Foundry",
+  "gui.cryo-awakening.breeze_foundry.wind": "Wind Energy: %s / %s V",
   "item.cryo-awakening.gale_monocle": "Gale Monocle"
 }
