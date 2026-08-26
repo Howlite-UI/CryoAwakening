@@ -52,11 +52,15 @@ class GalePipeBlockEntity(pos: BlockPos, state: BlockState) :
                             val received = destStorage.receiveWind(extracted)
                             remainingToExtract -= received
 
-                            if (sourceBe is BlockEntity) {
+                            if (sourceBe is GaleTankBlockEntity) {
+                                sourceBe.syncBothHalves()
+                            } else if (sourceBe is BlockEntity) {
                                 sourceBe.setChanged()
                                 level.sendBlockUpdated(sourceBe.blockPos, level.getBlockState(sourceBe.blockPos), level.getBlockState(sourceBe.blockPos), 2)
                             }
-                            if (destBe is BlockEntity) {
+                            if (destBe is GaleTankBlockEntity) {
+                                destBe.syncBothHalves()
+                            } else if (destBe is BlockEntity) {
                                 destBe.setChanged()
                                 level.sendBlockUpdated(destBe.blockPos, level.getBlockState(destBe.blockPos), level.getBlockState(destBe.blockPos), 2)
                             }

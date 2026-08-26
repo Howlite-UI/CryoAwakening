@@ -148,5 +148,7 @@
   "item.cryo-awakening.kaleidoscope": "Kaleidoscope",
   "block.cryo-awakening.gale_tank": "Gale Tank",
   "block.cryo-awakening.gale_pipe": "Gale Pipe",
+  "block.cryo-awakening.gale_bellows": "Gale Bellows",
+  "item.cryo-awakening.gale_bellows": "Gale Bellows",
   "item.cryo-awakening.gale_monocle": "Gale Monocle"
 }

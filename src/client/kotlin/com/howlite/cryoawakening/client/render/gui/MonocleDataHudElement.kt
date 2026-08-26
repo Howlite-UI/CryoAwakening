@@ -1,8 +1,10 @@
 package com.howlite.cryoawakening.client.render.gui
 
 import com.howlite.cryoawakening.CryoAwakening
+import com.howlite.cryoawakening.block.GaleBellowsBlock
 import com.howlite.cryoawakening.block.GaleTankBlock
 import com.howlite.cryoawakening.block.entity.CryoVentBlockEntity
+import com.howlite.cryoawakening.block.entity.GaleBellowsBlockEntity
 import com.howlite.cryoawakening.block.entity.GaleTankBlockEntity
 import com.howlite.cryoawakening.energy.IWindHolder
 import com.howlite.cryoawakening.item.ModItems
@@ -86,6 +88,16 @@ object MonocleDataHudElement : HudElement {
             windAmount = be.windStorage.wind
             windCapacity = be.windStorage.capacity
             isProducing = true
+        } else if (state.block is GaleBellowsBlock) {
+            title = "gale bellows"
+            val bellowsBe = be as? GaleBellowsBlockEntity
+            val storage = bellowsBe?.windStorage
+            if (storage != null) {
+                windAmount = storage.wind
+                windCapacity = storage.capacity
+            } else {
+                windCapacity = 500
+            }
         } else if (state.block is GaleTankBlock) {
             title = "gale tank"
             val half = state.getValue(GaleTankBlock.HALF)

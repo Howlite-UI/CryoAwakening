@@ -5,6 +5,7 @@ import com.howlite.cryoawakening.ModBlocks
 import com.howlite.cryoawakening.ModParticleTypes
 import com.howlite.cryoawakening.client.particle.StylizedWindTrailParticle
 import com.howlite.cryoawakening.client.render.CryoTombBlockEntityRenderer
+import com.howlite.cryoawakening.client.render.GaleBellowsBlockEntityRenderer
 import com.howlite.cryoawakening.client.render.LumeshStemBlockEntityRenderer
 import com.howlite.cryoawakening.client.render.armor.FossilizedHelmetRenderProvider
 import com.howlite.cryoawakening.client.render.entity.GawkBombRenderer
@@ -103,6 +104,12 @@ object CryoAwakeningClient : ClientModInitializer {
 		BlockEntityRenderers.register(
 			ModBlocks.LUMESH_STEM_BLOCK_ENTITY_TYPE,
 			::LumeshStemBlockEntityRenderer
+		)
+
+		// Enregistrement du renderer animé du Gale Bellows (soufflet d'accordéon)
+		BlockEntityRenderers.register(
+			ModBlocks.GALE_BELLOWS_BLOCK_ENTITY_TYPE,
+			::GaleBellowsBlockEntityRenderer
 		)
 
 		// Enregistrement de la factory de particule StylizedWindTrailParticle

@@ -148,5 +148,7 @@
   "item.cryo-awakening.kaleidoscope": "Kaléidoscope",
   "block.cryo-awakening.gale_tank": "Réservoir de Bourrasque",
   "block.cryo-awakening.gale_pipe": "Tuyau de Bourrasque",
+  "block.cryo-awakening.gale_bellows": "Soufflet de Bourrasque",
+  "item.cryo-awakening.gale_bellows": "Soufflet de Bourrasque",
   "item.cryo-awakening.gale_monocle": "Monocle de Bourrasque"
 }

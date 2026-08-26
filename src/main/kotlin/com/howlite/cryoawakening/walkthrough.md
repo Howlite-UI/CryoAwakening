@@ -1,20 +1,21 @@
-# Walkthrough : Véritable Spirale Hélicoïdale 3D dans le Gale Tank
+# Walkthrough : Correction de l'Alimentation Haute du Gale Tank & Connexions
 
-Les particules `STYLIZED_WIND` dans le **Gale Tank** suivent désormais une trajectoire hélicoïdale (spirale 3D) enroulée autour du cylindre intérieur.
+Le problème d'injection d'énergie vent par la partie haute du **Gale Tank** a été corrigé.
 
 ---
 
-## 🌀 Forme de la Spirale Hélicoïdale 3D
+## 🔍 Cause du Bug & Solution Appliquée
 
-1. **Enroulement Hélicoïdal (2 à 3 boucles complètes) :**
-   - L'angle de rotation s'incrémente de `0.42` à `0.85` radians par tick au fur et à mesure que la particule s'élève.
-   - La traînée forme ainsi 2 à 3 boucles spiralées nettes et visibles du bas vers le haut du réservoir.
-2. **Évasement Progressif en Entonnoir :**
-   - Rayon de départ serré au centre (`0.12` bloc) s'élargissant progressivement jusqu'à `0.30` bloc au sommet (bien contenu dans le verre).
-3. **Accélération avec le Niveau de Vent :**
-   - Plus le tank se remplit, plus la vitesse d'ascension et d'enroulement angulaire s'accélère.
+1. **Désynchronisation Client-Serveur sur les Blocs Doubles :**
+   - Lorsqu'un tuyau ou générateur injectait du vent dans la moitié haute (`UPPER`), l'énergie était bien stockée dans la moitié basse (`lowerBe`), mais seul le paquet réseau du bloc haut était émis.
+   - La moitié basse (`LOWER`) n'était pas notifiée côté client : le ticker client (`clientTick`) et le Monocle AR affichaient 0 vent, donnant l'impression que l'énergie s'était évaporée.
+2. **Synchronisation Bilatérale Unifiée (`syncBothHalves`) :**
+   - Toute modification de volume sur l'une des deux moitiés synchronise automatiquement les deux blocs (`lowerPos` et `upperPos`) côté réseau et côté sauvegarde.
+   - Les données NBT sont sauvegardées et rechargées de façon unifiée.
+3. **Connexions de Tuyaux :**
+   - Les tuyaux de bourrasque (`GalePipeBlock`) se connectent désormais automatiquement au `GALE_BELLOWS` en plus des réservoirs et évents.
 
 ---
 
 ## 🧪 Validation
-- `./gradlew build` : **BUILD SUCCESSFUL in 12s**
+- `./gradlew build` : **BUILD SUCCESSFUL in 4s**
