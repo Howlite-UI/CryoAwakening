@@ -147,12 +147,16 @@
   "item.cryo-awakening.dross_glass_lens": "Lentille en Verre de Scorie",
   "item.cryo-awakening.kaleidoscope": "Kaléidoscope",
   "block.cryo-awakening.gale_tank": "Réservoir de Bourrasque",
+  "item.cryo-awakening.gale_tank": "Réservoir de Bourrasque",
   "block.cryo-awakening.gale_pipe": "Tuyau de Bourrasque",
+  "item.cryo-awakening.gale_pipe": "Tuyau de Bourrasque",
   "block.cryo-awakening.gale_bellows": "Soufflet de Bourrasque",
   "item.cryo-awakening.gale_bellows": "Soufflet de Bourrasque",
   "block.cryo-awakening.breeze_foundry": "Fonderie de Bourrasque",
   "item.cryo-awakening.breeze_foundry": "Fonderie de Bourrasque",
   "container.cryo-awakening.breeze_foundry": "Fonderie de Bourrasque",
   "gui.cryo-awakening.breeze_foundry.wind": "Énergie Vent : %s / %s V",
+  "gui.cryo-awakening.breeze_foundry.wind_cost": "Vent requis : %s V",
+  "gui.cryo-awakening.breeze_foundry.craft_time": "Temps de fusion : %s s",
   "item.cryo-awakening.gale_monocle": "Monocle de Bourrasque"
 }

@@ -167,21 +167,39 @@ object MonocleDataHudElement : HudElement {
         val screenWidth = graphics.guiWidth()
         val screenHeight = graphics.guiHeight()
 
-        // Hauteur supérieure du bloc / machine
-        val topBlockY = if (state.block is GaleTankBlock) {
+        // Hauteur et géométrie d'ancrage de la machine
+        val topCorners = if (state.block is GaleBellowsBlock) {
+            // Ancrage précis sur le nozzle (buse centrale de 4..12 px en X/Z et 17 px de haut)
+            val nozzleMinX = pos.x + 4.0 / 16.0
+            val nozzleMaxX = pos.x + 12.0 / 16.0
+            val nozzleMinZ = pos.z + 4.0 / 16.0
+            val nozzleMaxZ = pos.z + 12.0 / 16.0
+            val nozzleTopY = pos.y + 17.0 / 16.0
+            listOf(
+                Vec3(nozzleMinX, nozzleTopY, nozzleMinZ),
+                Vec3(nozzleMaxX, nozzleTopY, nozzleMinZ),
+                Vec3(nozzleMinX, nozzleTopY, nozzleMaxZ),
+                Vec3(nozzleMaxX, nozzleTopY, nozzleMaxZ)
+            )
+        } else if (state.block is GaleTankBlock) {
             val half = state.getValue(GaleTankBlock.HALF)
             val upperY = if (half == net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER) pos.y + 1 else pos.y
-            (upperY + 1.0)
+            val topBlockY = upperY + 1.0
+            listOf(
+                Vec3(pos.x.toDouble(), topBlockY, pos.z.toDouble()),
+                Vec3(pos.x + 1.0, topBlockY, pos.z.toDouble()),
+                Vec3(pos.x.toDouble(), topBlockY, pos.z + 1.0),
+                Vec3(pos.x + 1.0, topBlockY, pos.z + 1.0)
+            )
         } else {
-            (pos.y + 1.0)
+            val topBlockY = pos.y + 1.0
+            listOf(
+                Vec3(pos.x.toDouble(), topBlockY, pos.z.toDouble()),
+                Vec3(pos.x + 1.0, topBlockY, pos.z.toDouble()),
+                Vec3(pos.x.toDouble(), topBlockY, pos.z + 1.0),
+                Vec3(pos.x + 1.0, topBlockY, pos.z + 1.0)
+            )
         }
-
-        val topCorners = listOf(
-            Vec3(pos.x.toDouble(), topBlockY, pos.z.toDouble()),
-            Vec3(pos.x + 1.0, topBlockY, pos.z.toDouble()),
-            Vec3(pos.x.toDouble(), topBlockY, pos.z + 1.0),
-            Vec3(pos.x + 1.0, topBlockY, pos.z + 1.0)
-        )
 
         // Trouver le coin supérieur le plus à droite dans le champ de vision du joueur (angle du bloc)
         var anchorScreenX = -10000

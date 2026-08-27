@@ -1,6 +1,6 @@
 package com.howlite.cryoawakening.screen
 
-import com.howlite.cryoawakening.item.ModItems
+import com.howlite.cryoawakening.recipe.BreezeFoundryRecipes
 import net.minecraft.world.Container
 import net.minecraft.world.SimpleContainer
 import net.minecraft.world.entity.player.Inventory
@@ -25,33 +25,31 @@ class BreezeFoundryMenu(
     constructor(containerId: Int, playerInventory: Inventory) : this(
         containerId,
         playerInventory,
-        SimpleContainer(4),
+        SimpleContainer(3),
         SimpleContainerData(4)
     )
 
     init {
-        checkContainerSize(container, 4)
+        checkContainerSize(container, 3)
         checkContainerDataCount(data, 4)
 
-        // Slot 0 : Entrée 1 (Raw Bismuth)
-        addSlot(Slot(container, 0, 45, 17))
-        // Slot 1 : Entrée 2 (Raw Tellurium)
-        addSlot(Slot(container, 1, 68, 17))
-        // Slot 2 : Carburant / Catalyseur
-        addSlot(Slot(container, 2, 56, 53))
-        // Slot 3 : Sortie (Lingot de Tellurobismuthite)
-        addSlot(BreezeFoundryOutputSlot(playerInventory.player, container, 3, 116, 35))
+        // Slot 0 : Entrée Haute (x = 57, y = 24)
+        addSlot(Slot(container, 0, 57, 24))
+        // Slot 1 : Entrée Basse (x = 57, y = 46)
+        addSlot(Slot(container, 1, 57, 46))
+        // Slot 2 : Sortie Lingot (x = 116, y = 35)
+        addSlot(BreezeFoundryOutputSlot(playerInventory.player, container, 2, 116, 35))
 
         // Inventaire du joueur (3 lignes de 9 slots)
         for (row in 0 until 3) {
             for (col in 0 until 9) {
-                addSlot(Slot(playerInventory, col + row * 9 + 9, 8 + col * 18, 84 + row * 18))
+                addSlot(Slot(playerInventory, col + row * 9 + 9, 8 + col * 18, 85 + row * 18))
             }
         }
 
         // Barre d'action rapide (Hotbar - 9 slots)
         for (col in 0 until 9) {
-            addSlot(Slot(playerInventory, col, 8 + col * 18, 142))
+            addSlot(Slot(playerInventory, col, 8 + col * 18, 143))
         }
 
         addDataSlots(data)
@@ -91,32 +89,28 @@ class BreezeFoundryMenu(
             val itemStack2 = slot.item
             itemStack = itemStack2.copy()
 
-            if (index == 3) {
+            if (index == 2) {
                 // Transfert depuis le slot de sortie vers l'inventaire du joueur
-                if (!moveItemStackTo(itemStack2, 4, 40, true)) {
+                if (!moveItemStackTo(itemStack2, 3, 39, true)) {
                     return ItemStack.EMPTY
                 }
                 slot.onQuickCraft(itemStack2, itemStack)
-            } else if (index < 4) {
-                // Transfert depuis les slots d'entrée/carburant vers l'inventaire
-                if (!moveItemStackTo(itemStack2, 4, 40, false)) {
+            } else if (index < 2) {
+                // Transfert depuis les slots d'entrée vers l'inventaire
+                if (!moveItemStackTo(itemStack2, 3, 39, false)) {
                     return ItemStack.EMPTY
                 }
             } else {
                 // Transfert depuis l'inventaire vers la machine
-                if (itemStack2.`is`(ModItems.RAW_BISMUTH)) {
-                    if (!moveItemStackTo(itemStack2, 0, 1, false) && !moveItemStackTo(itemStack2, 1, 2, false)) {
+                if (BreezeFoundryRecipes.isValidIngredient(itemStack2)) {
+                    if (!moveItemStackTo(itemStack2, 0, 2, false)) {
                         return ItemStack.EMPTY
                     }
-                } else if (itemStack2.`is`(ModItems.RAW_TELLURIUM)) {
-                    if (!moveItemStackTo(itemStack2, 1, 2, false) && !moveItemStackTo(itemStack2, 0, 1, false)) {
+                } else if (index in 3..29) {
+                    if (!moveItemStackTo(itemStack2, 30, 39, false)) {
                         return ItemStack.EMPTY
                     }
-                } else if (index in 4..30) {
-                    if (!moveItemStackTo(itemStack2, 31, 40, false)) {
-                        return ItemStack.EMPTY
-                    }
-                } else if (index in 31..39 && !moveItemStackTo(itemStack2, 4, 31, false)) {
+                } else if (index in 30..38 && !moveItemStackTo(itemStack2, 3, 30, false)) {
                     return ItemStack.EMPTY
                 }
             }

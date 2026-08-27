@@ -3,7 +3,7 @@ package com.howlite.cryoawakening.block.entity
 import com.howlite.cryoawakening.ModBlocks
 import com.howlite.cryoawakening.energy.IWindHolder
 import com.howlite.cryoawakening.energy.WindStorage
-import com.howlite.cryoawakening.item.ModItems
+import com.howlite.cryoawakening.recipe.BreezeFoundryRecipes
 import com.howlite.cryoawakening.screen.BreezeFoundryMenu
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
@@ -33,15 +33,15 @@ import net.minecraft.world.level.storage.ValueOutput
  * BlockEntity pour la Breeze Foundry (Fonderie de Bourrasque).
  *
  * Fonctionnement :
- * - Fusionne Raw Bismuth + Raw Tellurium grâce à l'énergie Vent.
- * - Produit des Lingots de Tellurobismuthite (Tellurobismuthite Ingot).
+ * - Combine deux ingrédients grâce à la puissance du Vent.
+ * - Système de recettes dynamique via BreezeFoundryRecipes.
  */
 class BreezeFoundryBlockEntity(pos: BlockPos, state: BlockState) :
     BlockEntity(ModBlocks.BREEZE_FOUNDRY_BLOCK_ENTITY_TYPE, pos, state),
     WorldlyContainer, IWindHolder, MenuProvider {
 
-    val items: NonNullList<ItemStack> = NonNullList.withSize(4, ItemStack.EMPTY)
-    val windStorage = WindStorage(capacity = 10_000, maxReceive = 100, maxExtract = 0)
+    val items: NonNullList<ItemStack> = NonNullList.withSize(3, ItemStack.EMPTY)
+    val windStorage = WindStorage(capacity = 10_000, maxReceive = 100, maxExtract = 100)
 
     var cookTime: Int = 0
     var cookTimeTotal: Int = 100
@@ -106,59 +106,63 @@ class BreezeFoundryBlockEntity(pos: BlockPos, state: BlockState) :
 
     // Gestion de l'automatisation par entonnoirs / hoppers
     override fun getSlotsForFace(side: Direction): IntArray = when (side) {
-        Direction.UP -> intArrayOf(0, 1)
-        Direction.DOWN -> intArrayOf(3)
-        else -> intArrayOf(0, 1, 2)
+        Direction.UP -> intArrayOf(0)       // Dessus -> Entrée 1 (Top Input)
+        Direction.DOWN -> intArrayOf(2)     // Dessous -> Sortie (Output)
+        else -> intArrayOf(1)               // Côtés -> Entrée 2 (Bottom Input)
     }
 
     override fun canPlaceItemThroughFace(index: Int, itemStack: ItemStack, direction: Direction?): Boolean {
-        if (index == 3) return false
-        if (index == 0 || index == 1) {
-            return itemStack.`is`(ModItems.RAW_BISMUTH) || itemStack.`is`(ModItems.RAW_TELLURIUM)
-        }
-        return true
+        if (index == 2) return false
+        return BreezeFoundryRecipes.isValidIngredient(itemStack)
     }
 
     override fun canTakeItemThroughFace(index: Int, stack: ItemStack, direction: Direction): Boolean =
-        index == 3
+        index == 2
 
     companion object {
+        const val WIND_PER_TICK: Int = 2
+
         fun serverTick(level: Level, pos: BlockPos, state: BlockState, be: BreezeFoundryBlockEntity) {
             val in1 = be.items[0]
             val in2 = be.items[1]
-            val out = be.items[3]
+            val out = be.items[2]
 
-            val hasBismuth = (in1.`is`(ModItems.RAW_BISMUTH) && in2.`is`(ModItems.RAW_TELLURIUM)) ||
-                    (in2.`is`(ModItems.RAW_BISMUTH) && in1.`is`(ModItems.RAW_TELLURIUM))
+            val recipe = BreezeFoundryRecipes.findRecipe(in1, in2)
 
-            val canFitOutput = out.isEmpty || (out.`is`(ModItems.TELLUROBISMUTHITE_INGOT) && out.count < out.maxStackSize)
-            val hasWindEnergy = be.windStorage.wind > 0
+            if (recipe != null) {
+                val canFitOutput = out.isEmpty ||
+                        (ItemStack.isSameItemSameComponents(out, recipe.output) && out.count + recipe.output.count <= out.maxStackSize)
+                val hasEnoughWind = be.windStorage.wind >= WIND_PER_TICK
 
-            if (hasBismuth && canFitOutput && hasWindEnergy) {
-                // Progression de fusion d'alliage
-                be.cookTime++
+                be.cookTimeTotal = recipe.cookTimeTicks
 
-                // Consommation progressive d'énergie vent (1 V toutes les 2 ticks)
-                if (be.cookTime % 2 == 0) {
-                    be.windStorage.extractWind(1)
-                }
+                if (canFitOutput && hasEnoughWind) {
+                    be.windStorage.wind -= WIND_PER_TICK
+                    be.cookTime++
 
-                if (be.cookTime >= be.cookTimeTotal) {
-                    be.cookTime = 0
-                    in1.shrink(1)
-                    in2.shrink(1)
+                    if (be.cookTime >= be.cookTimeTotal) {
+                        be.cookTime = 0
+                        in1.shrink(1)
+                        in2.shrink(1)
 
-                    if (out.isEmpty) {
-                        be.items[3] = ItemStack(ModItems.TELLUROBISMUTHITE_INGOT, 1)
-                    } else {
-                        out.grow(1)
+                        if (out.isEmpty) {
+                            be.items[2] = recipe.output.copy()
+                        } else {
+                            out.grow(recipe.output.count)
+                        }
+                        level.sendBlockUpdated(pos, state, state, 2)
                     }
                     be.setChanged()
-                    level.sendBlockUpdated(pos, state, state, 2)
+                } else {
+                    if (be.cookTime > 0) {
+                        be.cookTime = maxOf(0, be.cookTime - 2)
+                        be.setChanged()
+                    }
                 }
             } else {
                 if (be.cookTime > 0) {
                     be.cookTime = maxOf(0, be.cookTime - 2)
+                    be.setChanged()
                 }
             }
         }

@@ -18,6 +18,10 @@ repositories {
 		name = "GeckoLib"
 		url = uri("https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/")
 	}
+	maven {
+		name = "BlameJared"
+		url = uri("https://maven.blamejared.com/")
+	}
 }
 
 loom {
@@ -48,6 +52,10 @@ dependencies {
 
 	// GeckoLib (Modrinth Maven)
 	implementation("maven.modrinth:geckolib:${providers.gradleProperty("geckolib_version").get()}")
+
+	// JEI (Just Enough Items)
+	compileOnly("mezz.jei:jei-26.2-fabric-api:${providers.gradleProperty("jei_version").get()}")
+	runtimeOnly("mezz.jei:jei-26.2-fabric:${providers.gradleProperty("jei_version").get()}")
 }
 
 tasks.processResources {

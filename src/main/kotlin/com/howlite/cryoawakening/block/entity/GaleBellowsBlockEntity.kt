@@ -20,7 +20,7 @@ import net.minecraft.world.level.storage.ValueOutput
 /**
  * BlockEntity pour le Gale Bellows (Poumon Mécanique / Soufflet Automatique).
  *
- * Fonctionnement continu et automatique :
+ * Fonctionnement continu et automatique synchronisé sur l'horloge mondiale du monde (gameTime) :
  * - Respiration lente et fluide (cycle de ~3.5 secondes)
  * - Génération continue de vent (+15 V par expiration)
  * - Distribution constante vers les tuyaux et réservoirs adjacents
@@ -30,20 +30,26 @@ class GaleBellowsBlockEntity(pos: BlockPos, state: BlockState) :
 
     val windStorage = WindStorage(capacity = 500, maxReceive = 500, maxExtract = 50)
 
-    var animationTicks: Int = 0
-
     companion object {
         const val CYCLE_TICKS = 70 // ~3.5 secondes par cycle complet de respiration
         const val WIND_PER_BREATH = 15
+
+        fun getHeight(time: Long): Double {
+            val cycle = CYCLE_TICKS.toDouble()
+            val t = (time.toDouble() % cycle) / cycle
+            val comp = 0.5 - 0.5 * kotlin.math.cos(t * 2.0 * Math.PI)
+            val heightPixels = 14.0 - comp * 9.5
+            return heightPixels / 16.0
+        }
     }
 
     override fun getWindStorage(side: Direction?): WindStorage = windStorage
 
     fun tick(level: Level, pos: BlockPos, state: BlockState) {
-        animationTicks++
+        val gameTime = level.gameTime
 
         // Génération de vent au point culminant de l'expiration (milieu du cycle)
-        if (animationTicks % CYCLE_TICKS == (CYCLE_TICKS / 2)) {
+        if (gameTime % CYCLE_TICKS == (CYCLE_TICKS / 2).toLong()) {
             if (!level.isClientSide) {
                 windStorage.receiveWind(WIND_PER_BREATH)
                 distributeWind(level, pos, state)

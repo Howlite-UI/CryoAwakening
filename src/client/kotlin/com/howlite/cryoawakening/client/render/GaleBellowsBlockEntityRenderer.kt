@@ -20,7 +20,7 @@ import net.minecraft.resources.Identifier
 import net.minecraft.world.phys.Vec3
 
 class GaleBellowsRenderState : BlockEntityRenderState() {
-    var animationTicks: Int = 0
+    var gameTime: Long = 0L
     var partialTicks: Float = 0.0f
     var facing: Direction = Direction.NORTH
 
@@ -31,11 +31,11 @@ class GaleBellowsRenderState : BlockEntityRenderState() {
 /**
  * GaleBellowsBlockEntityRenderer
  *
- * Rendu animé haute fidélité du Poumon Mécanique (Gale Bellows).
- * Animation continue de respiration lente :
- * - boards_bot : Socle inférieur fixe (Y = 0..2 px)
- * - boards_top : Plateau supérieur oscillant doucement de haut en bas
- * - accordion  : Soufflet se pliant et se déployant harmoniquement comme un poumon
+ * Rendu animé haute fidélité du Poumon Mécanique (Gale Bellows) basé sur le modèle Blockbench gale_bellows.json :
+ * - boards_bot : Socle inférieur fixe [1..15, 0..2, 1..15]
+ * - nozzle     : Cheminée/conduit central fixe [4..12, 1..17, 4..12]
+ * - accordion  : Soufflet repliable coulissant [2..14, 2..topY, 2..14]
+ * - boards_top : Plateau supérieur oscillant [1..15, topY..topY+2, 1..15]
  */
 class GaleBellowsBlockEntityRenderer(val context: BlockEntityRendererProvider.Context) :
     BlockEntityRenderer<GaleBellowsBlockEntity, GaleBellowsRenderState> {
@@ -54,7 +54,7 @@ class GaleBellowsBlockEntityRenderer(val context: BlockEntityRendererProvider.Co
         breakProgress: ModelFeatureRenderer.CrumblingOverlay?
     ) {
         super.extractRenderState(blockEntity, state, partialTicks, cameraPosition, breakProgress)
-        state.animationTicks = blockEntity.animationTicks
+        state.gameTime = blockEntity.level?.gameTime ?: 0L
         state.partialTicks = partialTicks
         state.facing = if (blockEntity.blockState.hasProperty(GaleBellowsBlock.FACING)) {
             blockEntity.blockState.getValue(GaleBellowsBlock.FACING)
@@ -86,41 +86,50 @@ class GaleBellowsBlockEntityRenderer(val context: BlockEntityRendererProvider.Co
         poseStack.mulPose(Axis.YP.rotationDegrees(rotY))
         poseStack.translate(-0.5, 0.0, -0.5)
 
-        // Respiration lente et douce d'un poumon mécanique (cycle de 70 ticks ~ 3.5s)
+        // Respiration douce d'un poumon mécanique (cycle de 70 ticks ~ 3.5s)
         val cycle = 70.0
-        val t = ((state.animationTicks.toDouble() + state.partialTicks.toDouble()) % cycle) / cycle
+        val t = ((state.gameTime.toDouble() + state.partialTicks.toDouble()) % cycle) / cycle
         val comp = (0.5 - 0.5 * kotlin.math.cos(t * 2.0 * Math.PI)).toFloat()
         val topY = (12.0f - comp * 9.5f) / 16.0f
         val accordionHeight = topY - (2.0f / 16.0f)
 
         submitNodeCollector.submitCustomGeometry(poseStack, renderType) { pose, consumer ->
-            // 1. Socle fixe inférieur (boards_bot) : Y = 0..2 px
+            // 1. Socle fixe inférieur (boards_bot) : [1..15, 0..2, 1..15]
             renderBox(
                 pose, consumer, light,
-                0.0f, 0.0f, 0.0f,
-                1.0f, 2.0f / 16.0f, 1.0f,
-                uRim0 = 0.5f, vRim0 = 0.3125f, uRim1 = 1.0f, vRim1 = 0.375f,
-                uPlate0 = 0.0f, vPlate0 = 0.0f, uPlate1 = 0.5f, vPlate1 = 0.5f
+                1.0f / 16.0f, 0.0f, 1.0f / 16.0f,
+                15.0f / 16.0f, 2.0f / 16.0f, 15.0f / 16.0f,
+                uRim0 = 5.5f / 16.0f, vRim0 = 2.0f / 16.0f, uRim1 = 9.0f / 16.0f, vRim1 = 2.5f / 16.0f,
+                uPlate0 = 0.0f, vPlate0 = 0.0f, uPlate1 = 3.5f / 16.0f, vPlate1 = 3.5f / 16.0f
             )
 
-            // 2. Accordéon repliable : Y = 2 px jusqu'à topY
+            // 2. Cheminée/Buse centrale fixe (nozzle) : [4..12, 1..17, 4..12]
+            renderBox(
+                pose, consumer, light,
+                4.0f / 16.0f, 1.0f / 16.0f, 4.0f / 16.0f,
+                12.0f / 16.0f, 17.0f / 16.0f, 12.0f / 16.0f,
+                uRim0 = 3.5f / 16.0f, vRim0 = 0.0f, uRim1 = 5.5f / 16.0f, vRim1 = 4.0f / 16.0f,
+                uPlate0 = 5.5f / 16.0f, vPlate0 = 0.0f, uPlate1 = 7.5f / 16.0f, vPlate1 = 2.0f / 16.0f
+            )
+
+            // 3. Accordéon repliable : [2..14, 2..topY, 2..14]
             if (accordionHeight > 0.005f) {
                 renderBox(
                     pose, consumer, light,
-                    1.0f / 16.0f, 2.0f / 16.0f, 1.0f / 16.0f,
-                    15.0f / 16.0f, topY, 15.0f / 16.0f,
-                    uRim0 = 0.5f, vRim0 = 0.0f, uRim1 = 0.9375f, vRim1 = 0.3125f,
-                    uPlate0 = 0.0f, vPlate0 = 0.5f, uPlate1 = 0.4375f, vPlate1 = 0.9375f
+                    2.0f / 16.0f, 2.0f / 16.0f, 2.0f / 16.0f,
+                    14.0f / 16.0f, topY, 14.0f / 16.0f,
+                    uRim0 = 3.0f / 16.0f, vRim0 = 4.0f / 16.0f, uRim1 = 6.0f / 16.0f, vRim1 = 6.5f / 16.0f,
+                    uPlate0 = 0.0f, vPlate0 = 3.5f / 16.0f, uPlate1 = 3.0f / 16.0f, vPlate1 = 6.5f / 16.0f
                 )
             }
 
-            // 3. Plateau supérieur mobile (boards_top) : Y = topY .. topY + 2 px
+            // 4. Plateau supérieur mobile (boards_top) : [1..15, topY..topY+2, 1..15]
             renderBox(
                 pose, consumer, light,
-                0.0f, topY, 0.0f,
-                1.0f, topY + (2.0f / 16.0f), 1.0f,
-                uRim0 = 0.5f, vRim0 = 0.3125f, uRim1 = 1.0f, vRim1 = 0.375f,
-                uPlate0 = 0.0f, vPlate0 = 0.0f, uPlate1 = 0.5f, vPlate1 = 0.5f
+                1.0f / 16.0f, topY, 1.0f / 16.0f,
+                15.0f / 16.0f, topY + (2.0f / 16.0f), 15.0f / 16.0f,
+                uRim0 = 5.5f / 16.0f, vRim0 = 2.0f / 16.0f, uRim1 = 9.0f / 16.0f, vRim1 = 2.5f / 16.0f,
+                uPlate0 = 0.0f, vPlate0 = 0.0f, uPlate1 = 3.5f / 16.0f, vPlate1 = 3.5f / 16.0f
             )
         }
 

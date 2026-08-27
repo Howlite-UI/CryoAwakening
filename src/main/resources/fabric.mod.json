@@ -32,6 +32,18 @@
 				"value": "com.howlite.cryoawakening.client.CryoAwakeningDataGenerator",
 				"adapter": "kotlin"
 			}
+		],
+		"jei_mod_plugin": [
+			{
+				"value": "com.howlite.cryoawakening.client.compat.jei.CryoAwakeningJeiPlugin",
+				"adapter": "kotlin"
+			}
+		],
+		"jei": [
+			{
+				"value": "com.howlite.cryoawakening.client.compat.jei.CryoAwakeningJeiPlugin",
+				"adapter": "kotlin"
+			}
 		]
 	},
 	"mixins": [
