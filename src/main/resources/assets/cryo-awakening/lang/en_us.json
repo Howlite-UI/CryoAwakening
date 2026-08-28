@@ -150,6 +150,8 @@
   "item.cryo-awakening.gale_tank": "Gale Tank",
   "block.cryo-awakening.gale_pipe": "Gale Pipe",
   "item.cryo-awakening.gale_pipe": "Gale Pipe",
+  "block.cryo-awakening.gale_pipe_exhaust": "Gale Pipe Exhaust",
+  "item.cryo-awakening.gale_pipe_exhaust": "Gale Pipe Exhaust",
   "block.cryo-awakening.gale_bellows": "Gale Bellows",
   "item.cryo-awakening.gale_bellows": "Gale Bellows",
   "block.cryo-awakening.breeze_foundry": "Breeze Foundry",
@@ -158,5 +160,6 @@
   "gui.cryo-awakening.breeze_foundry.wind": "Wind Energy: %s / %s V",
   "gui.cryo-awakening.breeze_foundry.wind_cost": "Wind Required: %s V",
   "gui.cryo-awakening.breeze_foundry.craft_time": "Process Time: %s s",
+  "gui.cryo-awakening.value_settings.title": "Gale Pipe Exhaust Settings",
   "item.cryo-awakening.gale_monocle": "Gale Monocle"
 }

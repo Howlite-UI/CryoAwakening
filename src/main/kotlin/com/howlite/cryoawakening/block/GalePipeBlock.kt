@@ -174,6 +174,7 @@ class GalePipeBlock(properties: Properties) : Block(properties), SimpleWaterlogg
 
     fun canConnectTo(state: BlockState): Boolean {
         if (state.`is`(this)) return true
+        if (state.`is`(ModBlocks.GALE_PIPE_EXHAUST)) return true
         if (state.`is`(ModBlocks.GALE_TANK)) return true
         if (state.`is`(ModBlocks.CRYO_VENT)) return true
         if (state.`is`(ModBlocks.GALE_BELLOWS)) return true

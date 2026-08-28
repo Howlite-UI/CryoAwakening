@@ -6,7 +6,9 @@
 		"ExampleClientMixin",
 		"PlayerModelMixin",
 		"ItemInHandRendererMixin",
-		"GameRendererMixin"
+		"GameRendererMixin",
+		"MouseHandlerMixin",
+		"MinecraftMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

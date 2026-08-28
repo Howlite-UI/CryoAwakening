@@ -24,6 +24,7 @@ object CryoAwakening : ModInitializer {
 		FossilPostureCombatHandler.register()
 		GawkerCarryHandler.register() // Enregistre le payload et le receiver
 		com.howlite.cryoawakening.event.BoomerangServerHandler.register() // Enregistre le payload et receiver du Gale Boomerang
+		com.howlite.cryoawakening.event.PipeExhaustServerHandler.register() // Enregistre le payload et receiver du Pipe Exhaust
 		ModFeatures.register()       // WorldGen : Features custom (PillaredIceCave, etc.)
 		ModBiomes.register()         // WorldGen : Biomes custom + BiomeModifications (CryoCaverns, etc.)
 

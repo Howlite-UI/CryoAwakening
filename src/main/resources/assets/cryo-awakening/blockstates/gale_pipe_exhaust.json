@@ -1,0 +1,59 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "cryo-awakening:block/gale_pipe_exhaust"
+    },
+    "facing=south": {
+      "model": "cryo-awakening:block/gale_pipe_exhaust",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "cryo-awakening:block/gale_pipe_exhaust",
+      "y": 270
+    },
+    "facing=east": {
+      "model": "cryo-awakening:block/gale_pipe_exhaust",
+      "y": 90
+    },
+    "facing=up,facing_horizontal=north": {
+      "model": "cryo-awakening:block/gale_pipe_exhaust",
+      "x": 270,
+      "y": 180
+    },
+    "facing=up,facing_horizontal=south": {
+      "model": "cryo-awakening:block/gale_pipe_exhaust",
+      "x": 270,
+      "y": 0
+    },
+    "facing=up,facing_horizontal=west": {
+      "model": "cryo-awakening:block/gale_pipe_exhaust",
+      "x": 270,
+      "y": 90
+    },
+    "facing=up,facing_horizontal=east": {
+      "model": "cryo-awakening:block/gale_pipe_exhaust",
+      "x": 270,
+      "y": 270
+    },
+    "facing=down,facing_horizontal=north": {
+      "model": "cryo-awakening:block/gale_pipe_exhaust",
+      "x": 90,
+      "y": 0
+    },
+    "facing=down,facing_horizontal=south": {
+      "model": "cryo-awakening:block/gale_pipe_exhaust",
+      "x": 90,
+      "y": 180
+    },
+    "facing=down,facing_horizontal=west": {
+      "model": "cryo-awakening:block/gale_pipe_exhaust",
+      "x": 90,
+      "y": 270
+    },
+    "facing=down,facing_horizontal=east": {
+      "model": "cryo-awakening:block/gale_pipe_exhaust",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

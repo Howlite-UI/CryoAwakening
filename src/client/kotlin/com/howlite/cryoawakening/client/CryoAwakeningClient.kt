@@ -6,6 +6,7 @@ import com.howlite.cryoawakening.ModParticleTypes
 import com.howlite.cryoawakening.client.particle.StylizedWindTrailParticle
 import com.howlite.cryoawakening.client.render.CryoTombBlockEntityRenderer
 import com.howlite.cryoawakening.client.render.GaleBellowsBlockEntityRenderer
+import com.howlite.cryoawakening.client.render.GalePipeExhaustBlockEntityRenderer
 import com.howlite.cryoawakening.client.render.LumeshStemBlockEntityRenderer
 import com.howlite.cryoawakening.client.render.gui.BreezeFoundryScreen
 import com.howlite.cryoawakening.screen.ModMenuTypes
@@ -63,6 +64,9 @@ object CryoAwakeningClient : ClientModInitializer {
 		// Enregistrement du gestionnaire de ciblage et verrouillage multi-cibles du Gale Boomerang
 		com.howlite.cryoawakening.client.event.BoomerangClientTargetHandler.register()
 
+		// Enregistrement du gestionnaire de réglage Create mod du Pipe Exhaust (maintien clic-droit)
+		com.howlite.cryoawakening.client.event.ValueSettingsClientHandler.register()
+
 		// Enregistrement de l'élément HUD de la jauge de lancer au-dessus du crosshair
 		net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry.attachElementAfter(
 			net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements.CROSSHAIR,
@@ -91,6 +95,13 @@ object CryoAwakeningClient : ClientModInitializer {
 			com.howlite.cryoawakening.client.render.gui.MonocleDataHudElement
 		)
 
+		// Enregistrement du HUD Create de réglage de vitesse du Gale Pipe Exhaust
+		net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry.attachElementAfter(
+			CryoAwakening.id("monocle_data_hud"),
+			CryoAwakening.id("value_settings_hud"),
+			com.howlite.cryoawakening.client.render.gui.ValueSettingsHudElement
+		)
+
 		// Enregistrement des renderers d'armures GeckoLib
 		GeoArmorItem.registerRenderProvider(
 			ModItems.FOSSILIZED_HELMET,
@@ -113,6 +124,12 @@ object CryoAwakeningClient : ClientModInitializer {
 		BlockEntityRenderers.register(
 			ModBlocks.GALE_BELLOWS_BLOCK_ENTITY_TYPE,
 			::GaleBellowsBlockEntityRenderer
+		)
+
+		// Enregistrement du renderer animé du Gale Pipe Exhaust (volant de vanne rotatif)
+		BlockEntityRenderers.register(
+			ModBlocks.GALE_PIPE_EXHAUST_BLOCK_ENTITY_TYPE,
+			::GalePipeExhaustBlockEntityRenderer
 		)
 
 		// Enregistrement de l'écran d'interface de la Breeze Foundry

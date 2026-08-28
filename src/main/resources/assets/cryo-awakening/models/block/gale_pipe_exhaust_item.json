@@ -1,0 +1,81 @@
+{
+	"format_version": "1.21.11",
+	"credit": "Made for Cryo Awakening",
+	"textures": {
+		"particle": "cryo-awakening:block/gale_pipe/gale_pipe",
+		"pipe": "cryo-awakening:block/gale_pipe/gale_pipe",
+		"output": "cryo-awakening:block/gale_pipe/gale_pipe_output",
+		"valve": "cryo-awakening:block/gale_pipe/gale_pipe_valve",
+		"inside": "cryo-awakening:block/gale_pipe/gale_pipe_inside"
+	},
+	"elements": [
+		{
+			"name": "extraction_flange",
+			"from": [3, 3, 0],
+			"to": [13, 13, 2],
+			"faces": {
+				"north": {"uv": [3, 3, 13, 13], "texture": "#output"},
+				"east": {"uv": [3, 3, 13, 5], "rotation": 270, "texture": "#output"},
+				"south": {"uv": [3, 3, 13, 13], "texture": "#output"},
+				"west": {"uv": [3, 11, 13, 13], "rotation": 90, "texture": "#output"},
+				"up": {"uv": [3, 11, 13, 13], "rotation": 180, "texture": "#output"},
+				"down": {"uv": [3, 3, 13, 5], "texture": "#output"}
+			}
+		},
+		{
+			"name": "pipe",
+			"from": [4, 4, 2],
+			"to": [12, 12, 16],
+			"rotation": {"angle": 0, "axis": "y", "origin": [4, 4, 2]},
+			"faces": {
+				"north": {"uv": [4, 4, 12, 12], "texture": "#inside"},
+				"east": {"uv": [4, 1, 12, 15], "rotation": 90, "texture": "#pipe"},
+				"south": {"uv": [4, 4, 12, 12], "texture": "#inside"},
+				"west": {"uv": [4, 1, 12, 15], "rotation": 90, "texture": "#pipe"},
+				"up": {"uv": [4, 1, 12, 15], "texture": "#pipe"},
+				"down": {"uv": [4, 1, 12, 15], "texture": "#pipe"}
+			}
+		},
+		{
+			"name": "valve_wheel",
+			"from": [2, 12.5, 2],
+			"to": [14, 12.5, 14],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 12.5, 8]},
+			"faces": {
+				"up": {"uv": [2, 2, 14, 14], "texture": "#valve"},
+				"down": {"uv": [2, 2, 14, 14], "texture": "#valve"}
+			}
+		}
+	],
+	"display": {
+		"thirdperson_righthand": {
+			"rotation": [75, 45, 0],
+			"translation": [0, 2.5, 0],
+			"scale": [0.375, 0.375, 0.375]
+		},
+		"thirdperson_lefthand": {
+			"rotation": [75, 45, 0],
+			"translation": [0, 2.5, 0],
+			"scale": [0.375, 0.375, 0.375]
+		},
+		"firstperson_righthand": {
+			"rotation": [0, 45, 0],
+			"scale": [0.4, 0.4, 0.4]
+		},
+		"firstperson_lefthand": {
+			"rotation": [0, -135, 0],
+			"scale": [0.4, 0.4, 0.4]
+		},
+		"ground": {
+			"translation": [0, 3, 0],
+			"scale": [0.25, 0.25, 0.25]
+		},
+		"gui": {
+			"rotation": [125, 0, 45],
+			"scale": [0.625, 0.625, 0.625]
+		},
+		"fixed": {
+			"scale": [0.5, 0.5, 0.5]
+		}
+	}
+}

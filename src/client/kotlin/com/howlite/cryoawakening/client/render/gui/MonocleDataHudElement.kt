@@ -3,10 +3,12 @@ package com.howlite.cryoawakening.client.render.gui
 import com.howlite.cryoawakening.CryoAwakening
 import com.howlite.cryoawakening.block.BreezeFoundryBlock
 import com.howlite.cryoawakening.block.GaleBellowsBlock
+import com.howlite.cryoawakening.block.GalePipeExhaustBlock
 import com.howlite.cryoawakening.block.GaleTankBlock
 import com.howlite.cryoawakening.block.entity.BreezeFoundryBlockEntity
 import com.howlite.cryoawakening.block.entity.CryoVentBlockEntity
 import com.howlite.cryoawakening.block.entity.GaleBellowsBlockEntity
+import com.howlite.cryoawakening.block.entity.GalePipeExhaustBlockEntity
 import com.howlite.cryoawakening.block.entity.GaleTankBlockEntity
 import com.howlite.cryoawakening.energy.IWindHolder
 import com.howlite.cryoawakening.item.ModItems
@@ -126,6 +128,16 @@ object MonocleDataHudElement : HudElement {
             } else {
                 windCapacity = 20000
             }
+        } else if (state.block is com.howlite.cryoawakening.block.GalePipeExhaustBlock) {
+            title = "pipe exhaust"
+            val exhaustBe = be as? GalePipeExhaustBlockEntity
+            val storage = exhaustBe?.windStorage
+            if (storage != null) {
+                windAmount = storage.wind
+                windCapacity = storage.capacity
+            } else {
+                windCapacity = 500
+            }
         } else if (be is IWindHolder) {
             title = state.block.name.string.lowercase()
             val storage = be.getWindStorage(hit.direction)
@@ -192,12 +204,19 @@ object MonocleDataHudElement : HudElement {
                 Vec3(pos.x + 1.0, topBlockY, pos.z + 1.0)
             )
         } else {
-            val topBlockY = pos.y + 1.0
+            // Ancrage dynamique précis sur les bornes réelles de la hitbox VoxelShape
+            val shape = state.getShape(level, pos)
+            val bounds = if (!shape.isEmpty) shape.bounds() else net.minecraft.world.phys.AABB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)
+            val minX = pos.x + bounds.minX
+            val maxX = pos.x + bounds.maxX
+            val minZ = pos.z + bounds.minZ
+            val maxZ = pos.z + bounds.maxZ
+            val topBlockY = pos.y + bounds.maxY
             listOf(
-                Vec3(pos.x.toDouble(), topBlockY, pos.z.toDouble()),
-                Vec3(pos.x + 1.0, topBlockY, pos.z.toDouble()),
-                Vec3(pos.x.toDouble(), topBlockY, pos.z + 1.0),
-                Vec3(pos.x + 1.0, topBlockY, pos.z + 1.0)
+                Vec3(minX, topBlockY, minZ),
+                Vec3(maxX, topBlockY, minZ),
+                Vec3(minX, topBlockY, maxZ),
+                Vec3(maxX, topBlockY, maxZ)
             )
         }
 
@@ -235,16 +254,17 @@ object MonocleDataHudElement : HudElement {
 
         val gaugeRevealW = (currentW - GAUGE_OFFSET_X).coerceIn(0, GAUGE_WIDTH)
 
-        // A. Dessin du liquide/vent texturé (le haut de la texture reste toujours le haut de la barre)
+        // A. Dessin du liquide/vent texturé (remplissage du bas vers le haut avec texture alignée)
         if (gaugeRevealW > 0 && fillHeight > 0) {
             val filledY = barY + GAUGE_OFFSET_Y + (GAUGE_HEIGHT - fillHeight)
+            val vOffset = (GAUGE_HEIGHT - fillHeight).toFloat()
             graphics.blit(
                 RenderPipelines.GUI_TEXTURED,
                 GAUGE_TEXTURE,
                 barX + GAUGE_OFFSET_X,
                 filledY,
                 0.0f,
-                0.0f,
+                vOffset,
                 gaugeRevealW,
                 fillHeight,
                 16,
@@ -286,9 +306,17 @@ object MonocleDataHudElement : HudElement {
                 }
             }
 
-            // Ligne 2 : Données compactes et claires (ex: "16k / 20k")
+            // Ligne 2 : Données compactes et claires (ex: "16k / 20k", "0 / 500 (Closed)")
             if (line2Progress > 0.0f) {
-                val fullLine2 = if (isProducing) {
+                val fullLine2 = if (state.block is GalePipeExhaustBlock) {
+                    val exhaustBe = be as? GalePipeExhaustBlockEntity
+                    val rate = exhaustBe?.outputRate ?: 0
+                    if (rate > 0) {
+                        "§e$formattedCurrent §7/ §f$formattedCapacity §c(-$rate/t)"
+                    } else {
+                        "§e$formattedCurrent §7/ §f$formattedCapacity §7(Closed)"
+                    }
+                } else if (isProducing) {
                     "§e$formattedCurrent §7/ §f$formattedCapacity §a(+5/t)"
                 } else {
                     "§e$formattedCurrent §7/ §f$formattedCapacity"
