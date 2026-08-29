@@ -1,6 +1,7 @@
 package com.howlite.cryoawakening.block.entity
 
 import com.howlite.cryoawakening.ModBlocks
+import com.howlite.cryoawakening.ModParticleTypes
 import com.howlite.cryoawakening.block.GalePipeExhaustBlock
 import com.howlite.cryoawakening.energy.IWindHolder
 import com.howlite.cryoawakening.energy.WindStorage
@@ -178,16 +179,31 @@ class GalePipeExhaustBlockEntity(pos: BlockPos, state: BlockState) :
             }
         }
 
-        // Particules de souffle de vent (tous les ticks si actif)
-        val particleSpeed = 0.2 + powerRatio * 0.4
-        val spread = 0.15
-        serverLevel.sendParticles(
-            ParticleTypes.CLOUD,
-            origin.x, origin.y, origin.z,
-            (powerRatio * 3).toInt() + 1,
-            spread, spread, spread,
-            particleSpeed * 0.05
-        )
+        // Particules de souffle de vent stylisées personnalisées
+        val particleCount = (powerRatio * 3).toInt().coerceAtLeast(1)
+        val baseSpeed = 0.18 + powerRatio * 0.35
+
+        for (i in 0 until particleCount) {
+            val spreadX = (serverLevel.random.nextDouble() - 0.5) * 0.16
+            val spreadY = (serverLevel.random.nextDouble() - 0.5) * 0.16
+            val spreadZ = (serverLevel.random.nextDouble() - 0.5) * 0.16
+
+            val spawnX = origin.x + spreadX
+            val spawnY = origin.y + spreadY
+            val spawnZ = origin.z + spreadZ
+
+            val vx = facing.stepX * baseSpeed + (serverLevel.random.nextDouble() - 0.5) * 0.04
+            val vy = facing.stepY * baseSpeed + (serverLevel.random.nextDouble() - 0.5) * 0.04
+            val vz = facing.stepZ * baseSpeed + (serverLevel.random.nextDouble() - 0.5) * 0.04
+
+            serverLevel.sendParticles(
+                ModParticleTypes.STYLIZED_WIND,
+                spawnX, spawnY, spawnZ,
+                0,
+                vx, vy, vz,
+                1.0
+            )
+        }
     }
 
     override fun saveAdditional(output: ValueOutput) {

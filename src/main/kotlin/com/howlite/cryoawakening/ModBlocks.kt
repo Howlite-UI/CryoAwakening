@@ -3,6 +3,7 @@ package com.howlite.cryoawakening
 import com.howlite.cryoawakening.block.BreezeFoundryBlock
 import com.howlite.cryoawakening.block.CryoTombBlock
 import com.howlite.cryoawakening.block.CryoVentBlock
+import com.howlite.cryoawakening.block.EcosystemBenchBlock
 import com.howlite.cryoawakening.block.GaleBellowsBlock
 import com.howlite.cryoawakening.block.GalePipeBlock
 import com.howlite.cryoawakening.block.GalePipeExhaustBlock
@@ -160,6 +161,16 @@ object ModBlocks {
 
     val BREEZE_FOUNDRY_BLOCK_ENTITY_TYPE: BlockEntityType<BreezeFoundryBlockEntity> =
         FabricBlockEntityTypeBuilder.create(::BreezeFoundryBlockEntity, BREEZE_FOUNDRY).build()
+
+    val ECOSYSTEM_BENCH_KEY: ResourceKey<Block> = blockKey("ecosystem_bench")
+    val ECOSYSTEM_BENCH_ITEM_KEY: ResourceKey<Item> = itemKey("ecosystem_bench")
+    val ECOSYSTEM_BENCH: Block = EcosystemBenchBlock(
+        BlockBehaviour.Properties.of()
+            .setId(ECOSYSTEM_BENCH_KEY)
+            .strength(2.5f, 5.0f)
+            .sound(SoundType.WOOD)
+    )
+    val ECOSYSTEM_BENCH_ITEM: Item = BlockItem(ECOSYSTEM_BENCH, Item.Properties().setId(ECOSYSTEM_BENCH_ITEM_KEY))
 
     val BISMUTH_ORE_SHIVERING_SHALE_KEY: ResourceKey<Block> = blockKey("bismuth_ore_shivering_shale")
     val BISMUTH_ORE_SHIVERING_SHALE_ITEM_KEY: ResourceKey<Item> = itemKey("bismuth_ore_shivering_shale")
@@ -482,6 +493,7 @@ object ModBlocks {
             output.accept(GALE_PIPE_EXHAUST_ITEM)
             output.accept(GALE_BELLOWS_ITEM)
             output.accept(BREEZE_FOUNDRY_ITEM)
+            output.accept(ECOSYSTEM_BENCH_ITEM)
             output.accept(BISMUTH_ORE_SHIVERING_SHALE_ITEM)
             output.accept(TELLURIUM_ORE_ITEM)
             output.accept(com.howlite.cryoawakening.item.ModItems.RAW_BISMUTH)
@@ -601,6 +613,7 @@ object ModBlocks {
         registerBlock(GALE_PIPE_EXHAUST_KEY, GALE_PIPE_EXHAUST, GALE_PIPE_EXHAUST_ITEM_KEY, GALE_PIPE_EXHAUST_ITEM)
         registerBlock(GALE_BELLOWS_KEY, GALE_BELLOWS, GALE_BELLOWS_ITEM_KEY, GALE_BELLOWS_ITEM)
         registerBlock(BREEZE_FOUNDRY_KEY, BREEZE_FOUNDRY, BREEZE_FOUNDRY_ITEM_KEY, BREEZE_FOUNDRY_ITEM)
+        registerBlock(ECOSYSTEM_BENCH_KEY, ECOSYSTEM_BENCH, ECOSYSTEM_BENCH_ITEM_KEY, ECOSYSTEM_BENCH_ITEM)
         registerBlock(BISMUTH_ORE_SHIVERING_SHALE_KEY, BISMUTH_ORE_SHIVERING_SHALE, BISMUTH_ORE_SHIVERING_SHALE_ITEM_KEY, BISMUTH_ORE_SHIVERING_SHALE_ITEM)
         registerBlock(TELLURIUM_ORE_KEY, TELLURIUM_ORE, TELLURIUM_ORE_ITEM_KEY, TELLURIUM_ORE_ITEM)
         registerBlock(FROZEN_FLYSCH_KEY, FROZEN_FLYSCH, FROZEN_FLYSCH_ITEM_KEY, FROZEN_FLYSCH_ITEM)
