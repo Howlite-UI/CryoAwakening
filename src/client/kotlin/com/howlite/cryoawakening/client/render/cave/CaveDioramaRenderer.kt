@@ -20,6 +20,9 @@ import net.minecraft.world.level.block.HangingRootsBlock
 import net.minecraft.world.level.block.LiquidBlock
 import net.minecraft.world.level.block.MultifaceBlock
 import net.minecraft.world.level.block.TorchBlock
+import net.minecraft.world.level.block.LeavesBlock
+import net.minecraft.world.level.block.RotatedPillarBlock
+import net.minecraft.tags.BlockTags
 import net.minecraft.world.level.block.state.BlockState
 import com.howlite.cryoawakening.client.mixin.GuiGraphicsExtractorAccessor
 import com.mojang.blaze3d.pipeline.RenderPipeline
@@ -148,6 +151,50 @@ object CaveDioramaRenderer {
     }
 
     /**
+     * Détermine si un bloc est un élément d'intérêt nécessitant un rendu 3D haute définition 1:1
+     * (arbres, branches, feuilles, boiseries, établis, conteneurs, etc.).
+     */
+    fun isDetailedBlock(state: BlockState): Boolean {
+        if (state.isAir) return false
+        val b = state.block
+        if (b is LeavesBlock || state.`is`(BlockTags.LEAVES)) return true
+        if (state.`is`(BlockTags.LOGS)) return true
+        if (state.`is`(BlockTags.PLANKS)) return true
+        if (state.`is`(BlockTags.WOODEN_SLABS) || state.`is`(BlockTags.WOODEN_STAIRS) || state.`is`(BlockTags.WOODEN_FENCES)) return true
+        if (state.`is`(BlockTags.WOODEN_DOORS) || state.`is`(BlockTags.WOODEN_TRAPDOORS) || state.`is`(BlockTags.FENCE_GATES)) return true
+        if (state.`is`(ModBlocks.ECOSYSTEM_BENCH)) return true
+        if (b is RotatedPillarBlock && !state.`is`(Blocks.DEEPSLATE) && !state.`is`(Blocks.INFESTED_DEEPSLATE)) return true
+        if (b == Blocks.CRAFTING_TABLE || b == Blocks.CHEST || b == Blocks.TRAPPED_CHEST ||
+            b == Blocks.FURNACE || b == Blocks.BLAST_FURNACE || b == Blocks.SMOKER ||
+            b == Blocks.BARREL || b == Blocks.BOOKSHELF || b == Blocks.CHISELED_BOOKSHELF ||
+            b == Blocks.ANVIL || b == Blocks.CHIPPED_ANVIL || b == Blocks.DAMAGED_ANVIL ||
+            b == Blocks.ENCHANTING_TABLE || b == Blocks.BREWING_STAND) return true
+        return false
+    }
+
+    /**
+     * Teste si la face de [current] orientée vers [neighbor] est masquée (occultée).
+     * Évite le z-fighting et divise par 4 le nombre de faces pour les canopées de feuilles.
+     */
+    fun isFaceOccluded(neighbor: BlockState, current: BlockState): Boolean {
+        if (neighbor.isAir) return false
+        if (isPassable(neighbor)) return false
+
+        // Un bloc opaque plein masque complètement la face derrière lui
+        if (neighbor.isSolidRender) return true
+
+        // Deux feuilles adjacentes masquent la face mitoyenne
+        val curIsLeaves = current.block is LeavesBlock || current.`is`(BlockTags.LEAVES)
+        val nbrIsLeaves = neighbor.block is LeavesBlock || neighbor.`is`(BlockTags.LEAVES)
+        if (curIsLeaves && nbrIsLeaves) return true
+
+        // Un tronc mitoyen à une feuille masque la face commune
+        if (!curIsLeaves && nbrIsLeaves) return true
+
+        return false
+    }
+
+    /**
      * Détermine si un bloc est considéré comme de l'air ou une décoration traversante
      * (évite de créer des cubes opaques 3D pour des plantes 2D transparentes comme les lichens/buissons).
      */
@@ -156,6 +203,7 @@ object CaveDioramaRenderer {
         val b = state.block
         if (b is LiquidBlock) return false
         if (state.`is`(Blocks.ICE) || state.`is`(Blocks.PACKED_ICE) || state.`is`(Blocks.BLUE_ICE)) return false
+        if (isDetailedBlock(state)) return false
         if (b is BushBlock) return true
         if (b is MultifaceBlock) return true
         if (b is HangingRootsBlock) return true
@@ -412,11 +460,11 @@ object CaveDioramaRenderer {
                             for (scanY in colTopY downTo -56) {
                                 mpos.set(wx, scanY, wz)
                                 val s = level.getBlockState(mpos)
-                                if (!isPassable(s)) {
+                                if (!isPassable(s) && !isDetailedBlock(s)) {
                                     // Évite de s'arrêter sur un flocon ou bloc isolé de 1 bloc
                                     mpos.set(wx, scanY - 1, wz)
                                     val sBelow = level.getBlockState(mpos)
-                                    if (!isPassable(sBelow) || scanY <= -54) {
+                                    if ((!isPassable(sBelow) && !isDetailedBlock(sBelow)) || scanY <= -54) {
                                         foundY = scanY
                                         break
                                     }
@@ -473,7 +521,7 @@ object CaveDioramaRenderer {
 
                 mpos.set(wx, fy, wz)
                 val rawState = level.getBlockState(mpos)
-                val fState = if (isPassable(rawState)) Blocks.DEEPSLATE.defaultBlockState() else rawState
+                val fState = if (isPassable(rawState) || isDetailedBlock(rawState)) Blocks.DEEPSLATE.defaultBlockState() else rawState
 
                 addBlock(
                     level = level,
@@ -514,6 +562,98 @@ object CaveDioramaRenderer {
                     if (relY > maxY) maxY = relY
                     if (relZ < minZ) minZ = relZ
                     if (relZ > maxZ) maxZ = relZ
+                }
+            }
+        }
+
+        // ── PASSE 3 : NUMÉRISATION HAUTE DÉFINITION (1:1) DES ARBRES ET OBJETS DÉTAILLÉS ──
+        for (cz in minChunkZ..maxChunkZ) {
+            for (cx in minChunkX..maxChunkX) {
+                if (!level.hasChunk(cx, cz)) continue
+
+                val chunkBaseX = cx shl 4
+                val chunkBaseZ = cz shl 4
+
+                for (lx in 0 until 16) {
+                    val wx = chunkBaseX + lx
+                    val localDistSq = (wx - originX) * (wx - originX)
+                    if (localDistSq > scanRadiusX * scanRadiusX) continue
+
+                    for (lz in 0 until 16) {
+                        val wz = chunkBaseZ + lz
+
+                        if (isCryoCaverns) {
+                            val d = computeDOvoid(wx, wz, caveCenterX, caveCenterZ, radX, radZ, domeSeed)
+                            if (d > 0.88) continue // En dehors de la cavité intérieure
+                        } else {
+                            val distSq = (wx - originX) * (wx - originX) + (wz - originZ) * (wz - originZ)
+                            if (distSq > scanRadiusX * scanRadiusZ) continue
+                        }
+
+                        // Altitude du plancher sous cette colonne
+                        val groundWy = columnSurfaceMap[packKey(wx, wz)]
+                            ?: columnSurfaceMap[packKey(wx and 1.inv(), wz and 1.inv())]
+                            ?: -49
+
+                        // Plafond sécurisé : plafonné strictement à Y <= -27 pour ne jamais toucher le toit/voûte
+                        val maxDetailedY = if (isCryoCaverns) {
+                            minOf(groundWy + 22, -27)
+                        } else {
+                            minOf(groundWy + 22, yTop)
+                        }
+
+                        if (groundWy + 1 > maxDetailedY) continue
+
+                        for (wy in (groundWy + 1)..maxDetailedY) {
+                            mpos.set(wx, wy, wz)
+                            val s = level.getBlockState(mpos)
+                            if (!isDetailedBlock(s)) continue
+
+                            // Seules les 3 faces orientées vers la caméra isométrique sont candidates
+                            // 1. Face UP (+Y)
+                            mpos.set(wx, wy + 1, wz)
+                            val upState = level.getBlockState(mpos)
+                            val isUpVisible = !isFaceOccluded(upState, s)
+
+                            // 2. Face SOUTH (+Z)
+                            mpos.set(wx, wy, wz + 1)
+                            val southState = level.getBlockState(mpos)
+                            val isSouthVisible = !isFaceOccluded(southState, s)
+
+                            // 3. Face EAST (+X)
+                            mpos.set(wx + 1, wy, wz)
+                            val eastState = level.getBlockState(mpos)
+                            val isEastVisible = !isFaceOccluded(eastState, s)
+
+                            var faceMask = 0
+                            if (isUpVisible)    faceMask = faceMask or (1 shl 0)
+                            if (isSouthVisible) faceMask = faceMask or (1 shl 3)
+                            if (isEastVisible)  faceMask = faceMask or (1 shl 4)
+
+                            if (faceMask == 0) continue
+
+                            addBlock(
+                                level = level,
+                                modelSet = modelSet,
+                                solidBlockMap = solidBlockMap,
+                                wx = wx, wy = wy, wz = wz,
+                                state = s,
+                                faceMask = faceMask,
+                                center = center,
+                                blockSize = 1.0f
+                            )
+
+                            val relX = wx - center.x
+                            val relY = wy - center.y
+                            val relZ = wz - center.z
+                            if (relX < minX) minX = relX
+                            if (relX > maxX) maxX = relX
+                            if (relY < minY) minY = relY
+                            if (relY > maxY) maxY = relY
+                            if (relZ < minZ) minZ = relZ
+                            if (relZ > maxZ) maxZ = relZ
+                        }
+                    }
                 }
             }
         }
@@ -581,7 +721,14 @@ object CaveDioramaRenderer {
         blockSize: Float
     ) {
         val blockPos = BlockPos.asLong(wx, wy, wz)
-        if (solidBlockMap.containsKey(blockPos)) return
+        val existing = solidBlockMap[blockPos]
+        if (existing != null) {
+            if (existing.blockSize > blockSize) {
+                // Remplacement du bloc grossier (ex: 2.0f) par le bloc détaillé (1.0f)
+            } else {
+                return
+            }
+        }
 
         val sideSprite = getSideSprite(modelSet, state)
         val topSprite = getTopSprite(modelSet, state)
