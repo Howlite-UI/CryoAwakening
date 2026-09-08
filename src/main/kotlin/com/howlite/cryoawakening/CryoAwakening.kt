@@ -25,6 +25,10 @@ object CryoAwakening : ModInitializer {
 		GawkerCarryHandler.register() // Enregistre le payload et le receiver
 		com.howlite.cryoawakening.event.BoomerangServerHandler.register() // Enregistre le payload et receiver du Gale Boomerang
 		com.howlite.cryoawakening.event.PipeExhaustServerHandler.register() // Enregistre le payload et receiver du Pipe Exhaust
+		net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry.clientboundPlay().register(
+			com.howlite.cryoawakening.network.OpenEcosystemBenchPayload.ID,
+			com.howlite.cryoawakening.network.OpenEcosystemBenchPayload.CODEC
+		)
 		ModFeatures.register()       // WorldGen : Features custom (PillaredIceCave, etc.)
 		ModBiomes.register()         // WorldGen : Biomes custom + BiomeModifications (CryoCaverns, etc.)
 

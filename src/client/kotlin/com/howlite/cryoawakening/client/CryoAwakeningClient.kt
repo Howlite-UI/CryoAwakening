@@ -135,6 +135,17 @@ object CryoAwakeningClient : ClientModInitializer {
 		// Enregistrement de l'écran d'interface de la Breeze Foundry
 		MenuScreens.register(ModMenuTypes.BREEZE_FOUNDRY, ::BreezeFoundryScreen)
 
+		// Réception du paquet d'ouverture de l'Ecosystem Bench (Diagramme Isométrique de Grotte)
+		net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(
+			com.howlite.cryoawakening.network.OpenEcosystemBenchPayload.ID
+		) { payload, context ->
+			context.client().execute {
+				net.minecraft.client.Minecraft.getInstance().setScreenAndShow(
+					com.howlite.cryoawakening.client.render.gui.EcosystemBenchScreen(payload.pos)
+				)
+			}
+		}
+
 		// Enregistrement de la factory de particule StylizedWindTrailParticle
 		ParticleProviderRegistry.getInstance().register(
 			ModParticleTypes.STYLIZED_WIND,
