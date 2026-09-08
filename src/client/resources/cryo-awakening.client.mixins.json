@@ -8,7 +8,8 @@
 		"ItemInHandRendererMixin",
 		"GameRendererMixin",
 		"MouseHandlerMixin",
-		"MinecraftMixin"
+		"MinecraftMixin",
+		"GuiGraphicsExtractorAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

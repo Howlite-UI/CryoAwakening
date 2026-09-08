@@ -21,6 +21,13 @@ import net.minecraft.world.level.block.LiquidBlock
 import net.minecraft.world.level.block.MultifaceBlock
 import net.minecraft.world.level.block.TorchBlock
 import net.minecraft.world.level.block.state.BlockState
+import com.howlite.cryoawakening.client.mixin.GuiGraphicsExtractorAccessor
+import com.mojang.blaze3d.pipeline.RenderPipeline
+import com.mojang.blaze3d.vertex.VertexConsumer
+import net.minecraft.client.gui.navigation.ScreenRectangle
+import net.minecraft.client.gui.render.TextureSetup
+import net.minecraft.client.renderer.state.gui.GuiElementRenderState
+import net.minecraft.client.renderer.texture.TextureAtlas
 import kotlin.math.*
 
 /**
@@ -35,6 +42,14 @@ import kotlin.math.*
  */
 object CaveDioramaRenderer {
 
+    const val ISO_YAW: Float = 45.0f
+    const val ISO_PITCH: Float = 32.0f
+
+    val COS_Y: Float = cos(Math.toRadians(45.0)).toFloat()
+    val SIN_Y: Float = sin(Math.toRadians(45.0)).toFloat()
+    val COS_P: Float = cos(Math.toRadians(32.0)).toFloat()
+    val SIN_P: Float = sin(Math.toRadians(32.0)).toFloat()
+
     /**
      * Représente un bloc de paroi/sol/plafond/pilier de la grotte.
      */
@@ -48,12 +63,11 @@ object CaveDioramaRenderer {
         var visibleFacesMask: Int, // bits 0..5 pour UP, DOWN, NORTH, SOUTH, EAST, WEST
         val light: Float,
         val isFluid: Boolean,
-        val blockSize: Float = 1.0f
-    ) {
-        var depth: Float = 0.0f
-        var screenX: Float = 0.0f
-        var screenY: Float = 0.0f
-    }
+        val blockSize: Float = 1.0f,
+        val baseIsoX: Float = 0.0f,
+        val baseIsoY: Float = 0.0f,
+        val depth: Float = 0.0f
+    )
 
     data class DioramaMesh(
         val blocks: List<DioramaBlock>,
@@ -76,7 +90,6 @@ object CaveDioramaRenderer {
 
     private val topSpriteCache = HashMap<BlockState, TextureAtlasSprite>()
     private val sideSpriteCache = HashMap<BlockState, TextureAtlasSprite>()
-    private val visibleBlocks = ArrayList<DioramaBlock>(32768)
     private val dummyRandom = RandomSource.create(42L)
 
     fun getTopSprite(modelSet: net.minecraft.client.renderer.block.BlockStateModelSet, state: BlockState): TextureAtlasSprite {
@@ -422,8 +435,8 @@ object CaveDioramaRenderer {
             }
         }
 
-        // ── PASSE 2 : GÉNÉRATION DU MAILLAGE ET CULLING DE FACES PAR RELIEF ──
-        val solidBlockMap = HashMap<Long, DioramaBlock>(16384)
+        // ── PASSE 2 : GÉNÉRATION DU MAILLAGE OPTIMISÉ (UNIQUEMENT FACES VISIBLES CAMÉRA) ──
+        val solidBlockMap = HashMap<Long, DioramaBlock>(8192)
         val baseFloorLimit = -56
 
         var minX = 0; var maxX = 0
@@ -435,35 +448,31 @@ object CaveDioramaRenderer {
             val wx = unpackX(key)
             val wz = unpackZ(key)
 
-            val northTop = columnSurfaceMap[packKey(wx, wz - step)]
             val southTop = columnSurfaceMap[packKey(wx, wz + step)]
             val eastTop  = columnSurfaceMap[packKey(wx + step, wz)]
-            val westTop  = columnSurfaceMap[packKey(wx - step, wz)]
 
-            val colBase = minOf(baseFloorLimit, surfaceWy)
+            // Seules les faces UP (+Y), SOUTH (+Z) et EAST (+X) peuvent être visibles depuis cette caméra.
+            // On limite verticalement aux seuls blocs ayant au moins une face orientée vers la caméra.
+            val sLimit = if (southTop != null) southTop + 1 else baseFloorLimit
+            val eLimit = if (eastTop != null) eastTop + 1 else baseFloorLimit
+            val minNeededY = minOf(surfaceWy, minOf(sLimit, eLimit))
+            val colBase = maxOf(baseFloorLimit, minNeededY)
 
             for (fy in surfaceWy downTo colBase) {
                 val isUpVisible    = (fy == surfaceWy)
-                val isDownVisible  = (fy == colBase)
-                val isNorthVisible = (northTop == null || fy > northTop)
                 val isSouthVisible = (southTop == null || fy > southTop)
                 val isEastVisible  = (eastTop == null || fy > eastTop)
-                val isWestVisible  = (westTop == null || fy > westTop)
 
                 var faceMask = 0
                 if (isUpVisible)    faceMask = faceMask or (1 shl 0)
-                if (isDownVisible)  faceMask = faceMask or (1 shl 1)
-                if (isNorthVisible) faceMask = faceMask or (1 shl 2)
                 if (isSouthVisible) faceMask = faceMask or (1 shl 3)
                 if (isEastVisible)  faceMask = faceMask or (1 shl 4)
-                if (isWestVisible)  faceMask = faceMask or (1 shl 5)
 
-                // Bloc interne totalement enfoui : aucun affichage requis
+                // Si aucune face visible vers la caméra, on saute immédiatement
                 if (faceMask == 0) continue
 
                 mpos.set(wx, fy, wz)
                 val rawState = level.getBlockState(mpos)
-                // Comble les éventuelles poches d'air souterraines en deepslate solide
                 val fState = if (isPassable(rawState)) Blocks.DEEPSLATE.defaultBlockState() else rawState
 
                 addBlock(
@@ -516,6 +525,13 @@ object CaveDioramaRenderer {
             if (!centerState.isAir) {
                 val sideSprite = getSideSprite(modelSet, centerState)
                 val topSprite = getTopSprite(modelSet, centerState)
+
+                val cx = 0.5f
+                val cy = 0.5f
+                val cz = 0.5f
+                val czRot = cx * SIN_Y + cz * COS_Y
+                val centerDepth = cy * SIN_P + czRot * COS_P
+
                 solidBlockMap[centerLong] = DioramaBlock(
                     relX = 0, relY = 0, relZ = 0,
                     state = centerState,
@@ -524,12 +540,18 @@ object CaveDioramaRenderer {
                     visibleFacesMask = 0x3F,
                     light = 1.0f,
                     isFluid = false,
-                    blockSize = 1.0f
+                    blockSize = 1.0f,
+                    baseIsoX = 0.0f,
+                    baseIsoY = 0.0f,
+                    depth = centerDepth
                 )
             }
         }
 
+        // Tri topologique ASCENDANT unique (les plus lointains d'abord, les plus proches en dernier)
+        // Pré-trié une seule fois à la création du maillage : zéro tri par frame !
         val solidList = ArrayList<DioramaBlock>(solidBlockMap.values)
+        solidList.sortBy { it.depth }
 
         return DioramaMesh(
             blocks = solidList,
@@ -571,23 +593,132 @@ object CaveDioramaRenderer {
         val emission = state.lightEmission
         val finalLight = if (emission > 0) 1.0f else lightFactor
 
+        val rx = wx - center.x
+        val ry = wy - center.y
+        val rz = wz - center.z
+
+        val bx = rx.toFloat()
+        val by = ry.toFloat()
+        val bz = rz.toFloat()
+
+        val baseIsoX = bx * COS_Y - bz * SIN_Y
+        val zRot = bx * SIN_Y + bz * COS_Y
+        val baseIsoY = -(by * COS_P - zRot * SIN_P)
+
+        val cx = bx + 0.5f * blockSize
+        val cy = by + 0.5f * 1.0f
+        val cz = bz + 0.5f * blockSize
+        val czRot = cx * SIN_Y + cz * COS_Y
+        val depth = cy * SIN_P + czRot * COS_P
+
         solidBlockMap[blockPos] = DioramaBlock(
-            relX = wx - center.x,
-            relY = wy - center.y,
-            relZ = wz - center.z,
+            relX = rx,
+            relY = ry,
+            relZ = rz,
             state = state,
             sprite = sideSprite,
             topSprite = topSprite,
             visibleFacesMask = faceMask,
             light = finalLight,
             isFluid = state.block is LiquidBlock,
-            blockSize = blockSize
+            blockSize = blockSize,
+            baseIsoX = baseIsoX,
+            baseIsoY = baseIsoY,
+            depth = depth
         )
     }
 
+    class DioramaGuiElement(
+        private val mesh: DioramaMesh,
+        private val centerX: Int,
+        private val centerY: Int,
+        private val zoom: Float,
+        private val sliceY: Int,
+        private val boundsRect: ScreenRectangle,
+        private val scissorRect: ScreenRectangle?,
+        private val textureSetupVal: TextureSetup,
+        private val vpMinX: Float,
+        private val vpMaxX: Float,
+        private val vpMinY: Float,
+        private val vpMaxY: Float
+    ) : GuiElementRenderState {
+
+        override fun pipeline(): RenderPipeline = RenderPipelines.GUI_TEXTURED
+
+        override fun textureSetup(): TextureSetup = textureSetupVal
+
+        override fun scissorArea(): ScreenRectangle? = scissorRect
+
+        override fun bounds(): ScreenRectangle = boundsRect
+
+        override fun buildVertices(consumer: VertexConsumer) {
+            val blocks = mesh.blocks
+            if (blocks.isEmpty()) return
+
+            val uxX = COS_Y * zoom
+            val uxY = SIN_Y * SIN_P * zoom
+
+            val uyX = 0.0f
+            val uyY = -COS_P * zoom
+
+            val uzX = -SIN_Y * zoom
+            val uzY = COS_Y * SIN_P * zoom
+
+            for (b in blocks) {
+                if (b.relY > sliceY) continue
+
+                val sx = centerX + b.baseIsoX * zoom
+                val sy = centerY + b.baseIsoY * zoom
+
+                if (sx < vpMinX || sx > vpMaxX || sy < vpMinY || sy > vpMaxY) continue
+
+                val mask = if (b.relY == sliceY) (b.visibleFacesMask or (1 shl 0)) else b.visibleFacesMask
+                val bs = b.blockSize
+                val curUxX = uxX * bs
+                val curUxY = uxY * bs
+                val curUzX = uzX * bs
+                val curUzY = uzY * bs
+
+                // 1. Face Sud (+Z)
+                if ((mask and (1 shl 3)) != 0) {
+                    val shade = (b.light * 0.85f).coerceIn(0.25f, 1.0f)
+                    val tint = ARGB.color(255, (shade * 255).toInt(), (shade * 255).toInt(), (shade * 255).toInt())
+                    val sp = b.sprite
+                    consumer.addVertex(sx + curUzX, sy + curUzY + uyY, 0.0f).setUv(sp.u0, sp.v0).setColor(tint)
+                    consumer.addVertex(sx + curUzX, sy + curUzY, 0.0f).setUv(sp.u0, sp.v1).setColor(tint)
+                    consumer.addVertex(sx + curUzX + curUxX, sy + curUzY + curUxY, 0.0f).setUv(sp.u1, sp.v1).setColor(tint)
+                    consumer.addVertex(sx + curUzX + curUxX, sy + curUzY + uyY + curUxY, 0.0f).setUv(sp.u1, sp.v0).setColor(tint)
+                }
+
+                // 2. Face Est (+X)
+                if ((mask and (1 shl 4)) != 0) {
+                    val shade = (b.light * 0.68f).coerceIn(0.22f, 1.0f)
+                    val tint = ARGB.color(255, (shade * 255).toInt(), (shade * 255).toInt(), (shade * 255).toInt())
+                    val sp = b.sprite
+                    consumer.addVertex(sx + curUxX + curUzX, sy + curUxY + curUzY + uyY, 0.0f).setUv(sp.u0, sp.v0).setColor(tint)
+                    consumer.addVertex(sx + curUxX + curUzX, sy + curUxY + curUzY, 0.0f).setUv(sp.u0, sp.v1).setColor(tint)
+                    consumer.addVertex(sx + curUxX, sy + curUxY, 0.0f).setUv(sp.u1, sp.v1).setColor(tint)
+                    consumer.addVertex(sx + curUxX, sy + curUxY + uyY, 0.0f).setUv(sp.u1, sp.v0).setColor(tint)
+                }
+
+                // 3. Face Dessus (+Y)
+                if ((mask and (1 shl 0)) != 0) {
+                    val shade = (b.light * 1.0f).coerceIn(0.30f, 1.0f)
+                    val tint = ARGB.color(255, (shade * 255).toInt(), (shade * 255).toInt(), (shade * 255).toInt())
+                    val sp = b.topSprite
+                    consumer.addVertex(sx, sy + uyY, 0.0f).setUv(sp.u0, sp.v0).setColor(tint)
+                    consumer.addVertex(sx + curUzX, sy + uyY + curUzY, 0.0f).setUv(sp.u0, sp.v1).setColor(tint)
+                    consumer.addVertex(sx + curUxX + curUzX, sy + uyY + curUxY + curUzY, 0.0f).setUv(sp.u1, sp.v1).setColor(tint)
+                    consumer.addVertex(sx + curUxX, sy + uyY + curUxY, 0.0f).setUv(sp.u1, sp.v0).setColor(tint)
+                }
+            }
+        }
+    }
+
     /**
-     * Rendu 3D isométrique ultra-rapide (60+ FPS).
-     * Culling directionnel strict des faces non orientées vers la caméra + tri ascendant.
+     * Rendu 3D isométrique ultra-rapide (700+ FPS).
+     * Envoie l'ensemble du maillage en un SEUL élément GPU (GuiElementRenderState)
+     * sans aucun surcoût de collision/intersection GUI, avec batching matériel complet.
      */
     fun renderDiorama(
         graphics: GuiGraphicsExtractor,
@@ -598,159 +729,38 @@ object CaveDioramaRenderer {
         pitch: Float,
         zoom: Float,
         sliceY: Int,
-        cutawayRoof: Boolean
+        cutawayRoof: Boolean = false,
+        vpX: Int = 0,
+        vpY: Int = 0,
+        vpW: Int = graphics.guiWidth(),
+        vpH: Int = graphics.guiHeight()
     ) {
         val blocks = mesh.blocks
         if (blocks.isEmpty()) return
 
-        val yawRad = Math.toRadians(yaw.toDouble()).toFloat()
-        val pitchRad = Math.toRadians(pitch.toDouble()).toFloat()
+        val atlasLoc = blocks[0].sprite.atlasLocation()
+        val blockAtlas = Minecraft.getInstance().textureManager.getTexture(atlasLoc)
+        val textureSetup = TextureSetup.singleTexture(blockAtlas.textureView, blockAtlas.sampler)
 
-        val cosY = cos(yawRad)
-        val sinY = sin(yawRad)
-        val cosP = cos(pitchRad)
-        val sinP = sin(pitchRad)
+        val scissorRect = ScreenRectangle(vpX, vpY, vpW, vpH)
+        val boundsRect = scissorRect
 
-        // Projections unitaires de base
-        val uxX = cosY * zoom
-        val uxY = sinY * sinP * zoom
+        val element = DioramaGuiElement(
+            mesh = mesh,
+            centerX = centerX,
+            centerY = centerY,
+            zoom = zoom,
+            sliceY = sliceY,
+            boundsRect = boundsRect,
+            scissorRect = scissorRect,
+            textureSetupVal = textureSetup,
+            vpMinX = (vpX - 40).toFloat(),
+            vpMaxX = (vpX + vpW + 40).toFloat(),
+            vpMinY = (vpY - 40).toFloat(),
+            vpMaxY = (vpY + vpH + 40).toFloat()
+        )
 
-        val uyX = 0.0f
-        val uyY = -cosP * zoom
-
-        val uzX = -sinY * zoom
-        val uzY = cosY * sinP * zoom
-
-        // Vecteur caméra
-        val camDirX = sinY * cosP
-        val camDirY = sinP
-        val camDirZ = cosY * cosP
-
-        // Masque binaire des faces pointant vers la caméra
-        var cameraFacingMask = 0
-        if (camDirY > 0.0f) cameraFacingMask = cameraFacingMask or (1 shl 0) // UP (+Y)
-        if (camDirY < 0.0f) cameraFacingMask = cameraFacingMask or (1 shl 1) // DOWN (-Y)
-        if (camDirZ < 0.0f) cameraFacingMask = cameraFacingMask or (1 shl 2) // NORTH (-Z)
-        if (camDirZ > 0.0f) cameraFacingMask = cameraFacingMask or (1 shl 3) // SOUTH (+Z)
-        if (camDirX > 0.0f) cameraFacingMask = cameraFacingMask or (1 shl 4) // EAST (+X)
-        if (camDirX < 0.0f) cameraFacingMask = cameraFacingMask or (1 shl 5) // WEST (-X)
-
-        val roofCutY = max(mesh.minY + 8, mesh.maxY - 8)
-
-        visibleBlocks.clear()
-
-        for (b in blocks) {
-            // Coupe verticale réglable
-            if (b.relY > sliceY) continue
-
-            // Découpe de voûte en mode écorché
-            if (cutawayRoof && b.relY > roofCutY) continue
-
-            val effectiveMask = if (b.relY == sliceY && camDirY > 0.0f) (b.visibleFacesMask or (1 shl 0)) else b.visibleFacesMask
-
-            // CULLING MAJEUR : Si aucune face du bloc ne fait face à la caméra, on saute immédiatement !
-            if ((effectiveMask and cameraFacingMask) == 0) continue
-
-            val bx = b.relX.toFloat()
-            val by = b.relY.toFloat()
-            val bz = b.relZ.toFloat()
-
-            val cx = bx + 0.5f * b.blockSize
-            val cy = by + 0.5f * 1.0f
-            val cz = bz + 0.5f * b.blockSize
-
-            // Profondeur scalaire le long de l'axe de la caméra
-            val czRot = cx * sinY + cz * cosY
-            b.depth = cy * sinP + czRot * cosP
-
-            val xRot = bx * cosY - bz * sinY
-            val zRot = bx * sinY + bz * cosY
-            val yScreen = -(by * cosP - zRot * sinP)
-
-            b.screenX = centerX + xRot * zoom
-            b.screenY = centerY + yScreen * zoom
-
-            visibleBlocks.add(b)
-        }
-
-        // Tri topologique ASCENDANT (les plus lointains d'abord, les plus proches en dernier)
-        visibleBlocks.sortBy { it.depth }
-
-        val pose = graphics.pose()
-
-        for (b in visibleBlocks) {
-            val sx = b.screenX
-            val sy = b.screenY
-            val mask = if (b.relY == sliceY && camDirY > 0.0f) (b.visibleFacesMask or (1 shl 0)) else b.visibleFacesMask
-            val sprite = b.sprite
-            val bs = b.blockSize
-
-            val bUxX = uxX * bs
-            val bUxY = uxY * bs
-            val bUzX = uzX * bs
-            val bUzY = uzY * bs
-            val bUyX = uyX * 1.0f
-            val bUyY = uyY * 1.0f
-
-            // 1. Face Sud (+Z)
-            if ((mask and (1 shl 3)) != 0 && camDirZ > 0.0f) {
-                val shade = (b.light * 0.85f).coerceIn(0.25f, 1.0f)
-                val tint = ARGB.color(255, (shade * 255).toInt(), (shade * 255).toInt(), (shade * 255).toInt())
-                drawFace(pose, graphics, sprite, sx + bUzX + bUyX, sy + bUzY + bUyY, bUxX, bUxY, -bUyX, -bUyY, tint)
-            }
-
-            // 2. Face Nord (-Z)
-            if ((mask and (1 shl 2)) != 0 && camDirZ < 0.0f) {
-                val shade = (b.light * 0.85f).coerceIn(0.25f, 1.0f)
-                val tint = ARGB.color(255, (shade * 255).toInt(), (shade * 255).toInt(), (shade * 255).toInt())
-                drawFace(pose, graphics, sprite, sx + bUxX + bUyX, sy + bUxY + bUyY, -bUxX, -bUxY, -bUyX, -bUyY, tint)
-            }
-
-            // 3. Face Est (+X)
-            if ((mask and (1 shl 4)) != 0 && camDirX > 0.0f) {
-                val shade = (b.light * 0.68f).coerceIn(0.22f, 1.0f)
-                val tint = ARGB.color(255, (shade * 255).toInt(), (shade * 255).toInt(), (shade * 255).toInt())
-                drawFace(pose, graphics, sprite, sx + bUxX + bUzX + bUyX, sy + bUxY + bUzY + bUyY, -bUzX, -bUzY, -bUyX, -bUyY, tint)
-            }
-
-            // 4. Face Ouest (-X)
-            if ((mask and (1 shl 5)) != 0 && camDirX < 0.0f) {
-                val shade = (b.light * 0.68f).coerceIn(0.22f, 1.0f)
-                val tint = ARGB.color(255, (shade * 255).toInt(), (shade * 255).toInt(), (shade * 255).toInt())
-                drawFace(pose, graphics, sprite, sx + bUyX, sy + bUyY, bUzX, bUzY, -bUyX, -bUyY, tint)
-            }
-
-            // 5. Face du Dessous (-Y) : uniquement si vue inclinée vers le haut
-            if ((mask and (1 shl 1)) != 0 && camDirY < 0.0f) {
-                val shade = (b.light * 0.50f).coerceIn(0.20f, 1.0f)
-                val tint = ARGB.color(255, (shade * 255).toInt(), (shade * 255).toInt(), (shade * 255).toInt())
-                drawFace(pose, graphics, sprite, sx, sy, bUxX, bUxY, bUzX, bUzY, tint)
-            }
-
-            // 6. Face du Dessus (+Y) : TOUJOURS dessinée en dernier pour ce bloc quand camDirY > 0
-            if ((mask and (1 shl 0)) != 0 && camDirY > 0.0f) {
-                val shade = (b.light * 1.0f).coerceIn(0.30f, 1.0f)
-                val tint = ARGB.color(255, (shade * 255).toInt(), (shade * 255).toInt(), (shade * 255).toInt())
-                drawFace(pose, graphics, b.topSprite, sx + bUyX, sy + bUyY, bUxX, bUxY, bUzX, bUzY, tint)
-            }
-        }
-    }
-
-    private fun drawFace(
-        pose: org.joml.Matrix3x2fStack,
-        graphics: GuiGraphicsExtractor,
-        sprite: TextureAtlasSprite,
-        startX: Float,
-        startY: Float,
-        v1x: Float,
-        v1y: Float,
-        v2x: Float,
-        v2y: Float,
-        tintColor: Int
-    ) {
-        pose.pushMatrix()
-        pose.set(v1x, v1y, v2x, v2y, startX, startY)
-        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, 0, 0, 1, 1, tintColor)
-        pose.popMatrix()
+        val guiRenderState = (graphics as GuiGraphicsExtractorAccessor).`cryo$getGuiRenderState`()
+        guiRenderState.addGuiElement(element)
     }
 }

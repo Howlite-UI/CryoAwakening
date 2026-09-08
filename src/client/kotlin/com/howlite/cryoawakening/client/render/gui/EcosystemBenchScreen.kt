@@ -104,7 +104,7 @@ class EcosystemBenchScreen(val benchPos: BlockPos) : Screen(
         val vpH = h - 68
 
         if (vpW > 50 && vpH > 50) {
-            graphics.enableScissor(vpX, vpY, vpW, vpH)
+            graphics.enableScissor(vpX, vpY, vpX + vpW, vpY + vpH)
 
             val originX = vpX + vpW / 2 + panX.toInt()
             val originY = vpY + vpH / 2 + panY.toInt()
@@ -120,7 +120,11 @@ class EcosystemBenchScreen(val benchPos: BlockPos) : Screen(
                     pitch = pitch,
                     zoom = zoom,
                     sliceY = sliceY,
-                    cutawayRoof = false
+                    cutawayRoof = false,
+                    vpX = vpX,
+                    vpY = vpY,
+                    vpW = vpW,
+                    vpH = vpH
                 )
             }
 
