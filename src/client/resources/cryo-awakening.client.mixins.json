@@ -9,7 +9,9 @@
 		"GameRendererMixin",
 		"MouseHandlerMixin",
 		"MinecraftMixin",
-		"GuiGraphicsExtractorAccessor"
+		"GuiGraphicsExtractorAccessor",
+		"ConditionalItemModelPropertiesMixin",
+		"RangeSelectItemModelPropertiesMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

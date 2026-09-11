@@ -56,6 +56,41 @@ object CaveDioramaRenderer {
     /**
      * Représente un bloc de paroi/sol/plafond/pilier de la grotte.
      */
+    enum class SchematicMaterial(
+        val topColor: Int,
+        val southColor: Int,
+        val eastColor: Int
+    ) {
+        ROCK(0xFFEDE4D0.toInt(), 0xFFDACDB3.toInt(), 0xFFBEAF92.toInt()),
+        ICE(0xFFCCE7F5.toInt(), 0xFF9DC6E0.toInt(), 0xFF76A6C5.toInt()),
+        SNOW(0xFFF9FAFC.toInt(), 0xFFE2E7ED.toInt(), 0xFFCAD3DD.toInt()),
+        PILLAR(0xFF3D4046.toInt(), 0xFF2C2E33.toInt(), 0xFF1E2024.toInt()),
+        WOOD(0xFFC4B4A4.toInt(), 0xFFA69584.toInt(), 0xFF887766.toInt()),
+        ORE_BISMUTH(0xFFF43F5E.toInt(), 0xFFE11D48.toInt(), 0xFFBE123C.toInt()),
+        ORE_TELLURIUM(0xFFF59E0B.toInt(), 0xFFD97706.toInt(), 0xFFB45309.toInt()),
+        ORE_DIAMOND(0xFF06B6D4.toInt(), 0xFF0891B2.toInt(), 0xFF0E7490.toInt()),
+        ORE_OTHER(0xFFE2E8F0.toInt(), 0xFFCBD5E1.toInt(), 0xFF94A3B8.toInt()),
+        BENCH(0xFFFBBF24.toInt(), 0xFFF59E0B.toInt(), 0xFFD97706.toInt());
+    }
+
+    data class SurfaceInfo(
+        val surfaceRelY: Int,
+        val mat: SchematicMaterial
+    )
+
+    data class CalloutAnchor(
+        val label: String,
+        val subLabel: String? = null,
+        val relX: Float,
+        val relY: Float,
+        val relZ: Float,
+        val targetDirX: Float = 1.0f,
+        val targetDirY: Float = -1.0f
+    )
+
+    /**
+     * Représente un bloc de paroi/sol/plafond/pilier de la grotte.
+     */
     class DioramaBlock(
         val relX: Int,
         val relY: Int,
@@ -69,7 +104,8 @@ object CaveDioramaRenderer {
         val blockSize: Float = 1.0f,
         val baseIsoX: Float = 0.0f,
         val baseIsoY: Float = 0.0f,
-        val depth: Float = 0.0f
+        val depth: Float = 0.0f,
+        val mat: SchematicMaterial = SchematicMaterial.ROCK
     )
 
     data class DioramaMesh(
@@ -88,8 +124,31 @@ object CaveDioramaRenderer {
         val diamondCount: Int,
         val otherOreCount: Int,
         val radiusUsed: Int,
-        val isFullBiome: Boolean
+        val isFullBiome: Boolean,
+        val whiteSprite: TextureAtlasSprite? = null,
+        val surfaceMap: Map<Long, SurfaceInfo> = emptyMap(),
+        val callouts: List<CalloutAnchor> = emptyList()
     )
+
+    fun getSchematicMaterial(state: BlockState, isPillar: Boolean = false): SchematicMaterial {
+        if (state.`is`(ModBlocks.ECOSYSTEM_BENCH)) return SchematicMaterial.BENCH
+        if (isPillar) return SchematicMaterial.PILLAR
+        if (state.`is`(ModBlocks.BISMUTH_ORE_SHIVERING_SHALE)) return SchematicMaterial.ORE_BISMUTH
+        if (state.`is`(ModBlocks.TELLURIUM_ORE)) return SchematicMaterial.ORE_TELLURIUM
+        val b = state.block
+        if (b == Blocks.DIAMOND_ORE || b == Blocks.DEEPSLATE_DIAMOND_ORE) return SchematicMaterial.ORE_DIAMOND
+
+        if (state.`is`(Blocks.ICE) || state.`is`(Blocks.PACKED_ICE) || state.`is`(Blocks.BLUE_ICE) || state.block is LiquidBlock) {
+            return SchematicMaterial.ICE
+        }
+        if (state.`is`(Blocks.SNOW) || state.`is`(Blocks.SNOW_BLOCK) || state.`is`(Blocks.POWDER_SNOW) || state.`is`(ModBlocks.RIMECRUST_LICHEN)) {
+            return SchematicMaterial.SNOW
+        }
+        if (isDetailedBlock(state) && (state.`is`(BlockTags.LOGS) || state.`is`(BlockTags.LEAVES) || state.`is`(ModBlocks.PETRIFIED_LILAC_LEAVES) || state.`is`(ModBlocks.PETRIFIED_ANCIENT_LILAC_LOG))) {
+            return SchematicMaterial.WOOD
+        }
+        return SchematicMaterial.ROCK
+    }
 
     private val topSpriteCache = HashMap<BlockState, TextureAtlasSprite>()
     private val sideSpriteCache = HashMap<BlockState, TextureAtlasSprite>()
@@ -158,6 +217,7 @@ object CaveDioramaRenderer {
         if (state.isAir) return false
         val b = state.block
         if (b is LeavesBlock || state.`is`(BlockTags.LEAVES)) return true
+        if (state.`is`(ModBlocks.PETRIFIED_LILAC_LEAVES)) return true
         if (state.`is`(BlockTags.LOGS)) return true
         if (state.`is`(BlockTags.PLANKS)) return true
         if (state.`is`(BlockTags.WOODEN_SLABS) || state.`is`(BlockTags.WOODEN_STAIRS) || state.`is`(BlockTags.WOODEN_FENCES)) return true
@@ -184,8 +244,8 @@ object CaveDioramaRenderer {
         if (neighbor.isSolidRender) return true
 
         // Deux feuilles adjacentes masquent la face mitoyenne
-        val curIsLeaves = current.block is LeavesBlock || current.`is`(BlockTags.LEAVES)
-        val nbrIsLeaves = neighbor.block is LeavesBlock || neighbor.`is`(BlockTags.LEAVES)
+        val curIsLeaves = current.block is LeavesBlock || current.`is`(BlockTags.LEAVES) || current.`is`(ModBlocks.PETRIFIED_LILAC_LEAVES)
+        val nbrIsLeaves = neighbor.block is LeavesBlock || neighbor.`is`(BlockTags.LEAVES) || neighbor.`is`(ModBlocks.PETRIFIED_LILAC_LEAVES)
         if (curIsLeaves && nbrIsLeaves) return true
 
         // Un tronc mitoyen à une feuille masque la face commune
@@ -522,6 +582,7 @@ object CaveDioramaRenderer {
                 mpos.set(wx, fy, wz)
                 val rawState = level.getBlockState(mpos)
                 val fState = if (isPassable(rawState) || isDetailedBlock(rawState)) Blocks.DEEPSLATE.defaultBlockState() else rawState
+                val isPillarCol = isCryoCaverns && isNearPillar(wx, wz, domeSeed)
 
                 addBlock(
                     level = level,
@@ -531,7 +592,8 @@ object CaveDioramaRenderer {
                     state = fState,
                     faceMask = faceMask,
                     center = center,
-                    blockSize = blockSize
+                    blockSize = blockSize,
+                    isPillar = isPillarCol
                 )
 
                 // Télémétrie minerais
@@ -640,7 +702,8 @@ object CaveDioramaRenderer {
                                 state = s,
                                 faceMask = faceMask,
                                 center = center,
-                                blockSize = 1.0f
+                                blockSize = 1.0f,
+                                isPillar = false
                             )
 
                             val relX = wx - center.x
@@ -683,7 +746,8 @@ object CaveDioramaRenderer {
                     blockSize = 1.0f,
                     baseIsoX = 0.0f,
                     baseIsoY = 0.0f,
-                    depth = centerDepth
+                    depth = centerDepth,
+                    mat = SchematicMaterial.BENCH
                 )
             }
         }
@@ -692,6 +756,52 @@ object CaveDioramaRenderer {
         // Pré-trié une seule fois à la création du maillage : zéro tri par frame !
         val solidList = ArrayList<DioramaBlock>(solidBlockMap.values)
         solidList.sortBy { it.depth }
+
+        val snowSprite = try {
+            modelSet.getParticleMaterial(Blocks.SNOW_BLOCK.defaultBlockState()).sprite()
+        } catch (e: Exception) {
+            null
+        }
+
+        // Construction de la map de surface (altitude maximale et matériau par colonne relative X, Z)
+        val surfaceMap = HashMap<Long, SurfaceInfo>(solidBlockMap.size / 2)
+        var samplePillarBlock: DioramaBlock? = null
+        var sampleIceBlock: DioramaBlock? = null
+        var sampleOreBlock: DioramaBlock? = null
+        var sampleWoodBlock: DioramaBlock? = null
+
+        for (b in solidBlockMap.values) {
+            // Seuls les blocs de terrain, piliers et établi constituent le relief topographique
+            // Les feuilles et branches détaillées ne déforment pas les courbes de niveau du sol
+            if (!isDetailedBlock(b.state) || b.mat == SchematicMaterial.BENCH || b.mat == SchematicMaterial.PILLAR) {
+                val key = packKey(b.relX, b.relZ)
+                val existing = surfaceMap[key]
+                if (existing == null || b.relY > existing.surfaceRelY) {
+                    surfaceMap[key] = SurfaceInfo(b.relY, b.mat)
+                }
+            }
+
+            if (samplePillarBlock == null && b.mat == SchematicMaterial.PILLAR && b.relY > -42) samplePillarBlock = b
+            if (sampleIceBlock == null && b.mat == SchematicMaterial.ICE) sampleIceBlock = b
+            if (sampleOreBlock == null && (b.mat == SchematicMaterial.ORE_BISMUTH || b.mat == SchematicMaterial.ORE_TELLURIUM || b.mat == SchematicMaterial.ORE_DIAMOND)) sampleOreBlock = b
+            if (sampleWoodBlock == null && b.mat == SchematicMaterial.WOOD) sampleWoodBlock = b
+        }
+
+        val callouts = ArrayList<CalloutAnchor>()
+        callouts.add(CalloutAnchor("ÉTABLI", "STATION EXPÉDITION", 0f, 0f, 0f, 0f, -1.0f))
+
+        if (samplePillarBlock != null) {
+            callouts.add(CalloutAnchor("STRUCTURE", "PILIER DE GABBRO", samplePillarBlock.relX.toFloat(), samplePillarBlock.relY.toFloat(), samplePillarBlock.relZ.toFloat(), -1.0f, -1.0f))
+        }
+        if (sampleIceBlock != null) {
+            callouts.add(CalloutAnchor("GROTTE DE GLACE", "LACS & GOURS", sampleIceBlock.relX.toFloat(), sampleIceBlock.relY.toFloat(), sampleIceBlock.relZ.toFloat(), 1.0f, 1.0f))
+        }
+        if (sampleWoodBlock != null) {
+            callouts.add(CalloutAnchor("LILAS PÉTRIFIÉ", "VESTIGES GÉOLOGIQUES", sampleWoodBlock.relX.toFloat(), sampleWoodBlock.relY.toFloat(), sampleWoodBlock.relZ.toFloat(), -1.0f, 1.0f))
+        }
+        if (sampleOreBlock != null) {
+            callouts.add(CalloutAnchor("FILON MINÉRAL", "GISEMENTS DÉTECTÉS", sampleOreBlock.relX.toFloat(), sampleOreBlock.relY.toFloat(), sampleOreBlock.relZ.toFloat(), 1.0f, -0.6f))
+        }
 
         return DioramaMesh(
             blocks = solidList,
@@ -706,7 +816,10 @@ object CaveDioramaRenderer {
             diamondCount = diamondCount,
             otherOreCount = otherOreCount,
             radiusUsed = if (isFullBiome) max(scanRadiusX, scanRadiusZ) else scanRadius,
-            isFullBiome = isFullBiome
+            isFullBiome = isFullBiome,
+            whiteSprite = snowSprite,
+            surfaceMap = surfaceMap,
+            callouts = callouts
         )
     }
 
@@ -718,7 +831,8 @@ object CaveDioramaRenderer {
         state: BlockState,
         faceMask: Int,
         center: BlockPos,
-        blockSize: Float
+        blockSize: Float,
+        isPillar: Boolean = false
     ) {
         val blockPos = BlockPos.asLong(wx, wy, wz)
         val existing = solidBlockMap[blockPos]
@@ -758,6 +872,8 @@ object CaveDioramaRenderer {
         val czRot = cx * SIN_Y + cz * COS_Y
         val depth = cy * SIN_P + czRot * COS_P
 
+        val mat = getSchematicMaterial(state, isPillar)
+
         solidBlockMap[blockPos] = DioramaBlock(
             relX = rx,
             relY = ry,
@@ -771,7 +887,8 @@ object CaveDioramaRenderer {
             blockSize = blockSize,
             baseIsoX = baseIsoX,
             baseIsoY = baseIsoY,
-            depth = depth
+            depth = depth,
+            mat = mat
         )
     }
 
@@ -787,7 +904,8 @@ object CaveDioramaRenderer {
         private val vpMinX: Float,
         private val vpMaxX: Float,
         private val vpMinY: Float,
-        private val vpMaxY: Float
+        private val vpMaxY: Float,
+        private val sketchMode: Boolean = true
     ) : GuiElementRenderState {
 
         override fun pipeline(): RenderPipeline = RenderPipelines.GUI_TEXTURED
@@ -811,6 +929,10 @@ object CaveDioramaRenderer {
             val uzX = -SIN_Y * zoom
             val uzY = COS_Y * SIN_P * zoom
 
+            val ws = mesh.whiteSprite
+            val whiteU = if (ws != null) (ws.u0 + ws.u1) * 0.5f else 0.0f
+            val whiteV = if (ws != null) (ws.v0 + ws.v1) * 0.5f else 0.0f
+
             for (b in blocks) {
                 if (b.relY > sliceY) continue
 
@@ -826,37 +948,93 @@ object CaveDioramaRenderer {
                 val curUzX = uzX * bs
                 val curUzY = uzY * bs
 
-                // 1. Face Sud (+Z)
-                if ((mask and (1 shl 3)) != 0) {
-                    val shade = (b.light * 0.85f).coerceIn(0.25f, 1.0f)
-                    val tint = ARGB.color(255, (shade * 255).toInt(), (shade * 255).toInt(), (shade * 255).toInt())
-                    val sp = b.sprite
-                    consumer.addVertex(sx + curUzX, sy + curUzY + uyY, 0.0f).setUv(sp.u0, sp.v0).setColor(tint)
-                    consumer.addVertex(sx + curUzX, sy + curUzY, 0.0f).setUv(sp.u0, sp.v1).setColor(tint)
-                    consumer.addVertex(sx + curUzX + curUxX, sy + curUzY + curUxY, 0.0f).setUv(sp.u1, sp.v1).setColor(tint)
-                    consumer.addVertex(sx + curUzX + curUxX, sy + curUzY + uyY + curUxY, 0.0f).setUv(sp.u1, sp.v0).setColor(tint)
-                }
+                // Coordonnées des 7 sommets visibles de l'isocube
+                val xTopBack = sx
+                val yTopBack = sy + uyY
 
-                // 2. Face Est (+X)
-                if ((mask and (1 shl 4)) != 0) {
-                    val shade = (b.light * 0.68f).coerceIn(0.22f, 1.0f)
-                    val tint = ARGB.color(255, (shade * 255).toInt(), (shade * 255).toInt(), (shade * 255).toInt())
-                    val sp = b.sprite
-                    consumer.addVertex(sx + curUxX + curUzX, sy + curUxY + curUzY + uyY, 0.0f).setUv(sp.u0, sp.v0).setColor(tint)
-                    consumer.addVertex(sx + curUxX + curUzX, sy + curUxY + curUzY, 0.0f).setUv(sp.u0, sp.v1).setColor(tint)
-                    consumer.addVertex(sx + curUxX, sy + curUxY, 0.0f).setUv(sp.u1, sp.v1).setColor(tint)
-                    consumer.addVertex(sx + curUxX, sy + curUxY + uyY, 0.0f).setUv(sp.u1, sp.v0).setColor(tint)
-                }
+                val xTopFL = sx + curUzX
+                val yTopFL = sy + uyY + curUzY
 
-                // 3. Face Dessus (+Y)
-                if ((mask and (1 shl 0)) != 0) {
-                    val shade = (b.light * 1.0f).coerceIn(0.30f, 1.0f)
-                    val tint = ARGB.color(255, (shade * 255).toInt(), (shade * 255).toInt(), (shade * 255).toInt())
-                    val sp = b.topSprite
-                    consumer.addVertex(sx, sy + uyY, 0.0f).setUv(sp.u0, sp.v0).setColor(tint)
-                    consumer.addVertex(sx + curUzX, sy + uyY + curUzY, 0.0f).setUv(sp.u0, sp.v1).setColor(tint)
-                    consumer.addVertex(sx + curUxX + curUzX, sy + uyY + curUxY + curUzY, 0.0f).setUv(sp.u1, sp.v1).setColor(tint)
-                    consumer.addVertex(sx + curUxX, sy + uyY + curUxY, 0.0f).setUv(sp.u1, sp.v0).setColor(tint)
+                val xTopFR = sx + curUxX + curUzX
+                val yTopFR = sy + uyY + curUxY + curUzY
+
+                val xTopBR = sx + curUxX
+                val yTopBR = sy + uyY + curUxY
+
+                val xBotFL = sx + curUzX
+                val yBotFL = sy + curUzY
+
+                val xBotFR = sx + curUxX + curUzX
+                val yBotFR = sy + curUxY + curUzY
+
+                val xBotBR = sx + curUxX
+                val yBotBR = sy + curUxY
+
+                val hasTop = (mask and (1 shl 0)) != 0
+                val hasSouth = (mask and (1 shl 3)) != 0
+                val hasEast = (mask and (1 shl 4)) != 0
+
+                if (sketchMode) {
+                    // ── RENDU CROQUIS : PASSE 1 - APLATS CEL-SHADÉS SANS TEXTURE ──
+                    val mat = b.mat
+
+                    // 1. Face Sud (+Z)
+                    if (hasSouth) {
+                        consumer.addVertex(xTopFL, yTopFL, 0.0f).setUv(whiteU, whiteV).setColor(mat.southColor)
+                        consumer.addVertex(xBotFL, yBotFL, 0.0f).setUv(whiteU, whiteV).setColor(mat.southColor)
+                        consumer.addVertex(xBotFR, yBotFR, 0.0f).setUv(whiteU, whiteV).setColor(mat.southColor)
+                        consumer.addVertex(xTopFR, yTopFR, 0.0f).setUv(whiteU, whiteV).setColor(mat.southColor)
+                    }
+
+                    // 2. Face Est (+X)
+                    if (hasEast) {
+                        consumer.addVertex(xTopFR, yTopFR, 0.0f).setUv(whiteU, whiteV).setColor(mat.eastColor)
+                        consumer.addVertex(xBotFR, yBotFR, 0.0f).setUv(whiteU, whiteV).setColor(mat.eastColor)
+                        consumer.addVertex(xBotBR, yBotBR, 0.0f).setUv(whiteU, whiteV).setColor(mat.eastColor)
+                        consumer.addVertex(xTopBR, yTopBR, 0.0f).setUv(whiteU, whiteV).setColor(mat.eastColor)
+                    }
+
+                    // 3. Face Dessus (+Y)
+                    if (hasTop) {
+                        consumer.addVertex(xTopBack, yTopBack, 0.0f).setUv(whiteU, whiteV).setColor(mat.topColor)
+                        consumer.addVertex(xTopFL, yTopFL, 0.0f).setUv(whiteU, whiteV).setColor(mat.topColor)
+                        consumer.addVertex(xTopFR, yTopFR, 0.0f).setUv(whiteU, whiteV).setColor(mat.topColor)
+                        consumer.addVertex(xTopBR, yTopBR, 0.0f).setUv(whiteU, whiteV).setColor(mat.topColor)
+                    }
+                } else {
+                    // ── RENDU RÉALISTE TEXTURÉ MINECRAFT ──
+                    // 1. Face Sud (+Z)
+                    if (hasSouth) {
+                        val shade = (b.light * 0.85f).coerceIn(0.25f, 1.0f)
+                        val tint = ARGB.color(255, (shade * 255).toInt(), (shade * 255).toInt(), (shade * 255).toInt())
+                        val sp = b.sprite
+                        consumer.addVertex(xTopFL, yTopFL, 0.0f).setUv(sp.u0, sp.v0).setColor(tint)
+                        consumer.addVertex(xBotFL, yBotFL, 0.0f).setUv(sp.u0, sp.v1).setColor(tint)
+                        consumer.addVertex(xBotFR, yBotFR, 0.0f).setUv(sp.u1, sp.v1).setColor(tint)
+                        consumer.addVertex(xTopFR, yTopFR, 0.0f).setUv(sp.u1, sp.v0).setColor(tint)
+                    }
+
+                    // 2. Face Est (+X)
+                    if (hasEast) {
+                        val shade = (b.light * 0.65f).coerceIn(0.20f, 1.0f)
+                        val tint = ARGB.color(255, (shade * 255).toInt(), (shade * 255).toInt(), (shade * 255).toInt())
+                        val sp = b.sprite
+                        consumer.addVertex(xTopFR, yTopFR, 0.0f).setUv(sp.u0, sp.v0).setColor(tint)
+                        consumer.addVertex(xBotFR, yBotFR, 0.0f).setUv(sp.u0, sp.v1).setColor(tint)
+                        consumer.addVertex(xBotBR, yBotBR, 0.0f).setUv(sp.u1, sp.v1).setColor(tint)
+                        consumer.addVertex(xTopBR, yTopBR, 0.0f).setUv(sp.u1, sp.v0).setColor(tint)
+                    }
+
+                    // 3. Face Dessus (+Y)
+                    if (hasTop) {
+                        val shade = b.light.coerceIn(0.35f, 1.0f)
+                        val tint = ARGB.color(255, (shade * 255).toInt(), (shade * 255).toInt(), (shade * 255).toInt())
+                        val sp = b.topSprite
+                        consumer.addVertex(xTopBack, yTopBack, 0.0f).setUv(sp.u0, sp.v0).setColor(tint)
+                        consumer.addVertex(xTopFL, yTopFL, 0.0f).setUv(sp.u0, sp.v1).setColor(tint)
+                        consumer.addVertex(xTopFR, yTopFR, 0.0f).setUv(sp.u1, sp.v1).setColor(tint)
+                        consumer.addVertex(xTopBR, yTopBR, 0.0f).setUv(sp.u1, sp.v0).setColor(tint)
+                    }
                 }
             }
         }
@@ -880,7 +1058,8 @@ object CaveDioramaRenderer {
         vpX: Int = 0,
         vpY: Int = 0,
         vpW: Int = graphics.guiWidth(),
-        vpH: Int = graphics.guiHeight()
+        vpH: Int = graphics.guiHeight(),
+        sketchMode: Boolean = true
     ) {
         val blocks = mesh.blocks
         if (blocks.isEmpty()) return
@@ -904,7 +1083,8 @@ object CaveDioramaRenderer {
             vpMinX = (vpX - 40).toFloat(),
             vpMaxX = (vpX + vpW + 40).toFloat(),
             vpMinY = (vpY - 40).toFloat(),
-            vpMaxY = (vpY + vpH + 40).toFloat()
+            vpMaxY = (vpY + vpH + 40).toFloat(),
+            sketchMode = sketchMode
         )
 
         val guiRenderState = (graphics as GuiGraphicsExtractorAccessor).`cryo$getGuiRenderState`()

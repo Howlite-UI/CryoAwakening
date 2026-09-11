@@ -50,17 +50,30 @@ object ModEntities {
             .eyeHeight(0.12f)
             .build(GALE_BOOMERANG_KEY)
 
+    val CLAWSHOT_ANCHOR_KEY: ResourceKey<EntityType<*>> =
+        ResourceKey.create(Registries.ENTITY_TYPE, CryoAwakening.id("clawshot_anchor"))
+
+    val CLAWSHOT_ANCHOR: EntityType<ClawshotAnchorEntity> =
+        EntityType.Builder.of(::ClawshotAnchorEntity, MobCategory.MISC)
+            .sized(0.45f, 0.45f)
+            .eyeHeight(0.22f)
+            .clientTrackingRange(64)
+            .updateInterval(1)
+            .build(CLAWSHOT_ANCHOR_KEY)
+
     fun register() {
         // Enregistrement dans le registre d'EntityType Fabric
         Registry.register(BuiltInRegistries.ENTITY_TYPE, GLACIOPOD_KEY, GLACIOPOD)
         Registry.register(BuiltInRegistries.ENTITY_TYPE, GAWKER_KEY, GAWKER)
         Registry.register(BuiltInRegistries.ENTITY_TYPE, GAWK_BOMB_KEY, GAWK_BOMB)
         Registry.register(BuiltInRegistries.ENTITY_TYPE, GALE_BOOMERANG_KEY, GALE_BOOMERANG)
+        Registry.register(BuiltInRegistries.ENTITY_TYPE, CLAWSHOT_ANCHOR_KEY, CLAWSHOT_ANCHOR)
 
         // Enregistrement des attributs par défaut (HP, Armor, Speed, Knockback)
         FabricDefaultAttributeRegistry.register(GLACIOPOD, GlaciopodEntity.createAttributes())
         FabricDefaultAttributeRegistry.register(GAWKER, GawkerEntity.createAttributes())
         FabricDefaultAttributeRegistry.register(GAWK_BOMB, GawkBombEntity.createAttributes())
         FabricDefaultAttributeRegistry.register(GALE_BOOMERANG, GaleBoomerangEntity.createAttributes())
+        FabricDefaultAttributeRegistry.register(CLAWSHOT_ANCHOR, ClawshotAnchorEntity.createAttributes())
     }
 }

@@ -164,5 +164,10 @@
   "gui.cryo-awakening.breeze_foundry.wind_cost": "Vent requis : %s V",
   "gui.cryo-awakening.breeze_foundry.craft_time": "Temps de fusion : %s s",
   "gui.cryo-awakening.value_settings.title": "Réglages de l'Échappement",
-  "item.cryo-awakening.gale_monocle": "Monocle de Bourrasque"
+  "item.cryo-awakening.gale_monocle": "Monocle de Bourrasque",
+  "item.cryo-awakening.clawshot": "Grappin Clawshot",
+  "entity.cryo-awakening.clawshot_anchor": "Ancre du Clawshot",
+  "item.cryo-awakening.clawshot.desc": "Grappin à chaîne articulée inspiré de Twilight Princess.",
+  "item.cryo-awakening.clawshot.hook": "Clic droit : Projette la tête pour s'agripper aux blocs ou attirer les créatures.",
+  "item.cryo-awakening.clawshot.safety": "Sécurité : Annule strictement tous les dégâts de chute lors de la traction."
 }

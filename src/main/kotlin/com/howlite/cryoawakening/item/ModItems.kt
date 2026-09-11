@@ -87,6 +87,14 @@ object ModItems {
             .attributes(GALE_BOOMERANG_ATTRIBUTES)
     )
 
+    val CLAWSHOT_KEY: ResourceKey<Item> = itemKey("clawshot")
+    val CLAWSHOT: Item = ClawshotItem(
+        Item.Properties()
+            .setId(CLAWSHOT_KEY)
+            .stacksTo(1)
+            .durability(512)
+    )
+
     val GAWKER_SPAWN_EGG_KEY: ResourceKey<Item> = itemKey("gawker_spawn_egg")
     val GAWKER_SPAWN_EGG: Item = SpawnEggItem(
         Item.Properties()
@@ -229,6 +237,7 @@ object ModItems {
         Registry.register(BuiltInRegistries.ITEM, GAWKER_FUR_KEY, GAWKER_FUR)
         Registry.register(BuiltInRegistries.ITEM, GAWK_BOMB_KEY, GAWK_BOMB)
         Registry.register(BuiltInRegistries.ITEM, GALE_BOOMERANG_KEY, GALE_BOOMERANG)
+        Registry.register(BuiltInRegistries.ITEM, CLAWSHOT_KEY, CLAWSHOT)
         Registry.register(BuiltInRegistries.ITEM, GAWKER_SPAWN_EGG_KEY, GAWKER_SPAWN_EGG)
 
         // Items Lumesh & Flore

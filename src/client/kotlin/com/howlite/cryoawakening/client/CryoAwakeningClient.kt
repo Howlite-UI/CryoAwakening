@@ -16,6 +16,7 @@ import com.howlite.cryoawakening.client.render.entity.GawkBombRenderer
 import com.howlite.cryoawakening.client.render.entity.GawkerRenderer
 import com.howlite.cryoawakening.client.render.entity.GlaciopodRenderer
 import com.howlite.cryoawakening.client.render.entity.GaleBoomerangRenderer
+import com.howlite.cryoawakening.client.render.entity.ClawshotAnchorEntityRenderer
 import com.howlite.cryoawakening.entity.ModEntities
 import com.howlite.cryoawakening.item.GeoArmorItem
 import com.howlite.cryoawakening.item.ModItems
@@ -56,6 +57,12 @@ object CryoAwakeningClient : ClientModInitializer {
 		EntityRenderers.register(
 			ModEntities.GALE_BOOMERANG,
 			::GaleBoomerangRenderer
+		)
+
+		// Enregistrement du renderer du Clawshot (grappin 3D Zelda TP)
+		EntityRenderers.register(
+			ModEntities.CLAWSHOT_ANCHOR,
+			::ClawshotAnchorEntityRenderer
 		)
 
 		// Enregistrement du gestionnaire de portage et lancer client du Gawker

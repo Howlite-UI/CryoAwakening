@@ -6,8 +6,11 @@ import com.howlite.cryoawakening.worldgen.CryoWorldGenConfig
 import com.howlite.cryoawakening.worldgen.biome.ModBiomes
 import com.mojang.serialization.Codec
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
 import net.minecraft.world.level.WorldGenLevel
 import net.minecraft.world.level.block.Blocks
+import net.minecraft.world.level.block.RotatedPillarBlock
+import net.minecraft.world.level.block.SnowLayerBlock
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.levelgen.feature.Feature
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext
@@ -423,6 +426,17 @@ class PillaredIceCaveFeature(codec: Codec<NoneFeatureConfiguration>) :
             }
         }
 
+        // 1.5. Décoration au sol : Vestiges d'anciens lilas pétrifiés (bûches + tas de feuilles pétrifiées)
+        val placedLilac = generatePetrifiedLilacRemains(
+            world, cxMin, cxMax, czMin, czMax,
+            centerX, centerZ, radX, radZ, domeSeed,
+            chunkX, chunkZ,
+            amp1, amp2, amp3, phi1, phi2, phi3
+        )
+        if (placedLilac) {
+            placedAny = true
+        }
+
         // ── GÉNÉRATION DU ROCHER GLACÉ DE SURFACE (INDICATEUR DE SURFACE & CRYO-VENTS) ──────────────
         val placedSurface = generateSurfaceRockOutcropping(world, cxMin, cxMax, czMin, czMax, centerX, centerZ, domeSeed)
         if (placedSurface) {
@@ -783,6 +797,179 @@ class PillaredIceCaveFeature(codec: Codec<NoneFeatureConfiguration>) :
         }
 
         return rawState
+    }
+
+    // ── VESTIGES DE LILAS PÉTRIFIÉ (BÛCHES & FEUILLES ÉCHELONNÉES) ───────────
+
+    /**
+     * Génère des vestiges d'anciens lilas pétrifiés au-dessus des plaques de Rimecrust Lichen :
+     * 2 à 3 bûches de bois pétrifié couchées ou partiellement dressées, accompagnées à leur base
+     * de plusieurs tas de feuilles de lilas pétrifié d'épaisseurs variées (1 à 7 couches).
+     */
+    private fun generatePetrifiedLilacRemains(
+        world: WorldGenLevel,
+        cxMin: Int, cxMax: Int,
+        czMin: Int, czMax: Int,
+        centerX: Int, centerZ: Int,
+        radX: Double, radZ: Double,
+        domeSeed: Long,
+        chunkX: Int, chunkZ: Int,
+        amp1: Double, amp2: Double, amp3: Double,
+        phi1: Double, phi2: Double, phi3: Double
+    ): Boolean {
+        val cSeed = chunkX.toLong() * 341873128712L xor chunkZ.toLong() * 132897987541L xor domeSeed xor 0x5A5AL
+
+        // 1 à 2 tentatives de vestiges par chunk
+        val attempts = if (hash1D(cSeed xor 0x1111L) < 0.70) 2 else 1
+        var placedAny = false
+
+        val mpos = BlockPos.MutableBlockPos()
+
+        for (attempt in 0 until attempts) {
+            val aSeed = cSeed xor (attempt.toLong() * 0x7777L)
+            val lx = 2 + (hash1D(aSeed xor 0x2222L) * 12).toInt() // 2..13
+            val lz = 2 + (hash1D(aSeed xor 0x3333L) * 12).toInt() // 2..13
+            val ox = cxMin + lx
+            val oz = czMin + lz
+
+            // 1. Vérification géométrique de l'intérieur de la cathédrale
+            val dx = (ox - centerX) / radX
+            val dz = (oz - centerZ) / radZ
+            val theta = atan2(dz, dx)
+            val harmonicDeform = 1.0 + amp1 * sin(2.0 * theta + phi1) + amp2 * cos(3.0 * theta + phi2) + amp3 * sin(5.0 * theta + phi3)
+            val dOvoid = sqrt(dx * dx + dz * dz) / harmonicDeform
+            if (dOvoid > 0.82) continue // Trop proche de la paroi ou hors de la cave
+
+            // 2. Localiser le vrai sol solide de la caverne à (ox, oz)
+            val groundY = findSolidGroundY(world, ox, oz, -49)
+            if (groundY == -999) continue
+
+            // 3. Le bloc au sol doit impérativement être du RIMECRUST_LICHEN
+            mpos.set(ox, groundY, oz)
+            val groundState = world.getBlockState(mpos)
+            if (!groundState.`is`(ModBlocks.RIMECRUST_LICHEN)) continue
+
+            // L'espace au-dessus doit être libre (air ou petit buisson à écraser)
+            mpos.set(ox, groundY + 1, oz)
+            val aboveState = world.getBlockState(mpos)
+            if (!aboveState.isAir && !aboveState.`is`(ModBlocks.SMALL_LICHEN_BUSH)) continue
+
+            // 4. Déterminer le pattern des bûches (2 ou 3 bûches de petrified ancient lilac log)
+            val styleSeed = aSeed xor 0x4444L
+            val logCount = if (hash1D(styleSeed xor 0x5555L) < 0.55) 2 else 3
+
+            // Orientation horizontale : axe X ou axe Z
+            val isAxisX = hash1D(styleSeed xor 0x6666L) < 0.50
+            val logAxis = if (isAxisX) Direction.Axis.X else Direction.Axis.Z
+            val dirX = if (isAxisX) 1 else 0
+            val dirZ = if (isAxisX) 0 else 1
+
+            // 30% de chance d'avoir une souche verticale résiduelle sur la première bûche
+            val hasStump = hash1D(styleSeed xor 0x7777L) < 0.30
+
+            val logPositions = ArrayList<BlockPos>()
+
+            for (i in 0 until logCount) {
+                val tx = ox + i * dirX
+                val tz = oz + i * dirZ
+
+                // Trouver le sol solide à cette colonne (ignore les buissons de lichen)
+                val ty = findSolidGroundY(world, tx, tz, groundY)
+                if (ty == -999) break
+
+                val targetGround = world.getBlockState(BlockPos(tx, ty, tz))
+                // On s'assure que le sol est solide et pas du vide ni un lac de glace
+                if (targetGround.isAir || targetGround.`is`(Blocks.BLUE_ICE)) break
+
+                val logPos = BlockPos(tx, ty + 1, tz)
+                val curAxis = if (hasStump && i == 0) Direction.Axis.Y else logAxis
+                val logState = ModBlocks.PETRIFIED_ANCIENT_LILAC_LOG.defaultBlockState().setValue(RotatedPillarBlock.AXIS, curAxis)
+                // Écrase et détruit tout buisson de lichen éventuellement présent
+                world.setBlock(logPos, logState, PLACE_FLAG)
+                logPositions.add(logPos)
+                placedAny = true
+            }
+
+            if (logPositions.isEmpty()) continue
+
+            // 5. Tas de feuilles de lilas pétrifié d'épaisseurs variées autour de la base des bûches
+            val candidateSet = LinkedHashSet<Pair<Int, Int>>()
+            for (lpos in logPositions) {
+                for (dxOff in -1..1) {
+                    for (dzOff in -1..1) {
+                        if (dxOff == 0 && dzOff == 0) continue
+                        val cxPos = lpos.x + dxOff
+                        val czPos = lpos.z + dzOff
+                        if (logPositions.none { it.x == cxPos && it.z == czPos }) {
+                            candidateSet.add(Pair(cxPos, czPos))
+                        }
+                    }
+                }
+            }
+
+            // Tri déterministe pour choisir 4 à 8 tas
+            val leafPileTarget = (4 + hash1D(styleSeed xor 0x8888L) * 5).toInt().coerceIn(4, candidateSet.size)
+            val sortedCandidates = candidateSet.toList().sortedBy { (cxPos, czPos) ->
+                hash2D(cxPos, czPos, styleSeed xor 0x9999L)
+            }
+
+            var pilesPlaced = 0
+            for ((idx, cand) in sortedCandidates.withIndex()) {
+                if (pilesPlaced >= leafPileTarget) break
+                val (lxPos, lzPos) = cand
+
+                // Trouver le sol solide sous cette position (ignore les buissons)
+                val ly = findSolidGroundY(world, lxPos, lzPos, groundY)
+                if (ly == -999) continue
+
+                val groundUnder = world.getBlockState(BlockPos(lxPos, ly, lzPos))
+                if (groundUnder.isAir || groundUnder.`is`(Blocks.BLUE_ICE)) continue
+
+                val targetLeafPos = BlockPos(lxPos, ly + 1, lzPos)
+                if (logPositions.contains(targetLeafPos)) continue
+
+                val existingAbove = world.getBlockState(targetLeafPos)
+                if (!existingAbove.isAir && !existingAbove.`is`(ModBlocks.SMALL_LICHEN_BUSH)) continue
+
+                // Épaisseur variée (LAYERS de 1 à 7) :
+                // Les tas directement collés au tronc sont plus épais (2 à 7), ceux plus dégagés sont plus fins (1 à 4)
+                val pSeed = styleSeed xor (idx.toLong() * 0x718281L)
+                val isDirectNeighbor = logPositions.any { abs(it.x - lxPos) + abs(it.z - lzPos) == 1 }
+                val layerCount = if (isDirectNeighbor) {
+                    (2 + (hash1D(pSeed) * 6).toInt()).coerceIn(1, 7)
+                } else {
+                    (1 + (hash1D(pSeed) * 4).toInt()).coerceIn(1, 4)
+                }
+
+                val leafState = ModBlocks.PETRIFIED_LILAC_LEAVES.defaultBlockState()
+                    .setValue(SnowLayerBlock.LAYERS, layerCount)
+
+                // Écrase et détruit tout buisson de lichen éventuellement présent
+                world.setBlock(targetLeafPos, leafState, PLACE_FLAG)
+                pilesPlaced++
+                placedAny = true
+            }
+        }
+
+        return placedAny
+    }
+
+    /**
+     * Localise l'altitude du véritable sol solide sous une colonne (colX, colZ) :
+     * ignore l'air, les buissons de lichen et les feuilles pétrifiées pour trouver
+     * la roche ou la rimecrust d'appui, évitant ainsi toute bûche ou feuille flottante.
+     */
+    private fun findSolidGroundY(world: WorldGenLevel, colX: Int, colZ: Int, hintY: Int): Int {
+        val mpos = BlockPos.MutableBlockPos()
+        val startY = (hintY + 4).coerceIn(-54, -38)
+        for (y in startY downTo -56) {
+            mpos.set(colX, y, colZ)
+            val st = world.getBlockState(mpos)
+            if (!st.isAir && st.isSolidRender && !st.`is`(ModBlocks.SMALL_LICHEN_BUSH) && !st.`is`(ModBlocks.PETRIFIED_LILAC_LEAVES)) {
+                return y
+            }
+        }
+        return -999
     }
 
     // ── Fonctions de Hachage Déterministes ────────────────────────────────────

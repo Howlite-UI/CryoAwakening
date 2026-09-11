@@ -164,5 +164,10 @@
   "gui.cryo-awakening.breeze_foundry.wind_cost": "Wind Required: %s V",
   "gui.cryo-awakening.breeze_foundry.craft_time": "Process Time: %s s",
   "gui.cryo-awakening.value_settings.title": "Gale Pipe Exhaust Settings",
-  "item.cryo-awakening.gale_monocle": "Gale Monocle"
+  "item.cryo-awakening.gale_monocle": "Gale Monocle",
+  "item.cryo-awakening.clawshot": "Clawshot",
+  "entity.cryo-awakening.clawshot_anchor": "Clawshot Anchor",
+  "item.cryo-awakening.clawshot.desc": "Articulated chain grappling hook inspired by Twilight Princess.",
+  "item.cryo-awakening.clawshot.hook": "Right-click: Launch clawhead to hook blocks or latch onto creatures.",
+  "item.cryo-awakening.clawshot.safety": "Safety: Fully cancels fall damage during and after grappling."
 }
