@@ -60,6 +60,12 @@
   "enchantment.cryo-awakening.retrieval": "Retrieval",
   "enchantment.cryo-awakening.gale_vortex": "Gale Vortex",
   "enchantment.cryo-awakening.hawkeye": "Hawkeye",
+  "enchantment.cryo-awakening.frostwire": "Frostwire",
+  "enchantment.cryo-awakening.slingshot": "Slingshot",
+  "enchantment.cryo-awakening.disarm": "Disarm",
+  "enchantment.cryo-awakening.extended_chain": "Extended Chain",
+  "enchantment.cryo-awakening.rapid_reel": "Rapid Reel",
+  "enchantment.cryo-awakening.piercing_spike": "Piercing Spike",
   "itemGroup.cryo-awakening.cryo_awakening": "Cryo Awakening",
   "block.cryo-awakening.rimecrust": "Rimecrust",
   "item.cryo-awakening.rimecrust": "Rimecrust",
@@ -169,5 +175,6 @@
   "entity.cryo-awakening.clawshot_anchor": "Clawshot Anchor",
   "item.cryo-awakening.clawshot.desc": "Articulated chain grappling hook inspired by Twilight Princess.",
   "item.cryo-awakening.clawshot.hook": "Right-click: Launch clawhead to hook blocks or latch onto creatures.",
-  "item.cryo-awakening.clawshot.safety": "Safety: Fully cancels fall damage during and after grappling."
+  "item.cryo-awakening.clawshot.safety": "Safety: Fully cancels fall damage during and after grappling.",
+  "hud.cryo-awakening.clawshot.controls": "§e[Ctrl]§f Slack / Descend • §e[Space]§f Climb Up • §e[Shift]§f Release"
 }

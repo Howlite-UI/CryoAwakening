@@ -38,6 +38,7 @@ class ClawshotAnchorRenderState : EntityRenderState() {
     var yaw: Float = 0.0f
     var pitch: Float = 0.0f
     var hookDirection: Int = -1
+    var frostwireLevel: Int = 0
 
     private val dataMap: MutableMap<DataTicket<*>, Any> = mutableMapOf()
     override fun getDataMap(): MutableMap<DataTicket<*>, Any> = dataMap
@@ -60,6 +61,30 @@ class ClawshotAnchorEntityRenderer(
         val CHAIN_TEXTURE: Identifier = Identifier.withDefaultNamespace("textures/block/iron_chain.png")
     }
 
+    override fun affectedByCulling(entity: ClawshotAnchorEntity): Boolean = false
+
+    override fun getBoundingBoxForCulling(entity: ClawshotAnchorEntity): net.minecraft.world.phys.AABB {
+        val baseBox = super.getBoundingBoxForCulling(entity)
+        val owner = entity.getOwnerEntity() ?: return baseBox
+        return baseBox.minmax(owner.boundingBox).inflate(2.0)
+    }
+
+    override fun shouldRender(
+        entity: ClawshotAnchorEntity,
+        frustum: net.minecraft.client.renderer.culling.Frustum,
+        camX: Double,
+        camY: Double,
+        camZ: Double
+    ): Boolean {
+        if (!entity.shouldRender(camX, camY, camZ)) {
+            val owner = entity.getOwnerEntity()
+            if (owner == null || !owner.shouldRender(camX, camY, camZ)) {
+                return false
+            }
+        }
+        return true
+    }
+
     override fun createRenderState(): ClawshotAnchorRenderState = ClawshotAnchorRenderState()
 
     override fun extractRenderState(
@@ -72,6 +97,7 @@ class ClawshotAnchorEntityRenderer(
         state.anchorState = entity.anchorState.id
         state.clawOpenAmount = Mth.lerp(partialTick, entity.prevClawOpen, entity.clawOpenAmount)
         state.hookDirection = entity.hookDirection
+        state.frostwireLevel = entity.frostwireLevel
 
         val anchorPos = entity.getPosition(partialTick)
         state.anchorPos = anchorPos
@@ -97,13 +123,13 @@ class ClawshotAnchorEntityRenderer(
                     state.pitch = (atan2(toOwner.y, horizDist) * (180.0 / Math.PI)).toFloat()
                 }
             } else if (entity.anchorState == ClawshotAnchorEntity.AnchorState.HOOKED_BLOCK) {
-                // Accroché dans un bloc : l'ancre s'aligne proprement avec la face touchée
+                // Accroché dans un bloc : l'ancre s'enfonce dans le mur et le collier/chaîne fait face au joueur
                 if (state.hookDirection >= 0) {
                     when (net.minecraft.core.Direction.from3DDataValue(state.hookDirection)) {
                         net.minecraft.core.Direction.SOUTH -> { state.yaw = 0.0f; state.pitch = 0.0f }
                         net.minecraft.core.Direction.NORTH -> { state.yaw = 180.0f; state.pitch = 0.0f }
-                        net.minecraft.core.Direction.WEST -> { state.yaw = 90.0f; state.pitch = 0.0f }
-                        net.minecraft.core.Direction.EAST -> { state.yaw = -90.0f; state.pitch = 0.0f }
+                        net.minecraft.core.Direction.EAST -> { state.yaw = 90.0f; state.pitch = 0.0f }
+                        net.minecraft.core.Direction.WEST -> { state.yaw = -90.0f; state.pitch = 0.0f }
                         net.minecraft.core.Direction.UP -> { state.pitch = -90.0f }
                         net.minecraft.core.Direction.DOWN -> { state.pitch = 90.0f }
                     }
@@ -111,8 +137,8 @@ class ClawshotAnchorEntityRenderer(
                     val toOwner = state.ownerHandPos.subtract(anchorPos)
                     if (toOwner.lengthSqr() > 1.0e-4) {
                         val horizDist = sqrt(toOwner.x * toOwner.x + toOwner.z * toOwner.z)
-                        state.yaw = (atan2(toOwner.x, toOwner.z) * (180.0 / Math.PI)).toFloat()
-                        state.pitch = (atan2(-toOwner.y, horizDist) * (180.0 / Math.PI)).toFloat()
+                        state.yaw = (atan2(-toOwner.x, -toOwner.z) * (180.0 / Math.PI)).toFloat()
+                        state.pitch = (atan2(toOwner.y, horizDist) * (180.0 / Math.PI)).toFloat()
                     }
                 }
             } else {
@@ -120,8 +146,8 @@ class ClawshotAnchorEntityRenderer(
                 val toOwner = state.ownerHandPos.subtract(anchorPos)
                 if (toOwner.lengthSqr() > 1.0e-4) {
                     val horizDist = sqrt(toOwner.x * toOwner.x + toOwner.z * toOwner.z)
-                    state.yaw = (atan2(toOwner.x, toOwner.z) * (180.0 / Math.PI)).toFloat()
-                    state.pitch = (atan2(-toOwner.y, horizDist) * (180.0 / Math.PI)).toFloat()
+                    state.yaw = (atan2(-toOwner.x, -toOwner.z) * (180.0 / Math.PI)).toFloat()
+                    state.pitch = (atan2(toOwner.y, horizDist) * (180.0 / Math.PI)).toFloat()
                 }
             }
         } else {
@@ -148,9 +174,9 @@ class ClawshotAnchorEntityRenderer(
         poseStack.mulPose(Axis.YP.rotationDegrees(state.yaw))
         poseStack.mulPose(Axis.XP.rotationDegrees(state.pitch))
 
-        // Rotation de -90° sur l'axe X pour que l'axe -Y du modèle (direction des griffes)
-        // devienne l'axe de vol vers la cible
-        poseStack.mulPose(Axis.XP.rotationDegrees(-90.0f))
+        // Rotation de 90° sur l'axe X pour que l'axe -Y du modèle (direction des griffes)
+        // devienne l'axe de vol vers la cible et s'enfonce dans le bloc
+        poseStack.mulPose(Axis.XP.rotationDegrees(90.0f))
 
         // Échelle fidèle pour une présence visuelle percutante
         val scale = 1.35f
@@ -212,7 +238,7 @@ class ClawshotAnchorEntityRenderer(
 
             if (totalDist > 0.3) {
                 collector.submitCustomGeometry(poseStack, chainRenderType) { pose, consumer ->
-                    renderChainLinks(pose, consumer, diff, totalDist, state.anchorState, light)
+                    renderChainLinks(pose, consumer, diff, totalDist, state.anchorState, state.frostwireLevel, light)
                 }
             }
         }
@@ -455,6 +481,7 @@ class ClawshotAnchorEntityRenderer(
         diff: Vec3,
         totalDist: Double,
         anchorState: Int,
+        frostwireLevel: Int,
         light: Int
     ) {
         // Largeur exacte correspondant aux 3 pixels du maillon vanilla (3/16 / 2 = 1.5/16)
@@ -463,6 +490,11 @@ class ClawshotAnchorEntityRenderer(
         // Coordonnées horizontales UV (3 colonnes de pixels de iron_chain.png)
         val u0 = 0.0f
         val u1 = 3.0f / 16.0f
+
+        // Teinte cyan / givre éclatante si enchanté avec Fil de Givre (Frostwire)
+        val r = if (frostwireLevel > 0) 175 else 255
+        val g = if (frostwireLevel > 0) 230 else 255
+        val b = 255
 
         // Découpage en segments lisses
         val isHooked = (anchorState == 1 || anchorState == 2)
@@ -515,26 +547,26 @@ class ClawshotAnchorEntityRenderer(
             val v1 = (t1 * totalDist).toFloat()
 
             // Plan 1 (Ruban diagonal U) - double face
-            consumer.addVertex(pose, x0 - uX, y0 - uY, z0 - uZ).setColor(255, 255, 255, 255).setUv(u0, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, wX, wY, wZ)
-            consumer.addVertex(pose, x1 - uX, y1 - uY, z1 - uZ).setColor(255, 255, 255, 255).setUv(u0, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, wX, wY, wZ)
-            consumer.addVertex(pose, x1 + uX, y1 + uY, z1 + uZ).setColor(255, 255, 255, 255).setUv(u1, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, wX, wY, wZ)
-            consumer.addVertex(pose, x0 + uX, y0 + uY, z0 + uZ).setColor(255, 255, 255, 255).setUv(u1, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, wX, wY, wZ)
+            consumer.addVertex(pose, x0 - uX, y0 - uY, z0 - uZ).setColor(r, g, b, 255).setUv(u0, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, wX, wY, wZ)
+            consumer.addVertex(pose, x1 - uX, y1 - uY, z1 - uZ).setColor(r, g, b, 255).setUv(u0, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, wX, wY, wZ)
+            consumer.addVertex(pose, x1 + uX, y1 + uY, z1 + uZ).setColor(r, g, b, 255).setUv(u1, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, wX, wY, wZ)
+            consumer.addVertex(pose, x0 + uX, y0 + uY, z0 + uZ).setColor(r, g, b, 255).setUv(u1, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, wX, wY, wZ)
 
-            consumer.addVertex(pose, x0 + uX, y0 + uY, z0 + uZ).setColor(255, 255, 255, 255).setUv(u1, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, -wX, -wY, -wZ)
-            consumer.addVertex(pose, x1 + uX, y1 + uY, z1 + uZ).setColor(255, 255, 255, 255).setUv(u1, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, -wX, -wY, -wZ)
-            consumer.addVertex(pose, x1 - uX, y1 - uY, z1 - uZ).setColor(255, 255, 255, 255).setUv(u0, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, -wX, -wY, -wZ)
-            consumer.addVertex(pose, x0 - uX, y0 - uY, z0 - uZ).setColor(255, 255, 255, 255).setUv(u0, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, -wX, -wY, -wZ)
+            consumer.addVertex(pose, x0 + uX, y0 + uY, z0 + uZ).setColor(r, g, b, 255).setUv(u1, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, -wX, -wY, -wZ)
+            consumer.addVertex(pose, x1 + uX, y1 + uY, z1 + uZ).setColor(r, g, b, 255).setUv(u1, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, -wX, -wY, -wZ)
+            consumer.addVertex(pose, x1 - uX, y1 - uY, z1 - uZ).setColor(r, g, b, 255).setUv(u0, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, -wX, -wY, -wZ)
+            consumer.addVertex(pose, x0 - uX, y0 - uY, z0 - uZ).setColor(r, g, b, 255).setUv(u0, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, -wX, -wY, -wZ)
 
             // Plan 2 (Ruban diagonal W à 90° du Plan 1) - double face
-            consumer.addVertex(pose, x0 - wX, y0 - wY, z0 - wZ).setColor(255, 255, 255, 255).setUv(u0, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, uX, uY, uZ)
-            consumer.addVertex(pose, x1 - wX, y1 - wY, z1 - wZ).setColor(255, 255, 255, 255).setUv(u0, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, uX, uY, uZ)
-            consumer.addVertex(pose, x1 + wX, y1 + wY, z1 + wZ).setColor(255, 255, 255, 255).setUv(u1, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, uX, uY, uZ)
-            consumer.addVertex(pose, x0 + wX, y0 + wY, z0 + wZ).setColor(255, 255, 255, 255).setUv(u1, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, uX, uY, uZ)
+            consumer.addVertex(pose, x0 - wX, y0 - wY, z0 - wZ).setColor(r, g, b, 255).setUv(u0, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, uX, uY, uZ)
+            consumer.addVertex(pose, x1 - wX, y1 - wY, z1 - wZ).setColor(r, g, b, 255).setUv(u0, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, uX, uY, uZ)
+            consumer.addVertex(pose, x1 + wX, y1 + wY, z1 + wZ).setColor(r, g, b, 255).setUv(u1, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, uX, uY, uZ)
+            consumer.addVertex(pose, x0 + wX, y0 + wY, z0 + wZ).setColor(r, g, b, 255).setUv(u1, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, uX, uY, uZ)
 
-            consumer.addVertex(pose, x0 + wX, y0 + wY, z0 + wZ).setColor(255, 255, 255, 255).setUv(u1, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, -uX, -uY, -uZ)
-            consumer.addVertex(pose, x1 + wX, y1 + wY, z1 + wZ).setColor(255, 255, 255, 255).setUv(u1, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, -uX, -uY, -uZ)
-            consumer.addVertex(pose, x1 - wX, y1 - wY, z1 - wZ).setColor(255, 255, 255, 255).setUv(u0, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, -uX, -uY, -uZ)
-            consumer.addVertex(pose, x0 - wX, y0 - wY, z0 - wZ).setColor(255, 255, 255, 255).setUv(u0, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, -uX, -uY, -uZ)
+            consumer.addVertex(pose, x0 + wX, y0 + wY, z0 + wZ).setColor(r, g, b, 255).setUv(u1, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, -uX, -uY, -uZ)
+            consumer.addVertex(pose, x1 + wX, y1 + wY, z1 + wZ).setColor(r, g, b, 255).setUv(u1, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, -uX, -uY, -uZ)
+            consumer.addVertex(pose, x1 - wX, y1 - wY, z1 - wZ).setColor(r, g, b, 255).setUv(u0, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, -uX, -uY, -uZ)
+            consumer.addVertex(pose, x0 - wX, y0 - wY, z0 - wZ).setColor(r, g, b, 255).setUv(u0, v0).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, -uX, -uY, -uZ)
         }
     }
 

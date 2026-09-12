@@ -12,12 +12,14 @@ import com.howlite.cryoawakening.client.render.gui.BreezeFoundryScreen
 import com.howlite.cryoawakening.screen.ModMenuTypes
 import net.minecraft.client.gui.screens.MenuScreens
 import com.howlite.cryoawakening.client.render.armor.FossilizedHelmetRenderProvider
+import com.howlite.cryoawakening.client.render.item.ClawshotRenderProvider
 import com.howlite.cryoawakening.client.render.entity.GawkBombRenderer
 import com.howlite.cryoawakening.client.render.entity.GawkerRenderer
 import com.howlite.cryoawakening.client.render.entity.GlaciopodRenderer
 import com.howlite.cryoawakening.client.render.entity.GaleBoomerangRenderer
 import com.howlite.cryoawakening.client.render.entity.ClawshotAnchorEntityRenderer
 import com.howlite.cryoawakening.entity.ModEntities
+import com.howlite.cryoawakening.item.ClawshotItem
 import com.howlite.cryoawakening.item.GeoArmorItem
 import com.howlite.cryoawakening.item.ModItems
 import com.howlite.cryoawakening.worldgen.CryoWorldGenConfig
@@ -74,6 +76,9 @@ object CryoAwakeningClient : ClientModInitializer {
 		// Enregistrement du gestionnaire de réglage Create mod du Pipe Exhaust (maintien clic-droit)
 		com.howlite.cryoawakening.client.event.ValueSettingsClientHandler.register()
 
+		// Enregistrement du gestionnaire client de rappel et mou de chaîne du Clawshot
+		com.howlite.cryoawakening.client.event.ClawshotClientHandler.register()
+
 		// Enregistrement de l'élément HUD de la jauge de lancer au-dessus du crosshair
 		net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry.attachElementAfter(
 			net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements.CROSSHAIR,
@@ -109,11 +114,12 @@ object CryoAwakeningClient : ClientModInitializer {
 			com.howlite.cryoawakening.client.render.gui.ValueSettingsHudElement
 		)
 
-		// Enregistrement des renderers d'armures GeckoLib
+		// Enregistrement des renderers d'armures et items GeckoLib
 		GeoArmorItem.registerRenderProvider(
 			ModItems.FOSSILIZED_HELMET,
 			FossilizedHelmetRenderProvider
 		)
+		ClawshotItem.RENDER_PROVIDER = ClawshotRenderProvider
 
 		// Enregistrement du renderer de la Cryo-Tomb (affiche le mob capturé dans la glace)
 		BlockEntityRenderers.register(

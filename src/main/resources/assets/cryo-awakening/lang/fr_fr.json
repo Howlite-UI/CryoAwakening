@@ -60,6 +60,12 @@
   "enchantment.cryo-awakening.retrieval": "Récupération",
   "enchantment.cryo-awakening.gale_vortex": "Vortex Tornade",
   "enchantment.cryo-awakening.hawkeye": "Œil de Faucon",
+  "enchantment.cryo-awakening.frostwire": "Fil de Givre",
+  "enchantment.cryo-awakening.slingshot": "Élan Cinétique",
+  "enchantment.cryo-awakening.disarm": "Désarmement",
+  "enchantment.cryo-awakening.extended_chain": "Allonge",
+  "enchantment.cryo-awakening.rapid_reel": "Moulinet Rapide",
+  "enchantment.cryo-awakening.piercing_spike": "Harpon Piquant",
   "itemGroup.cryo-awakening.cryo_awakening": "Cryo Awakening",
   "block.cryo-awakening.rimecrust": "Givrecroûte",
   "item.cryo-awakening.rimecrust": "Givrecroûte",
@@ -169,5 +175,6 @@
   "entity.cryo-awakening.clawshot_anchor": "Ancre du Clawshot",
   "item.cryo-awakening.clawshot.desc": "Grappin à chaîne articulée inspiré de Twilight Princess.",
   "item.cryo-awakening.clawshot.hook": "Clic droit : Projette la tête pour s'agripper aux blocs ou attirer les créatures.",
-  "item.cryo-awakening.clawshot.safety": "Sécurité : Annule strictement tous les dégâts de chute lors de la traction."
+  "item.cryo-awakening.clawshot.safety": "Sécurité : Annule strictement tous les dégâts de chute lors de la traction.",
+  "hud.cryo-awakening.clawshot.controls": "§e[Ctrl]§f Lâcher du mou • §e[Espace]§f Remonter • §e[Shift]§f Se détacher"
 }

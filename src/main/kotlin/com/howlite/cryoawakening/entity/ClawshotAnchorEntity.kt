@@ -1,7 +1,12 @@
 package com.howlite.cryoawakening.entity
 
+import com.howlite.cryoawakening.enchantment.ModEnchantments
+import com.howlite.cryoawakening.item.ClawshotItem
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
 import net.minecraft.core.particles.ParticleTypes
+import net.minecraft.world.effect.MobEffectInstance
+import net.minecraft.world.effect.MobEffects
 import net.minecraft.network.syncher.EntityDataAccessor
 import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.network.syncher.SynchedEntityData
@@ -18,6 +23,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier
 import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.entity.player.Player
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.ClipContext
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.ChainBlock
@@ -90,6 +96,30 @@ class ClawshotAnchorEntity(
         val HOOK_DIRECTION: EntityDataAccessor<Int> =
             SynchedEntityData.defineId(ClawshotAnchorEntity::class.java, EntityDataSerializers.INT)
 
+        val IS_CLINGING: EntityDataAccessor<Boolean> =
+            SynchedEntityData.defineId(ClawshotAnchorEntity::class.java, EntityDataSerializers.BOOLEAN)
+
+        val SLACK_DISTANCE: EntityDataAccessor<Float> =
+            SynchedEntityData.defineId(ClawshotAnchorEntity::class.java, EntityDataSerializers.FLOAT)
+
+        val FROSTWIRE_LEVEL: EntityDataAccessor<Int> =
+            SynchedEntityData.defineId(ClawshotAnchorEntity::class.java, EntityDataSerializers.INT)
+
+        val SLINGSHOT_LEVEL: EntityDataAccessor<Int> =
+            SynchedEntityData.defineId(ClawshotAnchorEntity::class.java, EntityDataSerializers.INT)
+
+        val DISARM_LEVEL: EntityDataAccessor<Int> =
+            SynchedEntityData.defineId(ClawshotAnchorEntity::class.java, EntityDataSerializers.INT)
+
+        val EXTENDED_CHAIN_LEVEL: EntityDataAccessor<Int> =
+            SynchedEntityData.defineId(ClawshotAnchorEntity::class.java, EntityDataSerializers.INT)
+
+        val RAPID_REEL_LEVEL: EntityDataAccessor<Int> =
+            SynchedEntityData.defineId(ClawshotAnchorEntity::class.java, EntityDataSerializers.INT)
+
+        val PIERCING_SPIKE_LEVEL: EntityDataAccessor<Int> =
+            SynchedEntityData.defineId(ClawshotAnchorEntity::class.java, EntityDataSerializers.INT)
+
         fun createAttributes(): AttributeSupplier.Builder {
             return PathfinderMob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0)
@@ -135,6 +165,42 @@ class ClawshotAnchorEntity(
         get() = entityData.get(HOOK_DIRECTION)
         set(value) = entityData.set(HOOK_DIRECTION, value)
 
+    var isClinging: Boolean
+        get() = entityData.get(IS_CLINGING)
+        set(value) = entityData.set(IS_CLINGING, value)
+
+    var slackDistance: Float
+        get() = entityData.get(SLACK_DISTANCE)
+        set(value) = entityData.set(SLACK_DISTANCE, value.coerceAtLeast(0.0f))
+
+    var frostwireLevel: Int
+        get() = entityData.get(FROSTWIRE_LEVEL)
+        set(value) = entityData.set(FROSTWIRE_LEVEL, value)
+
+    var slingshotLevel: Int
+        get() = entityData.get(SLINGSHOT_LEVEL)
+        set(value) = entityData.set(SLINGSHOT_LEVEL, value)
+
+    var disarmLevel: Int
+        get() = entityData.get(DISARM_LEVEL)
+        set(value) = entityData.set(DISARM_LEVEL, value)
+
+    var extendedChainLevel: Int
+        get() = entityData.get(EXTENDED_CHAIN_LEVEL)
+        set(value) = entityData.set(EXTENDED_CHAIN_LEVEL, value)
+
+    var rapidReelLevel: Int
+        get() = entityData.get(RAPID_REEL_LEVEL)
+        set(value) = entityData.set(RAPID_REEL_LEVEL, value)
+
+    var piercingSpikeLevel: Int
+        get() = entityData.get(PIERCING_SPIKE_LEVEL)
+        set(value) = entityData.set(PIERCING_SPIKE_LEVEL, value)
+
+    fun getMaxRange(): Double = MAX_RANGE + 6.0 * extendedChainLevel
+
+    var launchedStack: ItemStack = ItemStack.EMPTY
+    var rappelDirection: Int = 0
     var prevClawOpen: Float = 1.0f
     var ownerUuid: UUID? = null
     var flightOrigin: Vec3 = Vec3.ZERO
@@ -152,6 +218,14 @@ class ClawshotAnchorEntity(
         builder.define(CLAW_OPEN_AMOUNT, 1.0f)
         builder.define(USED_HAND, 0)
         builder.define(HOOK_DIRECTION, -1)
+        builder.define(IS_CLINGING, false)
+        builder.define(SLACK_DISTANCE, 0.0f)
+        builder.define(FROSTWIRE_LEVEL, 0)
+        builder.define(SLINGSHOT_LEVEL, 0)
+        builder.define(DISARM_LEVEL, 0)
+        builder.define(EXTENDED_CHAIN_LEVEL, 0)
+        builder.define(RAPID_REEL_LEVEL, 0)
+        builder.define(PIERCING_SPIKE_LEVEL, 0)
     }
 
     override fun registerGoals() {
@@ -170,6 +244,17 @@ class ClawshotAnchorEntity(
         this.prevClawOpen = 1.0f
         this.flightTicks = 0
         this.hookedTicks = 0
+        this.slackDistance = 0.0f
+        this.rappelDirection = 0
+        this.launchedStack = player.getItemInHand(hand)
+        if (!launchedStack.isEmpty) {
+            this.frostwireLevel = ModEnchantments.getLevel(launchedStack, ModEnchantments.FROSTWIRE, level())
+            this.slingshotLevel = ModEnchantments.getLevel(launchedStack, ModEnchantments.SLINGSHOT, level())
+            this.disarmLevel = ModEnchantments.getLevel(launchedStack, ModEnchantments.DISARM, level())
+            this.extendedChainLevel = ModEnchantments.getLevel(launchedStack, ModEnchantments.EXTENDED_CHAIN, level())
+            this.rapidReelLevel = ModEnchantments.getLevel(launchedStack, ModEnchantments.RAPID_REEL, level())
+            this.piercingSpikeLevel = ModEnchantments.getLevel(launchedStack, ModEnchantments.PIERCING_SPIKE, level())
+        }
         this.setNoGravity(true)
         this.noPhysics = true
 
@@ -178,15 +263,32 @@ class ClawshotAnchorEntity(
         val startPos = eyePos.add(look.scale(0.35))
         this.flightOrigin = startPos
         this.setPos(startPos.x, startPos.y, startPos.z)
-        this.deltaMovement = look.scale(FLY_SPEED)
+        val flySpeedMultiplier = 1.0 + 0.25 * rapidReelLevel
+        this.deltaMovement = look.scale(FLY_SPEED * flySpeedMultiplier)
         this.hookPosition = startPos
         this.hookDirection = -1
+
+        val yaw = player.yRot
+        val pitch = player.xRot
+        this.setYRot(yaw)
+        this.setXRot(pitch)
+        this.yRotO = yaw
+        this.xRotO = pitch
     }
 
     /**
      * Rappelle immédiatement le grappin vers le joueur.
      */
     fun retract() {
+        if (isClinging) {
+            isClinging = false
+            slackDistance = 0.0f
+            rappelDirection = 0
+            getOwnerEntity()?.let {
+                it.setNoGravity(false)
+                cancelPlayerFall(it)
+            }
+        }
         if (anchorState != AnchorState.RETRACTING) {
             anchorState = AnchorState.RETRACTING
             hookedTargetId = -1
@@ -203,6 +305,19 @@ class ClawshotAnchorEntity(
         }
     }
 
+    override fun remove(reason: Entity.RemovalReason) {
+        if (isClinging) {
+            isClinging = false
+            slackDistance = 0.0f
+            rappelDirection = 0
+            getOwnerEntity()?.let {
+                it.setNoGravity(false)
+                cancelPlayerFall(it)
+            }
+        }
+        super.remove(reason)
+    }
+
     fun getOwnerEntity(): Player? {
         val uuid = ownerUuid
         if (uuid != null) {
@@ -214,6 +329,12 @@ class ClawshotAnchorEntity(
             return level().getEntity(id) as? Player
         }
         return null
+    }
+
+    override fun shouldRender(camX: Double, camY: Double, camZ: Double): Boolean {
+        if (super.shouldRender(camX, camY, camZ)) return true
+        val owner = getOwnerEntity() ?: return false
+        return owner.shouldRender(camX, camY, camZ)
     }
 
     override fun tick() {
@@ -229,6 +350,24 @@ class ClawshotAnchorEntity(
             return
         }
 
+        // Si le joueur ne tient plus le grappin dans la main du tir ou change de slot hotbar, annule immédiatement
+        val currentStack = owner.getItemInHand(usedHand)
+        val isHoldingClawshot = currentStack.item is ClawshotItem &&
+            (launchedStack.isEmpty || currentStack === launchedStack)
+
+        if (!isHoldingClawshot) {
+            if (isClinging) {
+                isClinging = false
+                slackDistance = 0.0f
+                rappelDirection = 0
+                owner.setNoGravity(false)
+                cancelPlayerFall(owner)
+            }
+            if (!level().isClientSide && anchorState != AnchorState.RETRACTING) {
+                retract()
+            }
+        }
+
         // Côté Client : Uniquement interpolation visuelle et suivi d'affichage
         if (level().isClientSide) {
             tickClient(owner)
@@ -236,6 +375,10 @@ class ClawshotAnchorEntity(
         }
 
         val serverLevel = level() as? ServerLevel ?: return
+
+        if (frostwireLevel > 0) {
+            tickFrostwire(serverLevel, owner)
+        }
 
         when (anchorState) {
             AnchorState.FLYING -> tickFlying(serverLevel, owner)
@@ -246,6 +389,36 @@ class ClawshotAnchorEntity(
     }
 
     private fun tickClient(owner: Player) {
+        // Détection de changement d'item côté client pour décrochage immédiat
+        val currentStack = owner.getItemInHand(usedHand)
+        val isHoldingClawshot = currentStack.item is ClawshotItem &&
+            (launchedStack.isEmpty || currentStack === launchedStack)
+
+        if (!isHoldingClawshot && owner.isLocalPlayer) {
+            if (isClinging) {
+                isClinging = false
+                slackDistance = 0.0f
+                rappelDirection = 0
+                if (owner.isNoGravity) {
+                    owner.setNoGravity(false)
+                }
+                cancelPlayerFall(owner)
+            }
+        }
+
+        if (frostwireLevel > 0 && flightTicks % 3 == 0) {
+            val start = owner.position().add(0.0, 0.8, 0.0)
+            val end = position()
+            val diff = end.subtract(start)
+            val len = diff.length()
+            if (len > 0.5) {
+                val dir = diff.normalize()
+                val offset = level().random.nextDouble() * len
+                val p = start.add(dir.scale(offset))
+                level().addParticle(ParticleTypes.SNOWFLAKE, p.x, p.y, p.z, 0.0, 0.01, 0.0)
+            }
+        }
+
         when (anchorState) {
             AnchorState.FLYING -> {
                 clawOpenAmount = (clawOpenAmount + 0.25f).coerceAtMost(1.0f)
@@ -254,6 +427,28 @@ class ClawshotAnchorEntity(
                 clawOpenAmount = (clawOpenAmount - 0.35f).coerceAtLeast(0.0f)
                 val anchorPos = hookPosition
                 setPos(anchorPos.x, anchorPos.y, anchorPos.z)
+
+                // Stabilisation côté client pour le joueur contrôlé localement (évite tout tremblement / gravité)
+                if (owner.isLocalPlayer) {
+                    cancelPlayerFall(owner)
+                    if (owner.isShiftKeyDown) {
+                        if (owner.isNoGravity) {
+                            owner.setNoGravity(false)
+                        }
+                        return
+                    }
+
+                    val normal = getFacingNormal()
+                    val targetPos = computeClingingPosition(anchorPos, normal, slackDistance.toDouble())
+                    val playerPos = owner.position()
+                    val distToTarget = targetPos.distanceTo(playerPos)
+                    val distToAnchor = anchorPos.distanceTo(playerPos)
+
+                    if (isClinging || distToTarget <= 1.25 || distToAnchor <= 2.35) {
+                        owner.setNoGravity(true)
+                        applyClingingSuspension(owner, targetPos, playerPos)
+                    }
+                }
             }
             AnchorState.HOOKED_ENTITY -> {
                 clawOpenAmount = (clawOpenAmount - 0.35f).coerceAtLeast(0.0f)
@@ -265,6 +460,9 @@ class ClawshotAnchorEntity(
             }
             AnchorState.RETRACTING -> {
                 clawOpenAmount = (clawOpenAmount - 0.3f).coerceAtLeast(0.0f)
+                if (owner.isLocalPlayer && owner.isNoGravity) {
+                    owner.setNoGravity(false)
+                }
                 val targetPos = owner.eyePosition.add(0.0, -0.2, 0.0)
                 val toOwner = targetPos.subtract(position())
                 if (toOwner.length() > 0.1) {
@@ -287,17 +485,17 @@ class ClawshotAnchorEntity(
         val blockHit = serverLevel.clip(
             ClipContext(currentPos, nextPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this)
         )
+        val blockDist = if (blockHit.type != HitResult.Type.MISS) currentPos.distanceTo(blockHit.location) else Double.MAX_VALUE
 
-        val targetEndPos = if (blockHit.type != HitResult.Type.MISS) blockHit.location else nextPos
+        // 2. Détection de collision d'entités vivantes ou items sur tout le vecteur de vol
+        val entityHit = findEntityOnPath(currentPos, nextPos, owner)
 
-        // 2. Détection de collision d'entités vivantes
-        val entityHit = findEntityOnPath(currentPos, targetEndPos, owner)
-
-        if (entityHit != null) {
+        if (entityHit != null && entityHit.distance <= blockDist) {
+            val targetEntity = entityHit.entity
             // Impact sur une entité
-            hookedTargetId = entityHit.id
+            hookedTargetId = targetEntity.id
             anchorState = AnchorState.HOOKED_ENTITY
-            val hitPos = entityHit.position().add(0.0, entityHit.bbHeight * 0.5, 0.0)
+            val hitPos = targetEntity.position().add(0.0, targetEntity.bbHeight * 0.5, 0.0)
             hookPosition = hitPos
             setPos(hitPos.x, hitPos.y, hitPos.z)
             deltaMovement = Vec3.ZERO
@@ -320,6 +518,15 @@ class ClawshotAnchorEntity(
                 setPos(hitPos.x, hitPos.y, hitPos.z)
                 deltaMovement = Vec3.ZERO
 
+                // Double Clawshot (Zelda TP) :
+                // Si le joueur était déjà suspendu à un mur avec son autre grappin,
+                // l'ancien grappin se détache automatiquement pour enchaîner les prises !
+                val otherHand = if (usedHand == InteractionHand.MAIN_HAND) InteractionHand.OFF_HAND else InteractionHand.MAIN_HAND
+                val otherAnchor = ClawshotItem.findActiveAnchor(serverLevel, owner, otherHand)
+                if (otherAnchor != null && otherAnchor.isAlive) {
+                    otherAnchor.retract()
+                }
+
                 // Sons de verrouillage métallique Zelda TP
                 playImpactEffects(serverLevel, hitPos)
 
@@ -340,9 +547,11 @@ class ClawshotAnchorEntity(
         // Déplacement normal en vol
         setPos(nextPos.x, nextPos.y, nextPos.z)
 
-        // Limite de portée maximale
+        // Limite de portée maximale (allongée par Extended Chain)
+        val maxAllowedRange = getMaxRange()
         val distFromOwner = nextPos.distanceTo(owner.eyePosition)
-        if (distFromOwner > MAX_RANGE || flightTicks > 35) {
+        val maxFlightTicks = 35 + extendedChainLevel * 8
+        if (distFromOwner > maxAllowedRange || flightTicks > maxFlightTicks) {
             retract()
         }
     }
@@ -357,25 +566,85 @@ class ClawshotAnchorEntity(
         setPos(anchorPos.x, anchorPos.y, anchorPos.z)
         deltaMovement = Vec3.ZERO
 
+        val normal = getFacingNormal()
+        val baseTargetPos = computeClingingPosition(anchorPos, normal, 0.0)
         val playerPos = owner.position()
-        val toAnchor = anchorPos.subtract(playerPos)
-        val dist = toAnchor.length()
+        val toBaseTarget = baseTargetPos.subtract(playerPos)
+        val distToBaseTarget = toBaseTarget.length()
+        val distToAnchor = anchorPos.distanceTo(playerPos)
 
         // 1. ANNULATION CONTINUE DES DÉGÂTS DE CHUTE
         cancelPlayerFall(owner)
 
-        // 2. Conditions de détachement :
-        // - Proximité atteinte (< 1.7 blocs)
-        // - Joueur accroupi (Shift) ou sautant
-        // - Temps de traction maximal dépassé (100 ticks = 5s)
-        if (dist < 1.7 || owner.isShiftKeyDown || hookedTicks > 100) {
-            releasePlayerAtDestination(owner, dist < 2.0)
+        // 2. Décrochage manuel : Le joueur s'accroupit (Shift / Sneak) pour lâcher prise (avec élan Slingshot si en vol)
+        if (owner.isShiftKeyDown) {
+            handleManualRelease(owner)
+            return
+        }
+
+        // 3. Vérification que le bloc cible existe toujours
+        val hitBlockPos = BlockPos.containing(anchorPos.subtract(normal.scale(0.2)))
+        val hitState = serverLevel.getBlockState(hitBlockPos)
+        if (!isValidHookTarget(hitState, hitBlockPos) && hookedTicks > 5) {
             retract()
             return
         }
 
-        // 3. Application de la traction fluide vers le point d'impact
-        applySmoothPull(serverLevel, owner, toAnchor, dist)
+        // 4. Physique Zelda TP : Traction initiale vers la cible, puis verrouillage stable (latch)
+        if (!isClinging) {
+            if (distToBaseTarget <= 1.25 || distToAnchor <= 2.35) {
+                isClinging = true
+                owner.setNoGravity(true)
+                owner.setDeltaMovement(0.0, 0.0, 0.0)
+                owner.hurtMarked = true
+            } else {
+                applySmoothPull(serverLevel, owner, toBaseTarget, distToBaseTarget)
+                return
+            }
+        }
+
+        // 5. Maintien fixe et gestion du rappel / mou de chaîne (Zelda TP)
+        if (isClinging) {
+            if (rappelDirection == -1) {
+                // Descendre le long de la chaîne (lâcher du mou)
+                val currentTarget = computeClingingPosition(anchorPos, normal, slackDistance.toDouble())
+                if (canDescendFurther(serverLevel, owner, currentTarget)) {
+                    val maxSlack = (getMaxRange() - 2.5).toFloat()
+                    if (slackDistance < maxSlack) {
+                        slackDistance = (slackDistance + 0.18f).coerceAtMost(maxSlack)
+                        if (hookedTicks % 4 == 0) {
+                            serverLevel.playSound(
+                                null,
+                                owner.blockPosition(),
+                                SoundEvents.CHAIN_STEP,
+                                SoundSource.PLAYERS,
+                                0.45f,
+                                1.35f + (hookedTicks % 6) * 0.03f
+                            )
+                        }
+                    }
+                }
+            } else if (rappelDirection == 1) {
+                // Remonter le long de la chaîne
+                if (slackDistance > 0.0f) {
+                    slackDistance = (slackDistance - 0.18f).coerceAtLeast(0.0f)
+                    if (hookedTicks % 4 == 0) {
+                        serverLevel.playSound(
+                            null,
+                            owner.blockPosition(),
+                            SoundEvents.CHAIN_STEP,
+                            SoundSource.PLAYERS,
+                            0.45f,
+                            1.55f + (hookedTicks % 6) * 0.03f
+                        )
+                    }
+                }
+            }
+        }
+
+        owner.setNoGravity(true)
+        val targetPosWithSlack = computeClingingPosition(anchorPos, normal, slackDistance.toDouble())
+        applyClingingSuspension(owner, targetPosWithSlack, playerPos)
     }
 
     private fun tickHookedEntity(serverLevel: ServerLevel, owner: Player) {
@@ -404,8 +673,17 @@ class ClawshotAnchorEntity(
             val toTarget = targetCenter.subtract(playerPos)
             val dist = toTarget.length()
 
+            // Dégâts d'impact et désarmement lors de la prise initiale
+            if (hookedTicks == 1 && target is LivingEntity) {
+                applyEntityImpact(serverLevel, owner, target)
+            }
+
             if (dist < 2.0 || owner.isShiftKeyDown || hookedTicks > 100) {
-                releasePlayerAtDestination(owner, dist < 2.5)
+                if (owner.isShiftKeyDown && slingshotLevel > 0 && dist > 1.2) {
+                    applySlingshotBoost(owner)
+                } else {
+                    releasePlayerAtDestination(owner, dist < 2.5)
+                }
                 retract()
                 return
             }
@@ -416,13 +694,9 @@ class ClawshotAnchorEntity(
             val toPlayer = owner.eyePosition.subtract(target.position())
             val dist = toPlayer.length()
 
-            // Dégâts légers et étourdissement du mob côté serveur
+            // Dégâts et désarmement côté serveur
             if (hookedTicks == 1 && target is LivingEntity) {
-                target.hurtServer(
-                    serverLevel,
-                    target.damageSources().mobAttack(owner),
-                    2.0f
-                )
+                applyEntityImpact(serverLevel, owner, target)
             }
 
             if (dist < 1.8 || hookedTicks > 60) {
@@ -432,9 +706,10 @@ class ClawshotAnchorEntity(
                 return
             }
 
-            // Traction du mob vers Link/le joueur
+            // Traction du mob vers Link/le joueur (accélérée par Rapid Reel)
             val pullDir = toPlayer.normalize()
-            val pullSpeed = 0.85
+            val pullSpeedMultiplier = 1.0 + 0.25 * rapidReelLevel
+            val pullSpeed = 0.85 * pullSpeedMultiplier
             target.setDeltaMovement(pullDir.x * pullSpeed, pullDir.y * pullSpeed + 0.08, pullDir.z * pullSpeed)
             target.hurtMarked = true
             target.resetFallDistance()
@@ -471,9 +746,10 @@ class ClawshotAnchorEntity(
     /**
      * Applique une vélocité progressive et amortie au joueur vers la cible.
      */
-    private fun applySmoothPull(serverLevel: ServerLevel, player: Player, toAnchor: Vec3, dist: Double) {
-        val dir = toAnchor.normalize()
-        val speed = PULL_SPEED.coerceAtMost(dist * 0.9)
+    private fun applySmoothPull(serverLevel: ServerLevel, player: Player, toTarget: Vec3, dist: Double) {
+        val dir = toTarget.normalize()
+        val speedMultiplier = 1.0 + 0.25 * rapidReelLevel
+        val speed = (PULL_SPEED * speedMultiplier).coerceAtMost((dist * 0.75).coerceAtLeast(0.35))
         val velocity = dir.scale(speed)
 
         player.setDeltaMovement(velocity.x, velocity.y, velocity.z)
@@ -497,11 +773,292 @@ class ClawshotAnchorEntity(
      * Relâche le joueur au point d'accroche avec un léger saut vers le haut façon Zelda TP.
      */
     private fun releasePlayerAtDestination(player: Player, giveHop: Boolean) {
+        isClinging = false
+        slackDistance = 0.0f
+        rappelDirection = 0
+        player.setNoGravity(false)
         cancelPlayerFall(player)
         if (giveHop) {
             val currentVel = player.deltaMovement
             player.setDeltaMovement(currentVel.x * 0.5, 0.28, currentVel.z * 0.5)
             player.hurtMarked = true
+        }
+    }
+
+    /**
+     * Gère le décrochage manuel (Shift ou re-clic droit). Si Slingshot est actif pendant la traction,
+     * convertit l'inertie en projection catapultée !
+     */
+    fun handleManualRelease(player: Player) {
+        val normal = getFacingNormal()
+        val baseTargetPos = computeClingingPosition(hookPosition, normal, 0.0)
+        val distToBaseTarget = baseTargetPos.subtract(player.position()).length()
+
+        if (slingshotLevel > 0 && !isClinging && anchorState == AnchorState.HOOKED_BLOCK && distToBaseTarget > 1.2) {
+            applySlingshotBoost(player)
+        } else {
+            releasePlayerAtDestination(player, false)
+        }
+        retract()
+    }
+
+    /**
+     * Propulse le joueur avec une violente impulsion cinétique (Enchantement Élan Cinétique / Slingshot).
+     */
+    fun applySlingshotBoost(player: Player) {
+        val serverLevel = level() as? ServerLevel
+        isClinging = false
+        slackDistance = 0.0f
+        rappelDirection = 0
+        player.setNoGravity(false)
+        cancelPlayerFall(player)
+
+        val lookDir = player.lookAngle.normalize()
+        val slingshotMultiplier = 1.25 + 0.45 * slingshotLevel
+        val speedMultiplier = 1.0 + 0.25 * rapidReelLevel
+        val boostSpeed = PULL_SPEED * slingshotMultiplier * speedMultiplier
+        val upwardBoost = 0.28 + 0.12 * slingshotLevel
+        val boostedVel = lookDir.scale(boostSpeed).add(0.0, upwardBoost, 0.0)
+
+        player.setDeltaMovement(boostedVel.x, boostedVel.y, boostedVel.z)
+        player.hurtMarked = true
+
+        if (serverLevel != null) {
+            serverLevel.playSound(
+                null,
+                player.blockPosition(),
+                SoundEvents.WIND_CHARGE_BURST.value(),
+                SoundSource.PLAYERS,
+                1.0f,
+                1.2f + slingshotLevel * 0.15f
+            )
+            serverLevel.sendParticles(
+                ParticleTypes.GUST,
+                player.x, player.y + 0.5, player.z,
+                6, 0.2, 0.2, 0.2, 0.08
+            )
+        }
+    }
+
+    /**
+     * Gère l'impact initial sur une créature vivante (dégâts Harpon Piquant + Désarmement).
+     */
+    private fun applyEntityImpact(serverLevel: ServerLevel, owner: Player, target: LivingEntity) {
+        // 1. Dégâts d'impact augmentés par Piercing Spike
+        val damage = 2.0f + 3.0f * piercingSpikeLevel
+        target.hurtServer(
+            serverLevel,
+            target.damageSources().mobAttack(owner),
+            damage
+        )
+
+        // 2. Enchantement Désarmement (Disarm) : arrache l'arme en main principale
+        if (disarmLevel > 0) {
+            val heldItem = target.getItemInHand(InteractionHand.MAIN_HAND)
+            if (!heldItem.isEmpty) {
+                val snatched = heldItem.copy()
+                target.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY)
+
+                val dropPos = target.position().add(0.0, target.bbHeight * 0.5, 0.0)
+                val itemEntity = ItemEntity(serverLevel, dropPos.x, dropPos.y, dropPos.z, snatched)
+                itemEntity.setPickUpDelay(0)
+                val toOwner = owner.eyePosition.subtract(dropPos).normalize().scale(0.85)
+                itemEntity.deltaMovement = toOwner
+                serverLevel.addFreshEntity(itemEntity)
+
+                serverLevel.playSound(
+                    null,
+                    target.blockPosition(),
+                    SoundEvents.ITEM_BREAK.value(),
+                    SoundSource.PLAYERS,
+                    0.85f,
+                    1.3f
+                )
+                serverLevel.playSound(
+                    null,
+                    target.blockPosition(),
+                    SoundEvents.CHAIN_HIT,
+                    SoundSource.PLAYERS,
+                    1.0f,
+                    1.6f
+                )
+            }
+        }
+    }
+
+    /**
+     * Gère la chaîne cryogénique Fil de Givre (Frostwire) : inflige gel et ralentissement aux entités qui la coupent.
+     */
+    private fun tickFrostwire(serverLevel: ServerLevel, owner: Player) {
+        val start = owner.position().add(0.0, 0.8, 0.0)
+        val end = position()
+        val diff = end.subtract(start)
+        val length = diff.length()
+        if (length <= 0.5) return
+
+        val dir = diff.normalize()
+        // Particules de flocons de givre le long de la ligne
+        if (flightTicks % 2 == 0) {
+            var step = 0.5
+            while (step < length) {
+                val pPos = start.add(dir.scale(step))
+                serverLevel.sendParticles(
+                    ParticleTypes.SNOWFLAKE,
+                    pPos.x, pPos.y, pPos.z,
+                    1, 0.05, 0.05, 0.05, 0.01
+                )
+                step += 1.25
+            }
+        }
+
+        if (flightTicks % 20 == 0) {
+            val center = start.add(diff.scale(0.5))
+            serverLevel.playSound(
+                null,
+                BlockPos.containing(center),
+                SoundEvents.PLAYER_HURT_FREEZE,
+                SoundSource.PLAYERS,
+                0.4f,
+                1.7f
+            )
+        }
+
+        val box = AABB(start.x, start.y, start.z, end.x, end.y, end.z).inflate(0.75)
+        val targets = serverLevel.getEntities(this, box) {
+            it != owner && it != this && it.isAlive && it is LivingEntity
+        }
+
+        for (target in targets) {
+            if (target !is LivingEntity) continue
+            val p = target.position().add(0.0, target.bbHeight * 0.5, 0.0)
+            val distToSegment = distanceToSegment(p, start, end)
+            if (distToSegment <= (target.bbWidth * 0.5 + 0.4)) {
+                target.ticksFrozen = (target.ticksFrozen + 25 * frostwireLevel).coerceAtMost(300)
+                target.addEffect(
+                    MobEffectInstance(
+                        MobEffects.SLOWNESS,
+                        40,
+                        (frostwireLevel - 1).coerceAtLeast(0),
+                        false,
+                        true
+                    )
+                )
+                if (flightTicks % 8 == 0) {
+                    target.hurtServer(serverLevel, target.damageSources().freeze(), 1.5f * frostwireLevel)
+                }
+            }
+        }
+    }
+
+    private fun distanceToSegment(point: Vec3, segStart: Vec3, segEnd: Vec3): Double {
+        val segVec = segEnd.subtract(segStart)
+        val segLenSq = segVec.lengthSqr()
+        if (segLenSq < 1e-6) {
+            return point.distanceTo(segStart)
+        }
+        val toPoint = point.subtract(segStart)
+        val t = (toPoint.dot(segVec) / segLenSq).coerceIn(0.0, 1.0)
+        val projection = segStart.add(segVec.scale(t))
+        return point.distanceTo(projection)
+    }
+
+    /**
+     * Renvoie la normale orientée de la face de bloc accrochée.
+     */
+    fun getFacingNormal(): Vec3 {
+        return if (hookDirection >= 0) {
+            val dir = Direction.from3DDataValue(hookDirection)
+            Vec3(dir.stepX.toDouble(), dir.stepY.toDouble(), dir.stepZ.toDouble())
+        } else {
+            Vec3.ZERO
+        }
+    }
+
+    /**
+     * Calcule la position idéale où le joueur doit rester suspendu sans heurter les colliders de blocs,
+     * en prenant en compte le mou relâché sur la chaîne (rappel).
+     */
+    fun computeClingingPosition(anchorPos: Vec3, normal: Vec3, slack: Double = slackDistance.toDouble()): Vec3 {
+        return when (hookDirection) {
+            Direction.DOWN.get3DDataValue() -> {
+                // Plafond : Pieds à 1.95m + slack sous l'ancre (tête à 15cm sous le plafond à slack=0)
+                Vec3(anchorPos.x, anchorPos.y - 1.95 - slack, anchorPos.z)
+            }
+            Direction.UP.get3DDataValue() -> {
+                // Sol : Pieds posés au-dessus de l'ancre
+                Vec3(anchorPos.x, anchorPos.y + 0.05, anchorPos.z)
+            }
+            else -> {
+                // Mur vertical ou angle : Pieds à 1.35m + slack sous l'ancre et centre à 0.50m du mur
+                val hx = if (normal.lengthSqr() > 0.01) normal.x else {
+                    if (hookDirection >= 0) Direction.from3DDataValue(hookDirection).stepX.toDouble() else 0.0
+                }
+                val hz = if (normal.lengthSqr() > 0.01) normal.z else {
+                    if (hookDirection >= 0) Direction.from3DDataValue(hookDirection).stepZ.toDouble() else 0.0
+                }
+                val hLen = Math.sqrt(hx * hx + hz * hz)
+                if (hLen > 0.01) {
+                    val normX = hx / hLen
+                    val normZ = hz / hLen
+                    Vec3(
+                        anchorPos.x + normX * 0.50,
+                        anchorPos.y - 1.35 - slack,
+                        anchorPos.z + normZ * 0.50
+                    )
+                } else {
+                    Vec3(anchorPos.x, anchorPos.y - 1.35 - slack, anchorPos.z)
+                }
+            }
+        }
+    }
+
+    /**
+     * Détermine si le joueur peut encore descendre le long de la chaîne sans traverser le sol.
+     */
+    @Suppress("DEPRECATION")
+    fun canDescendFurther(level: Level, player: Player, currentTargetPos: Vec3): Boolean {
+        val feetY = currentTargetPos.y
+        // Vérifie si le bloc sous les pieds du joueur est un sol solide bloquant le passage
+        val checkBlockPos = BlockPos.containing(currentTargetPos.x, feetY - 0.05, currentTargetPos.z)
+        val state = level.getBlockState(checkBlockPos)
+        if (state.blocksMotion() && !state.isAir) {
+            val shape = state.getCollisionShape(level, checkBlockPos)
+            if (!shape.isEmpty) {
+                val blockTopY = checkBlockPos.y + shape.max(Direction.Axis.Y)
+                if (feetY <= blockTopY + 0.02) {
+                    return false
+                }
+            } else {
+                return false
+            }
+        }
+        return true
+    }
+
+    /**
+     * Maintient fermement le joueur suspendu à la paroi en annulant la gravité et les tremblements.
+     */
+    fun applyClingingSuspension(player: Player, targetPos: Vec3, playerPos: Vec3) {
+        cancelPlayerFall(player)
+        val offset = targetPos.subtract(playerPos)
+        val offsetLen = offset.length()
+
+        if (offsetLen > 0.35) {
+            // Rattrapage amorti si décalé
+            val correction = offset.normalize().scale(0.25)
+            player.setDeltaMovement(correction.x, correction.y, correction.z)
+            player.hurtMarked = true
+        } else if (offsetLen > 0.02) {
+            // Doux rappel vers la position cible dès 2cm d'écart (absorbe les micro-mouvements sans à-coups)
+            val correction = offset.scale(0.4)
+            player.setDeltaMovement(correction.x, correction.y, correction.z)
+            player.hurtMarked = true
+        } else {
+            // Parfaitement immobile
+            if (player.deltaMovement.lengthSqr() > 0.0001) {
+                player.setDeltaMovement(0.0, 0.0, 0.0)
+                player.hurtMarked = true
+            }
         }
     }
 
@@ -543,28 +1100,43 @@ class ClawshotAnchorEntity(
         return false
     }
 
-    private fun findEntityOnPath(from: Vec3, to: Vec3, owner: Player): Entity? {
-        val box = AABB(from, to).inflate(0.5)
+    data class EntityHitResultData(val entity: Entity, val location: Vec3, val distance: Double)
+
+    private fun findEntityOnPath(from: Vec3, to: Vec3, owner: Player): EntityHitResultData? {
+        val motion = to.subtract(from)
+        val box = boundingBox.expandTowards(motion).inflate(1.2)
         val candidates = level().getEntities(this, box) { e ->
-            e != owner && e != this && e.isAlive && (e is LivingEntity || e is ItemEntity)
+            e != owner && e != this && e.isAlive && !e.isSpectator && (e is LivingEntity || e is ItemEntity)
         }
 
-        var closestEntity: Entity? = null
+        var closestHit: EntityHitResultData? = null
         var closestDist = Double.MAX_VALUE
 
         for (candidate in candidates) {
-            val candBox = candidate.boundingBox.inflate(0.3)
-            val clip = candBox.clip(from, to)
-            if (clip.isPresent) {
-                val dist = from.distanceTo(clip.get())
+            // Marge généreuse adaptée à l'envergure des 3 griffes ouvertes du Clawshot (~0.45m)
+            val candBox = candidate.boundingBox.inflate(0.45)
+
+            if (candBox.contains(from)) {
+                // L'entité englobe déjà l'ancre au début du tick
+                val dist = 0.0
                 if (dist < closestDist) {
                     closestDist = dist
-                    closestEntity = candidate
+                    closestHit = EntityHitResultData(candidate, from, dist)
+                }
+            } else {
+                val clip = candBox.clip(from, to)
+                if (clip.isPresent) {
+                    val hitLoc = clip.get()
+                    val dist = from.distanceTo(hitLoc)
+                    if (dist < closestDist) {
+                        closestDist = dist
+                        closestHit = EntityHitResultData(candidate, hitLoc, dist)
+                    }
                 }
             }
         }
 
-        return closestEntity
+        return closestHit
     }
 
     private fun playImpactEffects(serverLevel: ServerLevel, pos: Vec3) {
@@ -594,6 +1166,15 @@ class ClawshotAnchorEntity(
         output.putFloat("HookY", hookPosition.y.toFloat())
         output.putFloat("HookZ", hookPosition.z.toFloat())
         output.putFloat("ClawOpen", clawOpenAmount)
+        output.putBoolean("IsClinging", isClinging)
+        output.putFloat("SlackDistance", slackDistance)
+        output.putInt("HookDirection", hookDirection)
+        output.putInt("FrostwireLevel", frostwireLevel)
+        output.putInt("SlingshotLevel", slingshotLevel)
+        output.putInt("DisarmLevel", disarmLevel)
+        output.putInt("ExtendedChainLevel", extendedChainLevel)
+        output.putInt("RapidReelLevel", rapidReelLevel)
+        output.putInt("PiercingSpikeLevel", piercingSpikeLevel)
         ownerUuid?.let { output.putString("OwnerUuid", it.toString()) }
     }
 
@@ -607,6 +1188,15 @@ class ClawshotAnchorEntity(
         hookPosition = Vec3(hx.toDouble(), hy.toDouble(), hz.toDouble())
         clawOpenAmount = input.getFloatOr("ClawOpen", 1.0f)
         prevClawOpen = clawOpenAmount
+        isClinging = input.getBooleanOr("IsClinging", false)
+        slackDistance = input.getFloatOr("SlackDistance", 0.0f)
+        hookDirection = input.getIntOr("HookDirection", -1)
+        frostwireLevel = input.getIntOr("FrostwireLevel", 0)
+        slingshotLevel = input.getIntOr("SlingshotLevel", 0)
+        disarmLevel = input.getIntOr("DisarmLevel", 0)
+        extendedChainLevel = input.getIntOr("ExtendedChainLevel", 0)
+        rapidReelLevel = input.getIntOr("RapidReelLevel", 0)
+        piercingSpikeLevel = input.getIntOr("PiercingSpikeLevel", 0)
         val ownerStr = input.getStringOr("OwnerUuid", "")
         if (ownerStr.isNotEmpty()) {
             try {

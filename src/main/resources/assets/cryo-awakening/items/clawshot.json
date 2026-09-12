@@ -1,49 +1,9 @@
 {
   "model": {
-    "type": "minecraft:condition",
-    "property": "cryo-awakening:clawshot/fired",
-    "on_true": {
-      "type": "minecraft:model",
-      "model": "cryo-awakening:item/clawshot_fired"
-    },
-    "on_false": {
-      "type": "minecraft:range_dispatch",
-      "property": "cryo-awakening:clawshot/aiming_progress",
-      "scale": 1.0,
-      "fallback": {
-        "type": "minecraft:model",
-        "model": "cryo-awakening:item/clawshot"
-      },
-      "entries": [
-        {
-          "threshold": 0.2,
-          "model": {
-            "type": "minecraft:model",
-            "model": "cryo-awakening:item/clawshot_aiming_1"
-          }
-        },
-        {
-          "threshold": 0.45,
-          "model": {
-            "type": "minecraft:model",
-            "model": "cryo-awakening:item/clawshot_aiming_2"
-          }
-        },
-        {
-          "threshold": 0.7,
-          "model": {
-            "type": "minecraft:model",
-            "model": "cryo-awakening:item/clawshot_aiming_3"
-          }
-        },
-        {
-          "threshold": 0.9,
-          "model": {
-            "type": "minecraft:model",
-            "model": "cryo-awakening:item/clawshot_aiming"
-          }
-        }
-      ]
+    "type": "minecraft:special",
+    "base": "cryo-awakening:item/clawshot",
+    "model": {
+      "type": "geckolib:geckolib"
     }
   }
 }

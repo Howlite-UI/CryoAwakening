@@ -2,6 +2,11 @@ package com.howlite.cryoawakening.item
 
 import com.howlite.cryoawakening.entity.ClawshotAnchorEntity
 import com.howlite.cryoawakening.entity.ModEntities
+import com.geckolib.animatable.GeoItem
+import com.geckolib.animatable.client.GeoRenderProvider
+import com.geckolib.animatable.instance.AnimatableInstanceCache
+import com.geckolib.animatable.manager.AnimatableManager
+import com.geckolib.util.GeckoLibUtil
 import net.minecraft.ChatFormatting
 import net.minecraft.network.chat.CommonComponents
 import net.minecraft.network.chat.Component
@@ -33,23 +38,47 @@ import java.util.function.Consumer
  * - Mobs : Attire les créatures légères vers le joueur / tracte le joueur vers les créatures lourdes.
  * - Sécurité anti-chute : Annule strictement tous les dégâts de chute pendant la traction.
  */
-class ClawshotItem(properties: Properties) : Item(properties) {
+class ClawshotItem(properties: Properties) : Item(properties), GeoItem {
+
+    private val cache: AnimatableInstanceCache = GeckoLibUtil.createInstanceCache(this)
+
+    override fun registerControllers(controllers: AnimatableManager.ControllerRegistrar) {
+        // Géré procéduralement dans ClawshotItemRenderer
+    }
+
+    override fun getAnimatableInstanceCache(): AnimatableInstanceCache = cache
+
+    override fun createGeoRenderer(consumer: Consumer<GeoRenderProvider>) {
+        RENDER_PROVIDER?.let { consumer.accept(it) }
+    }
 
     override fun getUseAnimation(stack: ItemStack): ItemUseAnimation = ItemUseAnimation.NONE
 
     override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResult {
-        // Recherche si le joueur a déjà une ancre active dans le monde
-        val existingAnchor = findActiveAnchor(level, player)
+        // Recherche si CETTE main a déjà une ancre active dans le monde
+        val thisAnchor = findActiveAnchor(level, player, hand)
 
-        if (existingAnchor != null && existingAnchor.isAlive) {
-            // Un second clic droit rappelle l'ancre côté serveur
+        if (thisAnchor != null && thisAnchor.isAlive) {
+            val otherHand = if (hand == InteractionHand.MAIN_HAND) InteractionHand.OFF_HAND else InteractionHand.MAIN_HAND
+            val otherStack = player.getItemInHand(otherHand)
+
+            // Si c'est la main principale et que la main secondaire possède AUSSI un Clawshot disponible (non déployé),
+            // on passe (PASS) pour que Minecraft permette à la main secondaire de tirer son grappin !
+            if (hand == InteractionHand.MAIN_HAND && otherStack.item is ClawshotItem) {
+                val otherAnchor = findActiveAnchor(level, player, otherHand)
+                if (otherAnchor == null || !otherAnchor.isAlive) {
+                    return InteractionResult.PASS
+                }
+            }
+
+            // Un second clic droit avec la même main rappelle l'ancre et détache le joueur (avec élan Slingshot si applicable)
             if (!level.isClientSide) {
-                existingAnchor.retract()
+                thisAnchor.handleManualRelease(player)
             }
             return InteractionResult.SUCCESS
         }
 
-        // Lancer d'une nouvelle ancre
+        // Lancer d'une nouvelle ancre depuis cette main
         if (!level.isClientSide) {
             val anchor = ClawshotAnchorEntity(ModEntities.CLAWSHOT_ANCHOR, level)
             anchor.setupLaunch(player, hand)
@@ -79,17 +108,21 @@ class ClawshotItem(properties: Properties) : Item(properties) {
     }
 
     companion object {
-        fun findActiveAnchor(level: Level, player: Player): ClawshotAnchorEntity? {
+        var RENDER_PROVIDER: GeoRenderProvider? = null
+
+        fun findActiveAnchor(level: Level, player: Player, hand: InteractionHand? = null): ClawshotAnchorEntity? {
             val searchBox = AABB(
-                player.x - ClawshotAnchorEntity.MAX_RANGE - 4.0,
-                player.y - ClawshotAnchorEntity.MAX_RANGE - 4.0,
-                player.z - ClawshotAnchorEntity.MAX_RANGE - 4.0,
-                player.x + ClawshotAnchorEntity.MAX_RANGE + 4.0,
-                player.y + ClawshotAnchorEntity.MAX_RANGE + 4.0,
-                player.z + ClawshotAnchorEntity.MAX_RANGE + 4.0
+                player.x - 64.0,
+                player.y - 64.0,
+                player.z - 64.0,
+                player.x + 64.0,
+                player.y + 64.0,
+                player.z + 64.0
             )
             return level.getEntitiesOfClass(ClawshotAnchorEntity::class.java, searchBox) { anchor ->
-                (anchor.ownerUuid == player.uuid || anchor.ownerEntityId == player.id) && anchor.isAlive
+                (anchor.ownerUuid == player.uuid || anchor.ownerEntityId == player.id) &&
+                anchor.isAlive &&
+                (hand == null || anchor.usedHand == hand)
             }.firstOrNull()
         }
     }

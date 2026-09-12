@@ -1,0 +1,22 @@
+{
+  "description": {
+    "translate": "enchantment.cryo-awakening.disarm"
+  },
+  "supported_items": "#cryo-awakening:enchantable/clawshot",
+  "primary_items": "#cryo-awakening:enchantable/clawshot",
+  "weight": 1,
+  "max_level": 1,
+  "min_cost": {
+    "base": 20,
+    "per_level_above_first": 0
+  },
+  "max_cost": {
+    "base": 60,
+    "per_level_above_first": 0
+  },
+  "anvil_cost": 6,
+  "slots": [
+    "mainhand",
+    "offhand"
+  ]
+}

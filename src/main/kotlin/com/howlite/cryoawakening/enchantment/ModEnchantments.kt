@@ -24,6 +24,14 @@ object ModEnchantments {
     val RETRIEVAL: ResourceKey<Enchantment> = key("retrieval")
     val GALE_VORTEX: ResourceKey<Enchantment> = key("gale_vortex")
     val HAWKEYE: ResourceKey<Enchantment> = key("hawkeye")
+    
+    // --- Clawshot Enchantments ---
+    val FROSTWIRE: ResourceKey<Enchantment> = key("frostwire")
+    val SLINGSHOT: ResourceKey<Enchantment> = key("slingshot")
+    val DISARM: ResourceKey<Enchantment> = key("disarm")
+    val EXTENDED_CHAIN: ResourceKey<Enchantment> = key("extended_chain")
+    val RAPID_REEL: ResourceKey<Enchantment> = key("rapid_reel")
+    val PIERCING_SPIKE: ResourceKey<Enchantment> = key("piercing_spike")
 
     private fun key(name: String): ResourceKey<Enchantment> =
         ResourceKey.create(Registries.ENCHANTMENT, CryoAwakening.id(name))

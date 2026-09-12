@@ -1,0 +1,22 @@
+{
+  "description": {
+    "translate": "enchantment.cryo-awakening.frostwire"
+  },
+  "supported_items": "#cryo-awakening:enchantable/clawshot",
+  "primary_items": "#cryo-awakening:enchantable/clawshot",
+  "weight": 2,
+  "max_level": 3,
+  "min_cost": {
+    "base": 10,
+    "per_level_above_first": 10
+  },
+  "max_cost": {
+    "base": 50,
+    "per_level_above_first": 10
+  },
+  "anvil_cost": 4,
+  "slots": [
+    "mainhand",
+    "offhand"
+  ]
+}

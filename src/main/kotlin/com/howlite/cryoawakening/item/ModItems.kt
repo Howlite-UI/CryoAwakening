@@ -93,6 +93,7 @@ object ModItems {
             .setId(CLAWSHOT_KEY)
             .stacksTo(1)
             .durability(512)
+            .enchantable(15)
     )
 
     val GAWKER_SPAWN_EGG_KEY: ResourceKey<Item> = itemKey("gawker_spawn_egg")

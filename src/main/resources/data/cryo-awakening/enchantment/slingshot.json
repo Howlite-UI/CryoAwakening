@@ -1,0 +1,22 @@
+{
+  "description": {
+    "translate": "enchantment.cryo-awakening.slingshot"
+  },
+  "supported_items": "#cryo-awakening:enchantable/clawshot",
+  "primary_items": "#cryo-awakening:enchantable/clawshot",
+  "weight": 2,
+  "max_level": 2,
+  "min_cost": {
+    "base": 15,
+    "per_level_above_first": 12
+  },
+  "max_cost": {
+    "base": 60,
+    "per_level_above_first": 12
+  },
+  "anvil_cost": 4,
+  "slots": [
+    "mainhand",
+    "offhand"
+  ]
+}

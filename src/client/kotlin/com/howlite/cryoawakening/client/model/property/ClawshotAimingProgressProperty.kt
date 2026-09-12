@@ -41,50 +41,57 @@ class ClawshotAimingProgressProperty : RangeSelectItemModelProperty {
             }
             return currentProgress
         }
-    }
 
-    override fun get(stack: ItemStack, level: ClientLevel?, owner: ItemOwner?, seed: Int): Float {
-        val player = owner as? Player ?: Minecraft.getInstance().player ?: return 0.0f
-        val lvl = level ?: Minecraft.getInstance().level ?: return 0.0f
+        fun updateAndGetProgress(hand: net.minecraft.world.InteractionHand? = null): Float {
+            val mc = Minecraft.getInstance()
+            val player = mc.player ?: return 0.0f
+            val lvl = mc.level ?: return 0.0f
 
-        // Si le grappin est déjà tiré/dans le monde, les griffes ne s'ouvrent pas en main
-        val hasActiveAnchor = ClawshotItem.findActiveAnchor(lvl, player) != null
-        if (hasActiveAnchor) {
-            return updateProgress(false)
-        }
+            // Si CETTE main a déjà son grappin déployé, cette main n'anime pas ses griffes
+            val hasActiveAnchor = ClawshotItem.findActiveAnchor(lvl, player, hand) != null
+            if (hasActiveAnchor) {
+                return updateProgress(false)
+            }
 
-        val eyePos = player.eyePosition
-        val look = player.lookAngle
-        val reach = ClawshotAnchorEntity.MAX_RANGE
-        val endPos = eyePos.add(look.scale(reach))
+            val eyePos = player.eyePosition
+            val look = player.lookAngle
+            val reach = ClawshotAnchorEntity.MAX_RANGE
+            val endPos = eyePos.add(look.scale(reach))
 
-        // 1. Raycast blocs à portée
-        val blockHit = lvl.clip(
-            ClipContext(eyePos, endPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player)
-        )
-        val hitDistance = if (blockHit.type != HitResult.Type.MISS) {
-            eyePos.distanceTo(blockHit.location)
-        } else {
-            reach
-        }
+            // 1. Raycast blocs à portée
+            val blockHit = lvl.clip(
+                ClipContext(eyePos, endPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player)
+            )
+            val hitDistance = if (blockHit.type != HitResult.Type.MISS) {
+                eyePos.distanceTo(blockHit.location)
+            } else {
+                reach
+            }
 
-        // 2. Détection entités vivantes à portée
-        val searchBox = AABB(eyePos, eyePos.add(look.scale(hitDistance))).inflate(1.0)
-        var hitAny = blockHit.type != HitResult.Type.MISS
-        if (!hitAny) {
-            for (entity in lvl.getEntities(player, searchBox)) {
-                if (entity.isAlive && entity.isPickable) {
-                    val bb = entity.boundingBox.inflate(0.3)
-                    val clipOpt = bb.clip(eyePos, endPos)
-                    if (clipOpt.isPresent && eyePos.distanceTo(clipOpt.get()) <= hitDistance) {
-                        hitAny = true
-                        break
+            // 2. Détection entités vivantes à portée
+            var hitAny = blockHit.type != HitResult.Type.MISS
+            if (!hitAny) {
+                val searchBox = AABB(eyePos, eyePos.add(look.scale(hitDistance))).inflate(1.0)
+                for (entity in lvl.getEntities(player, searchBox)) {
+                    if (entity.isAlive && entity.isPickable) {
+                        val bb = entity.boundingBox.inflate(0.3)
+                        val clipOpt = bb.clip(eyePos, endPos)
+                        if (clipOpt.isPresent && eyePos.distanceTo(clipOpt.get()) <= hitDistance) {
+                            hitAny = true
+                            break
+                        }
                     }
                 }
             }
+
+            return updateProgress(hitAny)
         }
 
-        return updateProgress(hitAny)
+        fun getProgress(): Float = currentProgress
+    }
+
+    override fun get(stack: ItemStack, level: ClientLevel?, owner: ItemOwner?, seed: Int): Float {
+        return updateAndGetProgress()
     }
 
     override fun type(): MapCodec<out RangeSelectItemModelProperty> = MAP_CODEC
