@@ -1,5 +1,6 @@
 package com.howlite.cryoawakening.client.model.property
 
+import com.howlite.cryoawakening.enchantment.ModEnchantments
 import com.howlite.cryoawakening.entity.ClawshotAnchorEntity
 import com.mojang.serialization.MapCodec
 import net.minecraft.client.multiplayer.ClientLevel
@@ -39,10 +40,13 @@ class ClawshotAimingProperty : ConditionalItemModelProperty {
 
         if (!isHand) return false
 
+        val extendedChainLevel = ModEnchantments.getLevel(stack, ModEnchantments.EXTENDED_CHAIN, level)
+        val reach = ClawshotAnchorEntity.computeMaxRange(extendedChainLevel)
+
         val hit = ProjectileUtil.getHitResultOnViewVector(
             entity,
             { target -> target.isAlive && target != entity && !target.isSpectator },
-            ClawshotAnchorEntity.MAX_RANGE
+            reach
         )
 
         return hit.type != HitResult.Type.MISS

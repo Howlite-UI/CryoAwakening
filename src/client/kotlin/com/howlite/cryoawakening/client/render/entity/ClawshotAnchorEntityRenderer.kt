@@ -107,6 +107,15 @@ class ClawshotAnchorEntityRenderer(
             state.hasOwner = true
             state.ownerHandPos = computeOwnerHandPosition(owner, entity.usedHand, partialTick)
 
+            // Animation fluide de l'ouverture des 3 griffes proportionnelle à la distance et portée Extended Chain
+            if (entity.anchorState == ClawshotAnchorEntity.AnchorState.FLYING) {
+                val maxRange = entity.getMaxRange()
+                val currentDist = anchorPos.distanceTo(owner.getEyePosition(partialTick))
+                state.clawOpenAmount = (currentDist / maxRange).coerceIn(0.0, 1.0).toFloat()
+            } else {
+                state.clawOpenAmount = Mth.lerp(partialTick, entity.prevClawOpen, entity.clawOpenAmount)
+            }
+
             // Calcul de l'orientation de la tête dans la direction de vol / d'impact
             if (entity.anchorState == ClawshotAnchorEntity.AnchorState.FLYING) {
                 val motion = entity.deltaMovement

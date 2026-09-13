@@ -32,6 +32,7 @@ object ModEnchantments {
     val EXTENDED_CHAIN: ResourceKey<Enchantment> = key("extended_chain")
     val RAPID_REEL: ResourceKey<Enchantment> = key("rapid_reel")
     val PIERCING_SPIKE: ResourceKey<Enchantment> = key("piercing_spike")
+    val RELIC_SNATCHER: ResourceKey<Enchantment> = key("relic_snatcher")
 
     private fun key(name: String): ResourceKey<Enchantment> =
         ResourceKey.create(Registries.ENCHANTMENT, CryoAwakening.id(name))

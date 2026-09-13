@@ -73,7 +73,8 @@ class ClawshotItemRenderer : GeoItemRenderer<ClawshotItem>(ClawshotModel()) {
             }
 
             // Animation fluide de l'ouverture des 3 pinces radialement vers l'EXTÉRIEUR à la visée (+24°)
-            val progress = ClawshotAimingProgressProperty.updateAndGetProgress(currentHand)
+            val currentStack = player?.getItemInHand(currentHand)
+            val progress = ClawshotAimingProgressProperty.updateAndGetProgress(currentHand, currentStack)
             val openAngleRad = 24.0f * progress * (Math.PI.toFloat() / 180.0f)
             boneSnapshots.get("claw_1").ifPresent { it.setRotZ(openAngleRad) }
             boneSnapshots.get("claw_2").ifPresent { it.setRotZ(openAngleRad) }

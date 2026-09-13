@@ -1,5 +1,6 @@
 package com.howlite.cryoawakening.client.model.property
 
+import com.howlite.cryoawakening.enchantment.ModEnchantments
 import com.howlite.cryoawakening.entity.ClawshotAnchorEntity
 import com.howlite.cryoawakening.item.ClawshotItem
 import com.mojang.serialization.MapCodec
@@ -42,7 +43,7 @@ class ClawshotAimingProgressProperty : RangeSelectItemModelProperty {
             return currentProgress
         }
 
-        fun updateAndGetProgress(hand: net.minecraft.world.InteractionHand? = null): Float {
+        fun updateAndGetProgress(hand: net.minecraft.world.InteractionHand? = null, stack: ItemStack? = null): Float {
             val mc = Minecraft.getInstance()
             val player = mc.player ?: return 0.0f
             val lvl = mc.level ?: return 0.0f
@@ -53,9 +54,14 @@ class ClawshotAimingProgressProperty : RangeSelectItemModelProperty {
                 return updateProgress(false)
             }
 
+            val itemStack = stack ?: (if (hand != null) player.getItemInHand(hand) else player.mainHandItem)
+            val extendedChainLevel = if (itemStack.item is ClawshotItem) {
+                ModEnchantments.getLevel(itemStack, ModEnchantments.EXTENDED_CHAIN, lvl)
+            } else 0
+            val reach = ClawshotAnchorEntity.computeMaxRange(extendedChainLevel)
+
             val eyePos = player.eyePosition
             val look = player.lookAngle
-            val reach = ClawshotAnchorEntity.MAX_RANGE
             val endPos = eyePos.add(look.scale(reach))
 
             // 1. Raycast blocs à portée
@@ -91,7 +97,7 @@ class ClawshotAimingProgressProperty : RangeSelectItemModelProperty {
     }
 
     override fun get(stack: ItemStack, level: ClientLevel?, owner: ItemOwner?, seed: Int): Float {
-        return updateAndGetProgress()
+        return updateAndGetProgress(null, stack)
     }
 
     override fun type(): MapCodec<out RangeSelectItemModelProperty> = MAP_CODEC

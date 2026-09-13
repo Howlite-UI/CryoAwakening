@@ -49,6 +49,7 @@ object ClawshotClientHandler {
                 }
 
                 // Ajustement prédictif fluide immédiat côté client pour zéro latence
+                val rappelStep = 0.18f * (1.0f + 0.25f * activeAnchor.rapidReelLevel)
                 if (direction == -1) {
                     val currentTarget = activeAnchor.computeClingingPosition(
                         activeAnchor.hookPosition,
@@ -56,11 +57,11 @@ object ClawshotClientHandler {
                         activeAnchor.slackDistance.toDouble()
                     )
                     if (activeAnchor.canDescendFurther(level, player, currentTarget)) {
-                        val maxSlack = (ClawshotAnchorEntity.MAX_RANGE - 2.5).toFloat()
-                        activeAnchor.slackDistance = (activeAnchor.slackDistance + 0.18f).coerceAtMost(maxSlack)
+                        val maxSlack = (activeAnchor.getMaxRange() - 2.5).toFloat()
+                        activeAnchor.slackDistance = (activeAnchor.slackDistance + rappelStep).coerceAtMost(maxSlack)
                     }
                 } else if (direction == 1) {
-                    activeAnchor.slackDistance = (activeAnchor.slackDistance - 0.18f).coerceAtLeast(0.0f)
+                    activeAnchor.slackDistance = (activeAnchor.slackDistance - rappelStep).coerceAtLeast(0.0f)
                 }
             } else {
                 if (lastSentDirection != 0 && lastAnchorId != -1) {

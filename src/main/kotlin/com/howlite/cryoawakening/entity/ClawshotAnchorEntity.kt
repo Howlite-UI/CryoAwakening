@@ -26,11 +26,31 @@ import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.ClipContext
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.block.Blocks
+import net.minecraft.world.level.block.CampfireBlock
 import net.minecraft.world.level.block.ChainBlock
 import net.minecraft.world.level.block.IronBarsBlock
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.storage.ValueInput
 import net.minecraft.world.level.storage.ValueOutput
+import net.minecraft.tags.BlockTags
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow
+import net.minecraft.world.entity.animal.fish.AbstractFish
+import net.minecraft.world.entity.animal.fish.Cod
+import net.minecraft.world.entity.animal.fish.Salmon
+import net.minecraft.world.entity.animal.fish.Pufferfish
+import net.minecraft.world.entity.animal.fish.TropicalFish
+import net.minecraft.world.item.Items
+import net.minecraft.world.level.block.Block
+import net.minecraft.world.level.block.LeverBlock
+import net.minecraft.world.level.block.ButtonBlock
+import net.minecraft.world.level.block.BellBlock
+import net.minecraft.world.level.block.LanternBlock
+import net.minecraft.world.level.block.TorchBlock
+import net.minecraft.world.level.block.WallTorchBlock
+import net.minecraft.world.level.block.AmethystClusterBlock
+import net.minecraft.world.level.block.FlowerBlock
+import net.minecraft.world.level.block.HangingRootsBlock
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.HitResult
 import net.minecraft.world.phys.Vec3
@@ -65,9 +85,12 @@ class ClawshotAnchorEntity(
 
     companion object {
         const val MAX_RANGE: Double = 28.0
+        const val EXTENDED_CHAIN_BONUS: Double = 6.0
         const val FLY_SPEED: Double = 2.4
         const val PULL_SPEED: Double = 1.15
         const val RETRACT_SPEED: Double = 2.2
+
+        fun computeMaxRange(extendedChainLevel: Int): Double = MAX_RANGE + EXTENDED_CHAIN_BONUS * extendedChainLevel
 
         val ANCHOR_STATE: EntityDataAccessor<Int> =
             SynchedEntityData.defineId(ClawshotAnchorEntity::class.java, EntityDataSerializers.INT)
@@ -118,6 +141,9 @@ class ClawshotAnchorEntity(
             SynchedEntityData.defineId(ClawshotAnchorEntity::class.java, EntityDataSerializers.INT)
 
         val PIERCING_SPIKE_LEVEL: EntityDataAccessor<Int> =
+            SynchedEntityData.defineId(ClawshotAnchorEntity::class.java, EntityDataSerializers.INT)
+
+        val RELIC_SNATCHER_LEVEL: EntityDataAccessor<Int> =
             SynchedEntityData.defineId(ClawshotAnchorEntity::class.java, EntityDataSerializers.INT)
 
         fun createAttributes(): AttributeSupplier.Builder {
@@ -186,7 +212,19 @@ class ClawshotAnchorEntity(
         set(value) = entityData.set(DISARM_LEVEL, value)
 
     var extendedChainLevel: Int
-        get() = entityData.get(EXTENDED_CHAIN_LEVEL)
+        get() {
+            val synched = entityData.get(EXTENDED_CHAIN_LEVEL)
+            if (synched > 0) return synched
+            val owner = getOwnerEntity()
+            if (owner != null) {
+                val held = owner.getItemInHand(usedHand)
+                if (held.item is ClawshotItem) {
+                    val fallback = ModEnchantments.getLevel(held, ModEnchantments.EXTENDED_CHAIN, level())
+                    if (fallback > 0) return fallback
+                }
+            }
+            return 0
+        }
         set(value) = entityData.set(EXTENDED_CHAIN_LEVEL, value)
 
     var rapidReelLevel: Int
@@ -197,11 +235,32 @@ class ClawshotAnchorEntity(
         get() = entityData.get(PIERCING_SPIKE_LEVEL)
         set(value) = entityData.set(PIERCING_SPIKE_LEVEL, value)
 
-    fun getMaxRange(): Double = MAX_RANGE + 6.0 * extendedChainLevel
+    var relicSnatcherLevel: Int
+        get() = entityData.get(RELIC_SNATCHER_LEVEL)
+        set(value) = entityData.set(RELIC_SNATCHER_LEVEL, value)
+
+    fun getMaxRange(): Double = computeMaxRange(extendedChainLevel)
 
     var launchedStack: ItemStack = ItemStack.EMPTY
+    var snatchedItem: ItemStack = ItemStack.EMPTY
+    val snatchedItems: MutableList<ItemStack> = mutableListOf()
+
+    fun snatchItem(stack: ItemStack) {
+        if (stack.isEmpty) return
+        for (existing in snatchedItems) {
+            if (ItemStack.isSameItemSameComponents(existing, stack) && existing.count < existing.maxStackSize) {
+                val canAdd = (existing.maxStackSize - existing.count).coerceAtMost(stack.count)
+                existing.grow(canAdd)
+                stack.shrink(canAdd)
+                if (stack.isEmpty) return
+            }
+        }
+        if (!stack.isEmpty) {
+            snatchedItems.add(stack.copy())
+        }
+    }
     var rappelDirection: Int = 0
-    var prevClawOpen: Float = 1.0f
+    var prevClawOpen: Float = 0.0f
     var ownerUuid: UUID? = null
     var flightOrigin: Vec3 = Vec3.ZERO
     var flightTicks: Int = 0
@@ -215,7 +274,7 @@ class ClawshotAnchorEntity(
         builder.define(HOOK_X, 0.0f)
         builder.define(HOOK_Y, 0.0f)
         builder.define(HOOK_Z, 0.0f)
-        builder.define(CLAW_OPEN_AMOUNT, 1.0f)
+        builder.define(CLAW_OPEN_AMOUNT, 0.0f)
         builder.define(USED_HAND, 0)
         builder.define(HOOK_DIRECTION, -1)
         builder.define(IS_CLINGING, false)
@@ -226,6 +285,7 @@ class ClawshotAnchorEntity(
         builder.define(EXTENDED_CHAIN_LEVEL, 0)
         builder.define(RAPID_REEL_LEVEL, 0)
         builder.define(PIERCING_SPIKE_LEVEL, 0)
+        builder.define(RELIC_SNATCHER_LEVEL, 0)
     }
 
     override fun registerGoals() {
@@ -240,8 +300,8 @@ class ClawshotAnchorEntity(
         this.ownerEntityId = player.id
         this.usedHand = hand
         this.anchorState = AnchorState.FLYING
-        this.clawOpenAmount = 1.0f
-        this.prevClawOpen = 1.0f
+        this.clawOpenAmount = 0.0f
+        this.prevClawOpen = 0.0f
         this.flightTicks = 0
         this.hookedTicks = 0
         this.slackDistance = 0.0f
@@ -254,11 +314,12 @@ class ClawshotAnchorEntity(
             this.extendedChainLevel = ModEnchantments.getLevel(launchedStack, ModEnchantments.EXTENDED_CHAIN, level())
             this.rapidReelLevel = ModEnchantments.getLevel(launchedStack, ModEnchantments.RAPID_REEL, level())
             this.piercingSpikeLevel = ModEnchantments.getLevel(launchedStack, ModEnchantments.PIERCING_SPIKE, level())
+            this.relicSnatcherLevel = ModEnchantments.getLevel(launchedStack, ModEnchantments.RELIC_SNATCHER, level())
         }
         this.setNoGravity(true)
         this.noPhysics = true
 
-        val look = player.lookAngle.normalize()
+        val look = player.getViewVector(1.0f).normalize()
         val eyePos = player.eyePosition
         val startPos = eyePos.add(look.scale(0.35))
         this.flightOrigin = startPos
@@ -267,6 +328,7 @@ class ClawshotAnchorEntity(
         this.deltaMovement = look.scale(FLY_SPEED * flySpeedMultiplier)
         this.hookPosition = startPos
         this.hookDirection = -1
+        this.snatchedItem = ItemStack.EMPTY
 
         val yaw = player.yRot
         val pitch = player.xRot
@@ -274,6 +336,11 @@ class ClawshotAnchorEntity(
         this.setXRot(pitch)
         this.yRotO = yaw
         this.xRotO = pitch
+    }
+
+    override fun travel(travelVector: Vec3) {
+        // Neutralise la friction asymétrique et la gravité vanilla de LivingEntity
+        // pour garantir une trajectoire 100% rectiligne sans aucune déviation vers le haut
     }
 
     /**
@@ -314,6 +381,20 @@ class ClawshotAnchorEntity(
                 it.setNoGravity(false)
                 cancelPlayerFall(it)
             }
+        }
+        if (!snatchedItem.isEmpty && !level().isClientSide) {
+            val drop = ItemEntity(level(), x, y, z, snatchedItem)
+            drop.setPickUpDelay(0)
+            level().addFreshEntity(drop)
+            snatchedItem = ItemStack.EMPTY
+        }
+        if (snatchedItems.isNotEmpty() && !level().isClientSide) {
+            for (item in snatchedItems) {
+                val drop = ItemEntity(level(), x, y, z, item)
+                drop.setPickUpDelay(0)
+                level().addFreshEntity(drop)
+            }
+            snatchedItems.clear()
         }
         super.remove(reason)
     }
@@ -421,7 +502,9 @@ class ClawshotAnchorEntity(
 
         when (anchorState) {
             AnchorState.FLYING -> {
-                clawOpenAmount = (clawOpenAmount + 0.25f).coerceAtMost(1.0f)
+                val maxAllowedRange = getMaxRange()
+                val currentDist = position().distanceTo(owner.eyePosition)
+                clawOpenAmount = (currentDist / maxAllowedRange).coerceIn(0.0, 1.0).toFloat()
             }
             AnchorState.HOOKED_BLOCK -> {
                 clawOpenAmount = (clawOpenAmount - 0.35f).coerceAtLeast(0.0f)
@@ -474,12 +557,20 @@ class ClawshotAnchorEntity(
     }
 
     private fun tickFlying(serverLevel: ServerLevel, owner: Player) {
-        // En vol, ouverture maximale des 3 griffes
-        clawOpenAmount = (clawOpenAmount + 0.25f).coerceAtMost(1.0f)
-
         val currentPos = position()
         val motion = deltaMovement
         val nextPos = currentPos.add(motion)
+
+        // Animation d'ouverture progressive des griffes sur toute la portée (allongée par Extended Chain)
+        val maxAllowedRange = getMaxRange()
+        val flightProgress = (flightOrigin.distanceTo(nextPos) / maxAllowedRange).coerceIn(0.0, 1.0).toFloat()
+        clawOpenAmount = flightProgress
+
+        // Aspiration magnétique et interactions aquatiques (Magnéto-Griffe / Relic Snatcher)
+        if (relicSnatcherLevel > 0) {
+            tickRelicSnatcherMagneticSweep(serverLevel)
+            tickRelicSnatcherAquatic(serverLevel)
+        }
 
         // 1. Détection de collision de blocs par Raycast
         val blockHit = serverLevel.clip(
@@ -492,16 +583,89 @@ class ClawshotAnchorEntity(
 
         if (entityHit != null && entityHit.distance <= blockDist) {
             val targetEntity = entityHit.entity
-            // Impact sur une entité
+            val hitPos = targetEntity.position().add(0.0, targetEntity.bbHeight * 0.5, 0.0)
+
+            // Capture directe par Magnéto-Griffe pour les items et poissons en vol
+            if (relicSnatcherLevel > 0) {
+                if (targetEntity is ItemEntity) {
+                    snatchItem(targetEntity.item)
+                    targetEntity.discard()
+                    playImpactEffects(serverLevel, hitPos)
+                    serverLevel.playSound(null, blockPosition(), SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.8f, 1.2f)
+                    retract()
+                    return
+                }
+                if (targetEntity is AbstractFish) {
+                    val fishDrop = when (targetEntity) {
+                        is Cod -> ItemStack(Items.COD)
+                        is Salmon -> ItemStack(Items.SALMON)
+                        is Pufferfish -> ItemStack(Items.PUFFERFISH)
+                        is TropicalFish -> ItemStack(Items.TROPICAL_FISH)
+                        else -> ItemStack(Items.COD)
+                    }
+                    snatchItem(fishDrop)
+                    targetEntity.discard()
+                    playImpactEffects(serverLevel, hitPos)
+                    serverLevel.playSound(null, blockPosition(), SoundEvents.FISHING_BOBBER_SPLASH, SoundSource.PLAYERS, 0.8f, 1.2f)
+                    retract()
+                    return
+                }
+            }
+
+            // Si Désarmement (Disarm) est actif et que l'entité tient une arme :
+            // arrache l'arme, inflige les dégâts et se rétracte immédiatement vers le joueur SANS s'accrocher au mob !
+            if (disarmLevel > 0 && targetEntity is LivingEntity) {
+                val mainHand = targetEntity.getItemInHand(InteractionHand.MAIN_HAND)
+                val offHand = targetEntity.getItemInHand(InteractionHand.OFF_HAND)
+                val targetHand = when {
+                    !mainHand.isEmpty -> InteractionHand.MAIN_HAND
+                    !offHand.isEmpty -> InteractionHand.OFF_HAND
+                    else -> null
+                }
+
+                if (targetHand != null) {
+                    val heldItem = targetEntity.getItemInHand(targetHand)
+                    val snatched = heldItem.copy()
+                    targetEntity.setItemInHand(targetHand, ItemStack.EMPTY)
+
+                    // Usure réaliste si arraché d'un mob pour éviter le farm d'armes neuves à 100%
+                    if (targetEntity !is Player && snatched.isDamageableItem) {
+                        val maxDur = snatched.maxDamage
+                        if (maxDur > 0) {
+                            val wearPct = 0.25 + level().random.nextDouble() * 0.50
+                            val dmg = (maxDur * wearPct).toInt().coerceIn(1, maxDur - 1)
+                            snatched.damageValue = dmg
+                        }
+                    }
+
+                    // Dégâts Piercing Spike
+                    val damage = 2.0f + 3.0f * piercingSpikeLevel
+                    targetEntity.hurtServer(serverLevel, targetEntity.damageSources().mobAttack(owner), damage)
+
+                    if (frostwireLevel > 0) {
+                        triggerCryoNova(serverLevel, hitPos)
+                    }
+
+                    this.snatchedItem = snatched
+                    playImpactEffects(serverLevel, hitPos)
+                    serverLevel.playSound(null, targetEntity.blockPosition(), SoundEvents.ITEM_BREAK.value(), SoundSource.PLAYERS, 0.85f, 1.3f)
+                    retract()
+                    return
+                }
+            }
+
+            // Impact normal sur entité
             hookedTargetId = targetEntity.id
             anchorState = AnchorState.HOOKED_ENTITY
-            val hitPos = targetEntity.position().add(0.0, targetEntity.bbHeight * 0.5, 0.0)
             hookPosition = hitPos
             setPos(hitPos.x, hitPos.y, hitPos.z)
             deltaMovement = Vec3.ZERO
 
             // Sons et effets d'impact
             playImpactEffects(serverLevel, hitPos)
+            if (frostwireLevel > 0) {
+                triggerCryoNova(serverLevel, hitPos)
+            }
             return
         }
 
@@ -509,6 +673,55 @@ class ClawshotAnchorEntity(
             val hitPos = blockHit.location
             val hitBlockPos = blockHit.blockPos
             val hitState = serverLevel.getBlockState(hitBlockPos)
+
+            // Interaction Magnéto-Griffe (Relic Snatcher) :
+            if (relicSnatcherLevel > 0) {
+                // 1. Déclenchement à distance de leviers et boutons (Zelda dungeon puzzle-solver)
+                if (hitState.block is LeverBlock) {
+                    (hitState.block as LeverBlock).pull(hitState, serverLevel, hitBlockPos, owner)
+                    playImpactEffects(serverLevel, hitPos)
+                    serverLevel.playSound(null, hitBlockPos, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.8f, 1.2f)
+                    retract()
+                    return
+                }
+                if (hitState.block is ButtonBlock) {
+                    (hitState.block as ButtonBlock).press(hitState, serverLevel, hitBlockPos, owner)
+                    playImpactEffects(serverLevel, hitPos)
+                    serverLevel.playSound(null, hitBlockPos, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.8f, 1.2f)
+                    retract()
+                    return
+                }
+
+                // 2. Déclenchement à distance de cloche
+                if (hitState.block is BellBlock) {
+                    (hitState.block as BellBlock).attemptToRing(owner, serverLevel, hitBlockPos, blockHit.direction)
+                    playImpactEffects(serverLevel, hitPos)
+                    retract()
+                    return
+                }
+
+                // 3. Décrochage et récolte à distance d'objets précieux suspendus ou fragiles (lanternes, améthystes, torches)
+                val isHarvestableRelic = hitState.block is LanternBlock ||
+                    hitState.block is TorchBlock ||
+                    hitState.block is WallTorchBlock ||
+                    hitState.block is AmethystClusterBlock ||
+                    hitState.block is FlowerBlock ||
+                    hitState.block is HangingRootsBlock ||
+                    hitState.`is`(BlockTags.LANTERNS) ||
+                    (hitState.block.defaultDestroyTime() in 0.0f..0.6f && !hitState.isAir && hitState.fluidState.isEmpty)
+
+                if (isHarvestableRelic) {
+                    val drops = Block.getDrops(hitState, serverLevel, hitBlockPos, serverLevel.getBlockEntity(hitBlockPos), owner, launchedStack)
+                    serverLevel.destroyBlock(hitBlockPos, false, owner)
+                    for (drop in drops) {
+                        snatchItem(drop)
+                    }
+                    playImpactEffects(serverLevel, hitPos)
+                    serverLevel.playSound(null, hitBlockPos, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.8f, 1.3f)
+                    retract()
+                    return
+                }
+            }
 
             if (isValidHookTarget(hitState, hitBlockPos)) {
                 // Accrochage réussi dans le bloc
@@ -530,6 +743,11 @@ class ClawshotAnchorEntity(
                 // Sons de verrouillage métallique Zelda TP
                 playImpactEffects(serverLevel, hitPos)
 
+                // Déclenche l'onde de choc cryogénique Fil de Givre à l'impact
+                if (frostwireLevel > 0) {
+                    triggerCryoNova(serverLevel, hitPos)
+                }
+
                 // Particules d'impact étincelantes
                 serverLevel.sendParticles(
                     ParticleTypes.CRIT,
@@ -548,7 +766,6 @@ class ClawshotAnchorEntity(
         setPos(nextPos.x, nextPos.y, nextPos.z)
 
         // Limite de portée maximale (allongée par Extended Chain)
-        val maxAllowedRange = getMaxRange()
         val distFromOwner = nextPos.distanceTo(owner.eyePosition)
         val maxFlightTicks = 35 + extendedChainLevel * 8
         if (distFromOwner > maxAllowedRange || flightTicks > maxFlightTicks) {
@@ -575,6 +792,21 @@ class ClawshotAnchorEntity(
 
         // 1. ANNULATION CONTINUE DES DÉGÂTS DE CHUTE
         cancelPlayerFall(owner)
+
+        // Décrochage automatique quand le joueur touche le sol
+        if (hookedTicks > 5) {
+            val isTouchingGround = owner.onGround() || isFeetOnSolidGround(serverLevel, owner)
+            if (isClinging && isTouchingGround) {
+                releasePlayerAtDestination(owner, false)
+                retract()
+                return
+            }
+            if (rappelDirection == -1 && isTouchingGround) {
+                releasePlayerAtDestination(owner, false)
+                retract()
+                return
+            }
+        }
 
         // 2. Décrochage manuel : Le joueur s'accroupit (Shift / Sneak) pour lâcher prise (avec élan Slingshot si en vol)
         if (owner.isShiftKeyDown) {
@@ -604,6 +836,8 @@ class ClawshotAnchorEntity(
         }
 
         // 5. Maintien fixe et gestion du rappel / mou de chaîne (Zelda TP)
+        // Vitesse de rappel accélérée par Moulinet Rapide (Rapid Reel)
+        val rappelStep = 0.18f * (1.0f + 0.25f * rapidReelLevel)
         if (isClinging) {
             if (rappelDirection == -1) {
                 // Descendre le long de la chaîne (lâcher du mou)
@@ -611,7 +845,7 @@ class ClawshotAnchorEntity(
                 if (canDescendFurther(serverLevel, owner, currentTarget)) {
                     val maxSlack = (getMaxRange() - 2.5).toFloat()
                     if (slackDistance < maxSlack) {
-                        slackDistance = (slackDistance + 0.18f).coerceAtMost(maxSlack)
+                        slackDistance = (slackDistance + rappelStep).coerceAtMost(maxSlack)
                         if (hookedTicks % 4 == 0) {
                             serverLevel.playSound(
                                 null,
@@ -627,7 +861,7 @@ class ClawshotAnchorEntity(
             } else if (rappelDirection == 1) {
                 // Remonter le long de la chaîne
                 if (slackDistance > 0.0f) {
-                    slackDistance = (slackDistance - 0.18f).coerceAtLeast(0.0f)
+                    slackDistance = (slackDistance - rappelStep).coerceAtLeast(0.0f)
                     if (hookedTicks % 4 == 0) {
                         serverLevel.playSound(
                             null,
@@ -725,7 +959,32 @@ class ClawshotAnchorEntity(
         val dist = toOwner.length()
 
         if (dist < 1.4 || flightTicks > 300) {
-            // Rentrée dans le gantelet terminée
+            // Rentrée dans le gantelet terminée : transmission de l'item désarmé dans l'inventaire du joueur
+            if (!snatchedItem.isEmpty) {
+                if (!owner.inventory.add(snatchedItem)) {
+                    val drop = ItemEntity(serverLevel, owner.x, owner.y + 0.5, owner.z, snatchedItem)
+                    drop.setPickUpDelay(0)
+                    serverLevel.addFreshEntity(drop)
+                } else {
+                    serverLevel.playSound(null, owner.blockPosition(), SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.6f, 1.3f)
+                }
+                snatchedItem = ItemStack.EMPTY
+            }
+
+            // Transmission de tous les items capturés par la Magnéto-Griffe (Relic Snatcher)
+            if (snatchedItems.isNotEmpty()) {
+                for (item in snatchedItems) {
+                    if (!owner.inventory.add(item)) {
+                        val drop = ItemEntity(serverLevel, owner.x, owner.y + 0.5, owner.z, item)
+                        drop.setPickUpDelay(0)
+                        serverLevel.addFreshEntity(drop)
+                    } else {
+                        serverLevel.playSound(null, owner.blockPosition(), SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.6f, 1.3f)
+                    }
+                }
+                snatchedItems.clear()
+            }
+
             serverLevel.playSound(
                 null,
                 owner.blockPosition(),
@@ -813,12 +1072,16 @@ class ClawshotAnchorEntity(
         player.setNoGravity(false)
         cancelPlayerFall(player)
 
-        val lookDir = player.lookAngle.normalize()
-        val slingshotMultiplier = 1.25 + 0.45 * slingshotLevel
+        val lookDir = player.getViewVector(1.0f).normalize()
+        val horizLook = Vec3(lookDir.x, 0.0, lookDir.z).normalize()
+        val slingshotMultiplier = 1.35 + 0.45 * slingshotLevel
         val speedMultiplier = 1.0 + 0.25 * rapidReelLevel
         val boostSpeed = PULL_SPEED * slingshotMultiplier * speedMultiplier
-        val upwardBoost = 0.28 + 0.12 * slingshotLevel
-        val boostedVel = lookDir.scale(boostSpeed).add(0.0, upwardBoost, 0.0)
+
+        // Boost vertical accru pour simplifier grandement l'utilisation et franchir les rebords
+        val upwardBoost = 0.55 + 0.20 * slingshotLevel
+        val verticalBonus = lookDir.y.coerceAtLeast(0.0) * boostSpeed * 0.45
+        val boostedVel = horizLook.scale(boostSpeed * 0.85).add(0.0, upwardBoost + verticalBonus, 0.0)
 
         player.setDeltaMovement(boostedVel.x, boostedVel.y, boostedVel.z)
         player.hurtMarked = true
@@ -1036,6 +1299,174 @@ class ClawshotAnchorEntity(
     }
 
     /**
+     * Détermine si le joueur a les pieds posés sur un sol solide (décrochage automatique).
+     */
+    fun isFeetOnSolidGround(level: Level, player: Player): Boolean {
+        val feetY = player.y
+        val blockPos = BlockPos.containing(player.x, feetY - 0.08, player.z)
+        val state = level.getBlockState(blockPos)
+        if (!state.blocksMotion() || state.isAir) return false
+        val shape = state.getCollisionShape(level, blockPos)
+        if (shape.isEmpty) return false
+        val topY = blockPos.y + shape.max(Direction.Axis.Y)
+        return feetY <= topY + 0.12
+    }
+
+    /**
+     * Balayage magnétique (Enchantement Magnéto-Griffe / Relic Snatcher) :
+     * Aspire tous les items au sol et les flèches plantées dans un rayon étendu autour de la tête du grappin.
+     */
+    private fun tickRelicSnatcherMagneticSweep(serverLevel: ServerLevel) {
+        val radius = 2.5 + 1.0 * relicSnatcherLevel
+        val box = boundingBox.inflate(radius)
+
+        // 1. Aspiration des items au sol
+        val items = serverLevel.getEntitiesOfClass(ItemEntity::class.java, box) { it.isAlive && !it.hasPickUpDelay() }
+        for (itemEntity in items) {
+            val stack = itemEntity.item
+            if (!stack.isEmpty) {
+                snatchItem(stack)
+                serverLevel.sendParticles(ParticleTypes.ENCHANT, itemEntity.x, itemEntity.y + 0.2, itemEntity.z, 6, 0.15, 0.15, 0.15, 0.05)
+                serverLevel.playSound(null, itemEntity.blockPosition(), SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.4f, 1.5f)
+                itemEntity.discard()
+            }
+        }
+
+        // 2. Récupération des flèches plantées
+        val arrows = serverLevel.getEntitiesOfClass(AbstractArrow::class.java, box) { it.isAlive }
+        for (arrow in arrows) {
+            if (arrow.pickup == AbstractArrow.Pickup.ALLOWED) {
+                snatchItem(ItemStack(Items.ARROW))
+                serverLevel.sendParticles(ParticleTypes.ENCHANT, arrow.x, arrow.y + 0.2, arrow.z, 4, 0.1, 0.1, 0.1, 0.05)
+                serverLevel.playSound(null, arrow.blockPosition(), SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.4f, 1.6f)
+                arrow.discard()
+            }
+        }
+    }
+
+    /**
+     * Pêche et capture aquatique (Enchantement Magnéto-Griffe / Relic Snatcher) :
+     * Détecte les bancs de poissons dans l'eau et les capture immédiatement à l'impact ou au passage sous-marin.
+     */
+    private fun tickRelicSnatcherAquatic(serverLevel: ServerLevel) {
+        val fluid = serverLevel.getFluidState(blockPosition())
+        if (!fluid.isEmpty) {
+            serverLevel.sendParticles(ParticleTypes.BUBBLE, x, y, z, 2, 0.1, 0.1, 0.1, 0.02)
+
+            val box = boundingBox.inflate(2.0 + 0.5 * relicSnatcherLevel)
+            val fishList = serverLevel.getEntitiesOfClass(AbstractFish::class.java, box) { it.isAlive }
+            for (fish in fishList) {
+                val fishDrop = when (fish) {
+                    is Cod -> ItemStack(Items.COD)
+                    is Salmon -> ItemStack(Items.SALMON)
+                    is Pufferfish -> ItemStack(Items.PUFFERFISH)
+                    is TropicalFish -> ItemStack(Items.TROPICAL_FISH)
+                    else -> ItemStack(Items.COD)
+                }
+                snatchItem(fishDrop)
+                serverLevel.playSound(null, fish.blockPosition(), SoundEvents.FISHING_BOBBER_SPLASH, SoundSource.PLAYERS, 0.8f, 1.2f)
+                serverLevel.sendParticles(ParticleTypes.SPLASH, fish.x, fish.y, fish.z, 10, 0.2, 0.2, 0.2, 0.1)
+                fish.discard()
+                retract()
+                return
+            }
+        }
+    }
+
+    /**
+     * Déclenche une onde de choc cryogénique (Enchantement Fil de Givre / Frostwire)
+     * à l'impact sur un bloc ou une entité :
+     * - Gèle l'eau en glace compacte/frosted ice pour créer des plateformes
+     * - Éteint le feu et les feux de camp
+     * - Inflige du gel profond (TicksFrozen), ralentissement intense (Slowness IV) et dégâts de givre en zone
+     */
+    private fun triggerCryoNova(serverLevel: ServerLevel, center: Vec3) {
+        if (frostwireLevel <= 0) return
+
+        val radius = 2.5 + frostwireLevel * 1.0
+        val centerPos = BlockPos.containing(center)
+
+        // Effets sonores et visuels percutants
+        serverLevel.playSound(
+            null,
+            centerPos,
+            SoundEvents.PLAYER_HURT_FREEZE,
+            SoundSource.PLAYERS,
+            0.8f,
+            1.5f
+        )
+        serverLevel.playSound(
+            null,
+            centerPos,
+            SoundEvents.GLASS_BREAK,
+            SoundSource.PLAYERS,
+            0.6f,
+            1.8f
+        )
+        serverLevel.sendParticles(
+            ParticleTypes.SNOWFLAKE,
+            center.x, center.y, center.z,
+            30 + frostwireLevel * 15,
+            radius * 0.4, radius * 0.4, radius * 0.4,
+            0.12
+        )
+        serverLevel.sendParticles(
+            ParticleTypes.ITEM_SNOWBALL,
+            center.x, center.y, center.z,
+            12, 0.3, 0.3, 0.3, 0.08
+        )
+
+        // 1. Gel de l'eau et extinction des feux
+        val rInt = radius.toInt()
+        val cX = centerPos.x
+        val cY = centerPos.y
+        val cZ = centerPos.z
+        for (x in (cX - rInt)..(cX + rInt)) {
+            for (y in (cY - 2)..(cY + 2)) {
+                for (z in (cZ - rInt)..(cZ + rInt)) {
+                    val bp = BlockPos(x, y, z)
+                    if (bp.distToCenterSqr(center.x, center.y, center.z) <= radius * radius) {
+                        val state = serverLevel.getBlockState(bp)
+                        if (state.`is`(Blocks.WATER)) {
+                            serverLevel.setBlockAndUpdate(bp, Blocks.FROSTED_ICE.defaultBlockState())
+                        } else if (state.`is`(Blocks.FIRE) || state.`is`(Blocks.SOUL_FIRE)) {
+                            serverLevel.destroyBlock(bp, false)
+                        } else if (state.block is CampfireBlock && state.getValue(CampfireBlock.LIT)) {
+                            serverLevel.setBlock(bp, state.setValue(CampfireBlock.LIT, false), 11)
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. Dégâts et congélation des monstres alentours
+        val aoeBox = AABB(
+            center.x - radius, center.y - radius, center.z - radius,
+            center.x + radius, center.y + radius, center.z + radius
+        )
+        val nearbyEntities = serverLevel.getEntities(this, aoeBox) {
+            it != getOwnerEntity() && it != this && it.isAlive && it is LivingEntity
+        }
+        for (mob in nearbyEntities) {
+            if (mob !is LivingEntity) continue
+            val dist = mob.position().distanceTo(center)
+            if (dist <= radius) {
+                mob.ticksFrozen = (mob.ticksFrozen + 120 * frostwireLevel).coerceAtMost(300)
+                mob.addEffect(
+                    MobEffectInstance(
+                        MobEffects.SLOWNESS,
+                        60 + frostwireLevel * 20,
+                        3, // Slowness IV : quasiment figé sur place
+                        false,
+                        true
+                    )
+                )
+                mob.hurtServer(serverLevel, mob.damageSources().freeze(), 2.0f * frostwireLevel)
+            }
+        }
+    }
+
+    /**
      * Maintient fermement le joueur suspendu à la paroi en annulant la gravité et les tremblements.
      */
     fun applyClingingSuspension(player: Player, targetPos: Vec3, playerPos: Vec3) {
@@ -1175,6 +1606,7 @@ class ClawshotAnchorEntity(
         output.putInt("ExtendedChainLevel", extendedChainLevel)
         output.putInt("RapidReelLevel", rapidReelLevel)
         output.putInt("PiercingSpikeLevel", piercingSpikeLevel)
+        output.putInt("RelicSnatcherLevel", relicSnatcherLevel)
         ownerUuid?.let { output.putString("OwnerUuid", it.toString()) }
     }
 
@@ -1186,7 +1618,7 @@ class ClawshotAnchorEntity(
         val hy = input.getFloatOr("HookY", 0.0f)
         val hz = input.getFloatOr("HookZ", 0.0f)
         hookPosition = Vec3(hx.toDouble(), hy.toDouble(), hz.toDouble())
-        clawOpenAmount = input.getFloatOr("ClawOpen", 1.0f)
+        clawOpenAmount = input.getFloatOr("ClawOpen", 0.0f)
         prevClawOpen = clawOpenAmount
         isClinging = input.getBooleanOr("IsClinging", false)
         slackDistance = input.getFloatOr("SlackDistance", 0.0f)
@@ -1197,6 +1629,7 @@ class ClawshotAnchorEntity(
         extendedChainLevel = input.getIntOr("ExtendedChainLevel", 0)
         rapidReelLevel = input.getIntOr("RapidReelLevel", 0)
         piercingSpikeLevel = input.getIntOr("PiercingSpikeLevel", 0)
+        relicSnatcherLevel = input.getIntOr("RelicSnatcherLevel", 0)
         val ownerStr = input.getStringOr("OwnerUuid", "")
         if (ownerStr.isNotEmpty()) {
             try {

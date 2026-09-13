@@ -1,9 +1,27 @@
 {
   "model": {
-    "type": "minecraft:special",
-    "base": "cryo-awakening:item/clawshot",
-    "model": {
-      "type": "geckolib:geckolib"
+    "type": "minecraft:select",
+    "property": "minecraft:display_context",
+    "cases": [
+      {
+        "when": [
+          "gui",
+          "ground",
+          "fixed",
+          "on_shelf"
+        ],
+        "model": {
+          "type": "minecraft:model",
+          "model": "cryo-awakening:item/clawshot_item"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:special",
+      "base": "cryo-awakening:item/clawshot",
+      "model": {
+        "type": "geckolib:geckolib"
+      }
     }
   }
 }
