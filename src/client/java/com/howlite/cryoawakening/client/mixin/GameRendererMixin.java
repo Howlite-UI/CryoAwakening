@@ -1,5 +1,6 @@
 package com.howlite.cryoawakening.client.mixin;
 
+import com.howlite.cryoawakening.client.event.InfiltrationClientHandler;
 import com.howlite.cryoawakening.item.ModItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
@@ -11,6 +12,8 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.Objects;
 
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin {
@@ -26,22 +29,37 @@ public abstract class GameRendererMixin {
     private Minecraft minecraft;
 
     @Unique
-    private boolean cryoawakening$wasUsingKaleidoscope = false;
+    private Identifier cryoawakening$activePostEffect = null;
+
+    @Unique
+    private static final Identifier KALEIDOSCOPE_SHADER =
+        Identifier.fromNamespaceAndPath("cryo-awakening", "kaleidoscope");
 
     @Inject(method = "tick", at = @At("TAIL"))
-    private void cryoawakening$handleKaleidoscopeShader(CallbackInfo ci) {
-        if (minecraft.player != null) {
-            boolean isUsingKaleidoscope = minecraft.player.isUsingItem() &&
-                minecraft.player.getUseItem().is(ModItems.INSTANCE.getKALEIDOSCOPE()) &&
-                minecraft.options.getCameraType().isFirstPerson();
+    private void cryoawakening$handlePostShaders(CallbackInfo ci) {
+        Identifier desired = null;
 
-            if (isUsingKaleidoscope) {
-                if (!cryoawakening$wasUsingKaleidoscope) {
-                    cryoawakening$wasUsingKaleidoscope = true;
-                    this.setPostEffect(Identifier.fromNamespaceAndPath("cryo-awakening", "kaleidoscope"));
+        if (minecraft.player != null) {
+            // Priorité 1 : Shader Vortex de la Perle d'Infiltration (traversée des blocs)
+            Identifier infiltrationShader = InfiltrationClientHandler.getActivePostEffectId();
+            if (infiltrationShader != null) {
+                desired = infiltrationShader;
+            } else {
+                // Priorité 2 : Shader Kaléidoscope
+                boolean isUsingKaleidoscope = minecraft.player.isUsingItem() &&
+                    minecraft.player.getUseItem().is(ModItems.INSTANCE.getKALEIDOSCOPE()) &&
+                    minecraft.options.getCameraType().isFirstPerson();
+                if (isUsingKaleidoscope) {
+                    desired = KALEIDOSCOPE_SHADER;
                 }
-            } else if (cryoawakening$wasUsingKaleidoscope) {
-                cryoawakening$wasUsingKaleidoscope = false;
+            }
+        }
+
+        if (!Objects.equals(desired, cryoawakening$activePostEffect)) {
+            cryoawakening$activePostEffect = desired;
+            if (desired != null) {
+                this.setPostEffect(desired);
+            } else {
                 this.clearPostEffect();
             }
         }

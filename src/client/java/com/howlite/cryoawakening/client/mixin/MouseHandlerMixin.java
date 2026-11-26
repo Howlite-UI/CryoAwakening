@@ -1,5 +1,6 @@
 package com.howlite.cryoawakening.client.mixin;
 
+import com.howlite.cryoawakening.client.event.InfiltrationClientHandler;
 import com.howlite.cryoawakening.client.event.ValueSettingsClientHandler;
 import net.minecraft.client.MouseHandler;
 import org.spongepowered.asm.mixin.Mixin;
@@ -34,6 +35,11 @@ public class MouseHandlerMixin {
                 this.accumulatedDY = 0.0;
                 ci.cancel();
             }
+            return;
+        }
+        // Si le joueur bouge la souris manuellement, on redonne immédiatement le contrôle complet du pitch
+        if (InfiltrationClientHandler.isAiming() && (Math.abs(this.accumulatedDX) > 2.0 || Math.abs(this.accumulatedDY) > 2.0)) {
+            InfiltrationClientHandler.onPlayerMouseLook();
         }
     }
 }

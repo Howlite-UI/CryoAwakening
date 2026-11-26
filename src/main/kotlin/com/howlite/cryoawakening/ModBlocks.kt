@@ -576,6 +576,7 @@ object ModBlocks {
             output.accept(com.howlite.cryoawakening.item.ModItems.GAWK_BOMB)
             output.accept(com.howlite.cryoawakening.item.ModItems.GALE_BOOMERANG)
             output.accept(com.howlite.cryoawakening.item.ModItems.CLAWSHOT)
+            output.accept(com.howlite.cryoawakening.item.ModItems.INFILTRATION_PEARL)
 
             // Livres enchantés du Gale Boomerang
             val enchantRegistry = itemDisplayParameters.holders().lookup(Registries.ENCHANTMENT).orElse(null)

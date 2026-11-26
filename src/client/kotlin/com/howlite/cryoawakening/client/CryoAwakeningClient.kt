@@ -79,6 +79,10 @@ object CryoAwakeningClient : ClientModInitializer {
 		// Enregistrement du gestionnaire client de rappel et mou de chaîne du Clawshot
 		com.howlite.cryoawakening.client.event.ClawshotClientHandler.register()
 
+		// Enregistrement du système d'Infiltration Pearl (visée plafond 3D, animations caméra, vortex & émergence)
+		com.howlite.cryoawakening.client.event.InfiltrationClientHandler.register()
+		com.howlite.cryoawakening.client.render.InfiltrationWorldRenderer.register()
+
 		// Enregistrement de l'élément HUD de la jauge de lancer au-dessus du crosshair
 		net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry.attachElementAfter(
 			net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements.CROSSHAIR,
@@ -112,6 +116,13 @@ object CryoAwakeningClient : ClientModInitializer {
 			CryoAwakening.id("monocle_data_hud"),
 			CryoAwakening.id("value_settings_hud"),
 			com.howlite.cryoawakening.client.render.gui.ValueSettingsHudElement
+		)
+
+		// Enregistrement du HUD d'Infiltration Pearl (cadre de visée, barre de traversée, invites PEEK)
+		net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry.attachElementAfter(
+			CryoAwakening.id("value_settings_hud"),
+			CryoAwakening.id("infiltration_hud"),
+			com.howlite.cryoawakening.client.render.gui.InfiltrationHudElement
 		)
 
 		// Enregistrement des renderers d'armures et items GeckoLib

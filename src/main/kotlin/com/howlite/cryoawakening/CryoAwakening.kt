@@ -26,6 +26,7 @@ object CryoAwakening : ModInitializer {
 		com.howlite.cryoawakening.event.BoomerangServerHandler.register() // Enregistre le payload et receiver du Gale Boomerang
 		com.howlite.cryoawakening.event.PipeExhaustServerHandler.register() // Enregistre le payload et receiver du Pipe Exhaust
 		com.howlite.cryoawakening.event.ClawshotServerHandler.register() // Enregistre le payload et receiver du Clawshot (mou / rappel)
+		com.howlite.cryoawakening.event.InfiltrationServerHandler.register() // Enregistre le système d'Infiltration Pearl (style TOTK Ascend)
 		net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry.clientboundPlay().register(
 			com.howlite.cryoawakening.network.OpenEcosystemBenchPayload.ID,
 			com.howlite.cryoawakening.network.OpenEcosystemBenchPayload.CODEC

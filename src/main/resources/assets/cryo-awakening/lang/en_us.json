@@ -178,5 +178,17 @@
   "item.cryo-awakening.clawshot.desc": "Articulated chain grappling hook inspired by Twilight Princess.",
   "item.cryo-awakening.clawshot.hook": "Right-click: Launch clawhead to hook blocks or latch onto creatures.",
   "item.cryo-awakening.clawshot.safety": "Safety: Fully cancels fall damage during and after grappling.",
-  "hud.cryo-awakening.clawshot.controls": "§e[Ctrl]§f Slack / Descend • §e[Space]§f Climb Up • §e[Shift]§f Release"
+  "hud.cryo-awakening.clawshot.controls": "§e[Ctrl]§f Slack / Descend • §e[Space]§f Climb Up • §e[Shift]§f Release",
+  "item.cryo-awakening.infiltration_pearl": "Infiltration Pearl",
+  "item.cryo-awakening.infiltration_pearl.desc": "A crystalline pearl that lets you phase vertically through solid ceilings.",
+  "item.cryo-awakening.infiltration_pearl.usage": "Right Click to aim at a ceiling, Right Click again to ascend. Left Click cancels.",
+  "item.cryo-awakening.infiltration_pearl.single_use": "Single-use: Consumed only when you emerge on the surface.",
+  "hud.cryo-awakening.infiltration.ready": "Ceiling Locked (%sm up • %sm thick)",
+  "hud.cryo-awakening.infiltration.no_ceiling": "No ceiling in range",
+  "hud.cryo-awakening.infiltration.blocked": "Impenetrable barrier above",
+  "hud.cryo-awakening.infiltration.no_exit": "No open surface above",
+  "hud.cryo-awakening.infiltration.aim_controls": "§a[Right Click]§f Ascend   •   §c[Left Click]§f Cancel",
+  "hud.cryo-awakening.infiltration.aim_cancel_only": "§c[Left Click]§f Cancel",
+  "hud.cryo-awakening.infiltration.peek_title": "Surface Reached",
+  "hud.cryo-awakening.infiltration.peek_controls": "§a[Right Click]§f Emerge (Consumes Pearl)   •   §b[Left Click]§f Return"
 }

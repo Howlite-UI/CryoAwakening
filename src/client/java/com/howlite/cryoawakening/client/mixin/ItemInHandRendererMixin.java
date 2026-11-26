@@ -1,5 +1,6 @@
 package com.howlite.cryoawakening.client.mixin;
 
+import com.howlite.cryoawakening.client.event.InfiltrationClientHandler;
 import com.howlite.cryoawakening.entity.GawkerEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -33,6 +34,12 @@ public class ItemInHandRendererMixin {
     ) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
+
+        // Masque les mains/items en vue subjective pendant l'envol, le vortex et l'émergence
+        if (InfiltrationClientHandler.shouldHideFirstPersonHands()) {
+            ci.cancel();
+            return;
+        }
 
         boolean isCarrying = mc.level.getEntitiesOfClass(
             GawkerEntity.class,

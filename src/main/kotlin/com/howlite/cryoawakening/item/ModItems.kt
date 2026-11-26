@@ -96,6 +96,13 @@ object ModItems {
             .enchantable(15)
     )
 
+    val INFILTRATION_PEARL_KEY: ResourceKey<Item> = itemKey("infiltration_pearl")
+    val INFILTRATION_PEARL: Item = InfiltrationPearlItem(
+        Item.Properties()
+            .setId(INFILTRATION_PEARL_KEY)
+            .stacksTo(16)
+    )
+
     val GAWKER_SPAWN_EGG_KEY: ResourceKey<Item> = itemKey("gawker_spawn_egg")
     val GAWKER_SPAWN_EGG: Item = SpawnEggItem(
         Item.Properties()
@@ -239,6 +246,7 @@ object ModItems {
         Registry.register(BuiltInRegistries.ITEM, GAWK_BOMB_KEY, GAWK_BOMB)
         Registry.register(BuiltInRegistries.ITEM, GALE_BOOMERANG_KEY, GALE_BOOMERANG)
         Registry.register(BuiltInRegistries.ITEM, CLAWSHOT_KEY, CLAWSHOT)
+        Registry.register(BuiltInRegistries.ITEM, INFILTRATION_PEARL_KEY, INFILTRATION_PEARL)
         Registry.register(BuiltInRegistries.ITEM, GAWKER_SPAWN_EGG_KEY, GAWKER_SPAWN_EGG)
 
         // Items Lumesh & Flore

@@ -178,5 +178,17 @@
   "item.cryo-awakening.clawshot.desc": "Grappin à chaîne articulée inspiré de Twilight Princess.",
   "item.cryo-awakening.clawshot.hook": "Clic droit : Projette la tête pour s'agripper aux blocs ou attirer les créatures.",
   "item.cryo-awakening.clawshot.safety": "Sécurité : Annule strictement tous les dégâts de chute lors de la traction.",
-  "hud.cryo-awakening.clawshot.controls": "§e[Ctrl]§f Lâcher du mou • §e[Espace]§f Remonter • §e[Shift]§f Se détacher"
+  "hud.cryo-awakening.clawshot.controls": "§e[Ctrl]§f Lâcher du mou • §e[Espace]§f Remonter • §e[Shift]§f Se détacher",
+  "item.cryo-awakening.infiltration_pearl": "Perle d'Infiltration",
+  "item.cryo-awakening.infiltration_pearl.desc": "Perle cristalline permettant de traverser verticalement un plafond solide.",
+  "item.cryo-awakening.infiltration_pearl.usage": "Clic Droit pour viser le plafond, Clic Droit à nouveau pour traverser. Clic Gauche annule.",
+  "item.cryo-awakening.infiltration_pearl.single_use": "Usage unique : consommée uniquement lors de l'émergence à la surface.",
+  "hud.cryo-awakening.infiltration.ready": "Plafond verrouillé (%sm au-dessus • %sm d'épaisseur)",
+  "hud.cryo-awakening.infiltration.no_ceiling": "Aucun plafond à portée",
+  "hud.cryo-awakening.infiltration.blocked": "Obstacle infranchissable au-dessus",
+  "hud.cryo-awakening.infiltration.no_exit": "Aucune surface libre au-dessus",
+  "hud.cryo-awakening.infiltration.aim_controls": "§a[Clic Droit]§f Traverser   •   §c[Clic Gauche]§f Annuler",
+  "hud.cryo-awakening.infiltration.aim_cancel_only": "§c[Clic Gauche]§f Annuler",
+  "hud.cryo-awakening.infiltration.peek_title": "Surface atteinte",
+  "hud.cryo-awakening.infiltration.peek_controls": "§a[Clic Droit]§f Sortir (consomme la perle)   •   §b[Clic Gauche]§f Redescendre"
 }

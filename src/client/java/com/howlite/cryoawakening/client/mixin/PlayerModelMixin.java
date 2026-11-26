@@ -1,5 +1,6 @@
 package com.howlite.cryoawakening.client.mixin;
 
+import com.howlite.cryoawakening.client.event.InfiltrationClientHandler;
 import com.howlite.cryoawakening.entity.GawkerEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.player.PlayerModel;
@@ -14,25 +15,39 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class PlayerModelMixin {
 
     @Inject(method = "setupAnim(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)V", at = @At("TAIL"))
-    private void cryoawakening$raiseArmsWhenCarryingGawker(AvatarRenderState state, CallbackInfo ci) {
+    private void cryoawakening$customPlayerPoses(AvatarRenderState state, CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level != null) {
-            boolean isCarrying = mc.level.getEntitiesOfClass(
-                GawkerEntity.class,
-                new AABB(state.x - 2.0, state.y - 1.0, state.z - 2.0, state.x + 2.0, state.y + 3.0, state.z + 2.0),
-                g -> g.isCarried() && g.getCarrierId() == state.id
-            ).stream().findFirst().isPresent();
+        if (mc.level == null) return;
 
-            if (isCarrying) {
-                PlayerModel self = (PlayerModel) (Object) this;
+        PlayerModel self = (PlayerModel) (Object) this;
 
-                // Lever les deux bras vers le haut pour tenir le Gawker au-dessus de la tête
-                self.rightArm.setRotation((float) (-Math.PI + 0.35), -0.15f, 0.25f);
-                self.leftArm.setRotation((float) (-Math.PI + 0.35), 0.15f, -0.25f);
+        // 1. Posture d'Infiltration : bras tendus vers le ciel façon plongeon ascendant (Zelda TOTK)
+        if (mc.player != null && state.id == mc.player.getId() && InfiltrationClientHandler.shouldPoseArmsOverhead()) {
+            self.rightArm.setRotation((float) -Math.PI, 0.0f, -0.14f);
+            self.leftArm.setRotation((float) -Math.PI, 0.0f, 0.14f);
+            self.rightSleeve.setRotation(self.rightArm.xRot, self.rightArm.yRot, self.rightArm.zRot);
+            self.leftSleeve.setRotation(self.leftArm.xRot, self.leftArm.yRot, self.leftArm.zRot);
 
-                self.rightSleeve.setRotation(self.rightArm.xRot, self.rightArm.yRot, self.rightArm.zRot);
-                self.leftSleeve.setRotation(self.leftArm.xRot, self.leftArm.yRot, self.leftArm.zRot);
-            }
+            self.rightLeg.setRotation(0.18f, 0.0f, 0.06f);
+            self.leftLeg.setRotation(-0.18f, 0.0f, -0.06f);
+            self.rightPants.setRotation(self.rightLeg.xRot, self.rightLeg.yRot, self.rightLeg.zRot);
+            self.leftPants.setRotation(self.leftLeg.xRot, self.leftLeg.yRot, self.leftLeg.zRot);
+            return;
+        }
+
+        // 2. Posture de portage du Gawker au-dessus de la tête
+        boolean isCarrying = mc.level.getEntitiesOfClass(
+            GawkerEntity.class,
+            new AABB(state.x - 2.0, state.y - 1.0, state.z - 2.0, state.x + 2.0, state.y + 3.0, state.z + 2.0),
+            g -> g.isCarried() && g.getCarrierId() == state.id
+        ).stream().findFirst().isPresent();
+
+        if (isCarrying) {
+            self.rightArm.setRotation((float) (-Math.PI + 0.35), -0.15f, 0.25f);
+            self.leftArm.setRotation((float) (-Math.PI + 0.35), 0.15f, -0.25f);
+
+            self.rightSleeve.setRotation(self.rightArm.xRot, self.rightArm.yRot, self.rightArm.zRot);
+            self.leftSleeve.setRotation(self.leftArm.xRot, self.leftArm.yRot, self.leftArm.zRot);
         }
     }
 }

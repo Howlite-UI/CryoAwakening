@@ -1,6 +1,8 @@
 package com.howlite.cryoawakening.mixin;
 
 import com.howlite.cryoawakening.event.GawkerCarryHandler;
+import com.howlite.cryoawakening.event.InfiltrationServerHandler;
+import com.howlite.cryoawakening.infiltration.InfiltrationClientBridge;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Final;
@@ -19,6 +21,13 @@ public class InventoryMixin {
     private void cryoawakening$lockSlotWhenCarryingGawker(int slot, CallbackInfo ci) {
         if (this.player != null && this.player.level() != null) {
             if (GawkerCarryHandler.getCarriedGawker(this.player) != null) {
+                ci.cancel();
+                return;
+            }
+            boolean infiltrating = this.player.level().isClientSide()
+                ? InfiltrationClientBridge.isClientPlayerInfiltrating(this.player)
+                : InfiltrationServerHandler.isPlayerInfiltrating(this.player);
+            if (infiltrating) {
                 ci.cancel();
             }
         }

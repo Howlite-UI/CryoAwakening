@@ -7,7 +7,9 @@
 		"OverworldBiomeBuilderMixin",
 		"MultiNoiseBiomeSourceMixin",
 		"InventoryMixin",
-		"BrushItemMixin"
+		"BrushItemMixin",
+		"PlayerInfiltrationMixin",
+		"ServerGamePacketListenerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

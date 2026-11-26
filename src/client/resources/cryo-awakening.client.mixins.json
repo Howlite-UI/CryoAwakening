@@ -11,7 +11,9 @@
 		"MinecraftMixin",
 		"GuiGraphicsExtractorAccessor",
 		"ConditionalItemModelPropertiesMixin",
-		"RangeSelectItemModelPropertiesMixin"
+		"RangeSelectItemModelPropertiesMixin",
+		"CameraMixin",
+		"KeyboardInputMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
