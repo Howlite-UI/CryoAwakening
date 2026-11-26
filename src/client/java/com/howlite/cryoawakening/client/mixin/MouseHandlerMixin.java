@@ -37,7 +37,18 @@ public class MouseHandlerMixin {
             }
             return;
         }
-        // Si le joueur bouge la souris manuellement, on redonne immédiatement le contrôle complet du pitch
+
+        // Pendant la nage dans le vortex, la souris fait orbiter la caméra à 360° autour du personnage
+        // sans faire pivoter le corps du personnage !
+        if (InfiltrationClientHandler.isInsideBlocks()) {
+            InfiltrationClientHandler.handleOrbitMouseMove(this.accumulatedDX, this.accumulatedDY);
+            this.accumulatedDX = 0.0;
+            this.accumulatedDY = 0.0;
+            ci.cancel();
+            return;
+        }
+
+        // Si le joueur bouge la souris manuellement en visée, on lui redonne immédiatement le contrôle du pitch
         if (InfiltrationClientHandler.isAiming() && (Math.abs(this.accumulatedDX) > 2.0 || Math.abs(this.accumulatedDY) > 2.0)) {
             InfiltrationClientHandler.onPlayerMouseLook();
         }

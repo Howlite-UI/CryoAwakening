@@ -6,6 +6,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -15,15 +16,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Gère les animations de caméra fluides de la Perle d'Infiltration (style Zelda TOTK) :
+ * Gère les animations de caméra fluides de la Perle d'Infiltration :
  * - AIMING : léger abaissement caméra + zoom FOV doux vers le plafond.
- * - RISING_TO_CEILING : recul cinématique en 3ème personne pour voir le joueur s'envoler dans le plafond.
- * - SWIMMING_THROUGH / RETURNING : 1ère personne immersive dans le tunnel vortex + élargissement FOV.
- * - PEEKING : caméra 360° libre juste au-dessus du sol autour de la tête qui émerge.
- * - EMERGING : retour progressif fluide vers la caméra normale du joueur.
+ * - RISING_TO_CEILING : recul cinématique en 3ème personne (démarrant directement hors de la tête).
+ * - SWIMMING_THROUGH / RETURNING : caméra orbitale libre à 360° autour du joueur qui nage dans le vortex 3D.
+ * - PEEKING : caméra 360° libre centrée sur le buste/la tête à moitié sortis du sol.
+ * - EMERGING -> IDLE : rapprochement fluide puis bascule nette en 1ère personne AVANT d'entrer dans la tête !
  */
 @Mixin(Camera.class)
 public abstract class CameraMixin {
+
+    private static final float MIN_SAFE_HEAD_DISTANCE = 0.85f;
 
     @Shadow
     private Entity entity;
@@ -73,55 +76,79 @@ public abstract class CameraMixin {
 
         switch (phase) {
             case AIMING -> {
-                // Légère baisse de caméra en 1ère personne pour accentuer le regard vers le plafond
                 if (!this.detached && aimAnim > 0.005f) {
                     this.setPosition(this.position.x, this.position.y - 0.16 * aimAnim, this.position.z);
                 }
             }
 
             case RISING_TO_CEILING -> {
-                // Recul cinématique en 3ème personne pour voir son personnage s'envoler dans le plafond !
-                this.detached = true;
-                this.setPosition(px, py + 1.15, pz);
-                float desiredPitch = Mth.lerp(detach, this.xRot, -24.0f);
-                this.setRotation(this.yRot, desiredPitch);
-                float dist = this.getMaxZoom(3.5f * detach);
-                this.move(-dist, -0.32f * detach, 0.0f);
+                float dist = this.getMaxZoom(3.6f * detach);
+                if (dist >= MIN_SAFE_HEAD_DISTANCE) {
+                    this.detached = true;
+                    this.setPosition(px, py + 1.15, pz);
+                    float desiredPitch = Mth.lerp(detach, this.xRot, -22.0f);
+                    this.setRotation(this.yRot, desiredPitch);
+                    this.move(-dist, -0.32f * detach, 0.0f);
+                }
             }
 
             case SWIMMING_THROUGH, RETURNING -> {
-                // Vue subjective plein écran dédiée au vortex
-                this.detached = false;
-                this.setPosition(px, py + this.entity.getEyeHeight(), pz);
+                // Caméra orbitale 360° libre autour du personnage qui nage dans le vortex 3D !
+                this.detached = true;
+                double bobY = Math.sin((this.entity.tickCount + partialTick) * 0.22) * 0.09;
+                this.setPosition(px, py + 0.96 + bobY, pz);
+
+                float orbYaw = InfiltrationClientHandler.INSTANCE.getOrbitYaw(partialTick);
+                float orbPitch = InfiltrationClientHandler.INSTANCE.getOrbitPitch(partialTick);
+                this.setRotation(orbYaw, orbPitch);
+
+                float orbitRadius = Math.max(MIN_SAFE_HEAD_DISTANCE, 4.35f * detach);
+                this.move(-orbitRadius, 0.0f, 0.0f);
             }
 
             case PEEKING -> {
-                // Caméra 360° juste au-dessus du sol autour de la tête qui dépasse (comme TOTK)
-                this.detached = true;
+                // Caméra 360° centrée sur le buste/la tête qui dépasse à moitié du sol
                 double floorY = InfiltrationClientHandler.INSTANCE.getExitFloorY();
                 double tx = InfiltrationClientHandler.INSTANCE.getTargetX();
                 double tz = InfiltrationClientHandler.INSTANCE.getTargetZ();
 
-                this.setPosition(tx, floorY + 0.52, tz);
-                float safePitch = Mth.clamp(this.xRot, -22.0f, 76.0f);
+                this.setPosition(tx, floorY + 0.68, tz);
+                float safePitch = Mth.clamp(this.xRot, -18.0f, 76.0f);
                 this.setRotation(this.yRot, safePitch);
-                float dist = this.getMaxZoom(2.4f * detach);
-                this.move(-dist, 0.22f * detach, 0.0f);
+                float dist = this.getMaxZoom(2.85f * detach);
 
-                // Garantit que la caméra ne plonge jamais sous le sol pendant le coup d'œil
-                if (this.position.y < floorY + 0.25) {
-                    this.setPosition(this.position.x, floorY + 0.25, this.position.z);
+                if (dist >= MIN_SAFE_HEAD_DISTANCE) {
+                    this.detached = true;
+                    this.move(-dist, 0.28f * detach, 0.0f);
+                    if (this.position.y < floorY + 0.30) {
+                        this.setPosition(this.position.x, floorY + 0.30, this.position.z);
+                    }
+                } else {
+                    // Espace trop étroit (1×1) : reste proprement aux yeux en 1ère personne, jamais dans le crâne !
+                    this.detached = false;
+                    this.setPosition(tx, floorY + 0.62, tz);
                 }
             }
 
-            case EMERGING, IDLE -> {
-                // Transition douce vers la caméra normale après émergence
-                if (detach > 0.01f) {
+            case EMERGING -> {
+                // Accompagne le bond de sortie puis bascule proprement en 1ère personne avant d'entrer dans la tête
+                float desiredDist = 2.65f * detach;
+                float dist = this.getMaxZoom(desiredDist);
+                if (dist >= MIN_SAFE_HEAD_DISTANCE) {
                     this.detached = true;
                     this.setPosition(px, py + this.entity.getEyeHeight(), pz);
-                    float dist = this.getMaxZoom(2.15f * detach);
-                    this.move(-dist, 0.12f * detach, 0.0f);
-                } else if (aimAnim > 0.005f && !this.detached) {
+                    this.move(-dist, 0.14f * detach, 0.0f);
+                } else {
+                    // Bascule nette en 1ère personne (ou garde F5 si le joueur jouait déjà en 3ème personne)
+                    if (mc.options.getCameraType().isFirstPerson()) {
+                        this.detached = false;
+                        this.setPosition(px, py + this.entity.getEyeHeight(), pz);
+                    }
+                }
+            }
+
+            case IDLE -> {
+                if (aimAnim > 0.005f && !this.detached) {
                     this.setPosition(this.position.x, this.position.y - 0.16 * aimAnim, this.position.z);
                 }
             }
@@ -134,6 +161,13 @@ public abstract class CameraMixin {
         if (Math.abs(offset) > 0.01f) {
             float adjusted = Mth.clamp(cir.getReturnValue() + offset, 30.0f, 130.0f);
             cir.setReturnValue(adjusted);
+        }
+    }
+
+    @Inject(method = "getFluidInCamera", at = @At("HEAD"), cancellable = true)
+    private void cryoawakening$ignoreFluidFogInsideVortex(CallbackInfoReturnable<FogType> cir) {
+        if (InfiltrationClientHandler.isInsideBlocks()) {
+            cir.setReturnValue(FogType.NONE);
         }
     }
 }

@@ -13,7 +13,10 @@
 		"ConditionalItemModelPropertiesMixin",
 		"RangeSelectItemModelPropertiesMixin",
 		"CameraMixin",
-		"KeyboardInputMixin"
+		"KeyboardInputMixin",
+		"LevelRendererMixin",
+		"ChunkSectionsToRenderMixin",
+		"AvatarRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

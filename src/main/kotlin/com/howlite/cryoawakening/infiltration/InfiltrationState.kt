@@ -73,7 +73,7 @@ data class InfiltrationTarget(
 object InfiltrationMath {
     const val MAX_CEILING_REACH: Int = 28
     const val MAX_TRAVERSE_THICKNESS: Int = 48
-    const val PEEK_HEAD_OFFSET: Double = 1.24 // player.y = exitFloorY - 1.24 -> yeux ~0.38 au-dessus du sol
+    const val PEEK_HEAD_OFFSET: Double = 1.06 // player.y = exitFloorY - 1.06 -> torse supérieur, épaules et tête dépassent du sol !
 
     fun computeRiseTicks(startY: Double, ceilingHitY: Double): Int {
         val dist = (ceilingHitY - (startY + 1.2)).coerceAtLeast(0.0)
@@ -82,12 +82,12 @@ object InfiltrationMath {
 
     fun computeSwimTicks(ceilingHitY: Double, exitFloorY: Double): Int {
         val thickness = (exitFloorY - ceilingHitY).coerceAtLeast(1.0)
-        return (16 + (thickness * 1.6).toInt()).coerceIn(20, 66)
+        return (34 + (thickness * 1.8).toInt()).coerceIn(38, 82)
     }
 
     fun computeReturnTicks(exitFloorY: Double, originY: Double): Int {
         val totalDist = (exitFloorY - originY).coerceAtLeast(1.0)
-        return (16 + (totalDist * 0.9).toInt()).coerceIn(18, 44)
+        return (26 + (totalDist * 1.0).toInt()).coerceIn(28, 56)
     }
 
     const val EMERGE_TICKS: Int = 12

@@ -13,104 +13,50 @@ layout(std140) uniform SamplerInfo {
 
 out vec4 fragColor;
 
-float hash21(vec2 p) {
-    p = fract(p * vec2(123.34, 456.21));
-    p += dot(p, p + 45.32);
-    return fract(p.x * p.y);
-}
-
-float noise(vec2 p) {
-    vec2 i = floor(p);
-    vec2 f = fract(p);
-    f = f * f * (3.0 - 2.0 * f);
-    float a = hash21(i);
-    float b = hash21(i + vec2(1.0, 0.0));
-    float c = hash21(i + vec2(0.0, 1.0));
-    float d = hash21(i + vec2(1.0, 1.0));
-    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
-}
-
-float fbm(vec2 p) {
-    float v = 0.0;
-    float amp = 0.5;
-    for (int i = 0; i < 4; i++) {
-        v += amp * noise(p);
-        p = p * 2.04 + vec2(13.7, 7.3);
-        amp *= 0.5;
-    }
-    return v;
-}
-
 void main() {
-    // Temps continu en secondes (GameTime va de 0 à 1 sur 24000 ticks = 1200s)
     float t = GameTime * 1200.0;
+    vec2 texel = 1.0 / max(InSize, vec2(1.0));
 
-    // Coordonnées centrées corrigées par le ratio d'aspect
-    vec2 uv = texCoord - 0.5;
-    uv.x *= OutSize.x / OutSize.y;
+    // Scène 3D nette (personnage vertical + spirales voxel pixel-art + colonne en escaliers + carrés lumineux)
+    vec3 scene = texture(InSampler, texCoord).rgb;
 
-    // Léger flottement organique de caméra dans le courant d'énergie
-    uv += vec2(sin(t * 2.3), cos(t * 1.9)) * 0.016;
+    // Bloom maîtrisé et serré pour faire rayonner les voxels blanc-menthe SANS flouter les arêtes pixel-art !
+    vec3 tightGlow = vec3(0.0);
+    vec3 haloGlow = vec3(0.0);
 
-    float r = length(uv);
-    float angle = atan(uv.y, uv.x);
+    const float TAU = 6.2831853;
+    for (int i = 0; i < 8; i++) {
+        float ang = float(i) * (TAU / 8.0);
+        vec2 off = vec2(cos(ang), sin(ang)) * texel * 3.2;
+        vec3 s = texture(InSampler, clamp(texCoord + off, 0.001, 0.999)).rgb;
+        float luma = dot(s, vec3(0.2126, 0.7152, 0.0722));
+        tightGlow += s * smoothstep(0.58, 0.96, luma);
+    }
+    tightGlow /= 8.0;
 
-    // Projection de tunnel 3D en perspective vers la surface lumineuse
-    float depth = 0.62 / (r + 0.09);
-    float travel = depth - t * 5.6;
+    for (int i = 0; i < 8; i++) {
+        float ang = float(i) * (TAU / 8.0) + 0.39;
+        vec2 off = vec2(cos(ang), sin(ang)) * texel * 9.0;
+        vec3 s = texture(InSampler, clamp(texCoord + off, 0.001, 0.999)).rgb;
+        float luma = dot(s, vec3(0.2126, 0.7152, 0.0722));
+        haloGlow += s * smoothstep(0.55, 0.95, luma);
+    }
+    haloGlow /= 8.0;
 
-    // Spirale fluide inspirée de l'Infiltration de Zelda TOTK
-    float spiralAngle = angle + depth * 0.55 - t * 1.35;
-    vec2 tunnelUV = vec2(spiralAngle / 3.14159265 * 3.0, travel * 0.65);
+    // Harmonie colorimétrique émeraude-sarcelle nette (préserve 100% la netteté du pixel-art)
+    vec3 col = mix(scene, scene * vec3(0.86, 1.06, 1.01), 0.22);
+    col += tightGlow * vec3(0.35, 1.02, 0.84) * 0.44;
+    col += haloGlow * vec3(0.10, 0.88, 0.68) * 0.30;
 
-    // 1. Nappes nébuleuses émeraude / turquoise en mouvement
-    float n1 = fbm(tunnelUV + vec2(0.0, -t * 1.2));
-    float n2 = fbm(tunnelUV * 2.1 - vec2(t * 0.4, t * 2.2));
-    float nebula = smoothstep(0.18, 0.85, n1 * 0.65 + n2 * 0.45);
+    // Légère vignette sarcelle profonde sur les bords (identique au fond sombre de ton illustration)
+    vec2 centered = (texCoord - 0.5) * vec2(OutSize.x / OutSize.y, 1.0);
+    float dist = length(centered);
+    float vignette = smoothstep(0.42, 1.08, dist);
+    col = mix(col, vec3(0.006, 0.055, 0.068), vignette * 0.56);
 
-    // 2. Rubans lumineux spiralés le long des parois du vortex
-    float ribbonWave = sin(spiralAngle * 6.0 + n1 * 3.5);
-    float ribbons = pow(max(0.0, ribbonWave), 4.0) * smoothstep(0.06, 0.48, r);
+    // Légère pulsation subtile liée à GameTime (garde le shader vivant)
+    col *= (0.985 + 0.015 * sin(t * 3.0));
 
-    // 3. Ondes concentriques qui défilent rapidement vers le joueur (sensation de vitesse)
-    float ringWave = sin(travel * 4.2 + n1 * 1.8);
-    float rings = pow(0.5 + 0.5 * ringWave, 7.0) * smoothstep(0.05, 0.35, r);
-
-    // 4. Stries d'énergie cristalline (traînées rapides)
-    float streakSector = floor((angle + 3.14159265) * 14.0);
-    float streakRand = hash21(vec2(streakSector, 19.7));
-    float streakSpeed = fract(depth * 0.42 - t * (1.8 + streakRand * 1.6) + streakRand);
-    float streakMask = smoothstep(0.0, 0.12, streakSpeed) * smoothstep(0.45, 0.08, streakSpeed);
-    float streakThin = pow(max(0.0, cos((angle * 14.0 - streakSector) * 3.14159)), 8.0);
-    float streaks = streakMask * streakThin * smoothstep(0.08, 0.42, r);
-
-    // 5. Palette Cryo-Émeraude lumineuse (style TOTK + thème Cryo Awakening)
-    vec3 abyssColor   = vec3(0.015, 0.085, 0.105);
-    vec3 jadeColor    = vec3(0.045, 0.48, 0.44);
-    vec3 emeraldGlow  = vec3(0.18, 0.96, 0.72);
-    vec3 iceCyanGlow  = vec3(0.45, 0.98, 1.0);
-    vec3 portalCore   = vec3(0.86, 1.0, 0.96);
-
-    vec3 col = mix(abyssColor, jadeColor, nebula);
-    col += emeraldGlow * ribbons * 0.72;
-    col += iceCyanGlow * rings * 0.62;
-    col += portalCore * streaks * 0.95;
-
-    // 6. Cœur lumineux du tunnel (lumière de la surface droit devant)
-    float corePulse = 0.92 + 0.08 * sin(t * 6.5);
-    float centerGlow = exp(-r * 4.2) * corePulse;
-    float innerHalo = exp(-r * 1.8) * 0.35;
-    col += emeraldGlow * innerHalo;
-    col = mix(col, portalCore, clamp(centerGlow * 1.15, 0.0, 1.0));
-
-    // 7. Douce vignette périphérique avec frange turquoise vibrante
-    float edgeBoost = smoothstep(0.45, 0.95, r);
-    col *= (1.0 - edgeBoost * 0.38);
-    col += vec3(0.02, 0.16, 0.18) * edgeBoost * (0.5 + 0.5 * sin(angle * 4.0 - t * 3.0));
-
-    // Tone mapping subtil pour garder des blancs doux sans écrêtage dur
-    col = col / (1.0 + col * 0.25);
-    col += texture(InSampler, texCoord).rgb * 0.0001;
-
+    col = col / (1.0 + col * 0.12);
     fragColor = vec4(col, 1.0);
 }

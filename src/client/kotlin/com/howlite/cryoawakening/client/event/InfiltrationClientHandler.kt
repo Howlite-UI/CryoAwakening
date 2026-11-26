@@ -68,6 +68,14 @@ object InfiltrationClientHandler {
     var flashAlpha: Float = 0.0f
     var flashColorRgb: Int = 0x55FFD6 // Émeraude-cyan TOTK
 
+    // Caméra orbitale libre 360° autour du personnage qui nage dans le vortex
+    var orbitYaw: Float = 0.0f
+    var prevOrbitYaw: Float = 0.0f
+    var orbitPitch: Float = -12.0f
+    var prevOrbitPitch: Float = -12.0f
+    var swimBodyYaw: Float = 0.0f
+    var vortexSeed: Int = 1337
+
     var invalidFlashTicks: Int = 0
         private set
 
@@ -112,8 +120,22 @@ object InfiltrationClientHandler {
     fun getCameraDetach(partialTick: Float): Float = Mth.lerp(partialTick, prevCameraDetach, cameraDetach)
     fun getFovOffset(partialTick: Float): Float = Mth.lerp(partialTick, prevFovOffset, fovOffset)
     fun getFlashAlpha(partialTick: Float): Float = Mth.lerp(partialTick, prevFlashAlpha, flashAlpha)
+    fun getOrbitYaw(partialTick: Float): Float = Mth.lerp(partialTick, prevOrbitYaw, orbitYaw)
+    fun getOrbitPitch(partialTick: Float): Float = Mth.lerp(partialTick, prevOrbitPitch, orbitPitch)
     fun getPhaseProgress(partialTick: Float): Float =
         ((phaseTick + partialTick) / phaseDuration.coerceAtLeast(1).toFloat()).coerceIn(0.0f, 1.0f)
+
+    /**
+     * Applique le mouvement de souris libre pour orbiter autour du personnage
+     * pendant la nage dans le vortex (sans faire tourner le corps du perso).
+     */
+    @JvmStatic
+    fun handleOrbitMouseMove(dx: Double, dy: Double) {
+        val sens = Minecraft.getInstance().options.sensitivity().get().toFloat() * 0.6f + 0.2f
+        val mult = sens * sens * sens * 1.2f
+        orbitYaw += (dx * mult).toFloat()
+        orbitPitch = Mth.clamp(orbitPitch + (dy * mult).toFloat(), -62.0f, 62.0f)
+    }
 
     fun register() {
         // Pont vers les mixins communs (PlayerInfiltrationMixin, InventoryMixin)
@@ -151,16 +173,34 @@ object InfiltrationClientHandler {
 
         // Flash lumineux aux transitions clés (entrée plafond, arrivée surface, émergence, retour)
         if (prevPhase != newPhase) {
+            val player = Minecraft.getInstance().player
             when (newPhase) {
                 InfiltrationPhase.SWIMMING_THROUGH -> {
                     flashColorRgb = 0x55FFD6
                     flashAlpha = 0.85f
                     prevFlashAlpha = 0.85f
+                    vortexSeed = (System.nanoTime() xor (payload.targetX.toBits())).toInt()
+                    if (player != null) {
+                        swimBodyYaw = player.yRot
+                        orbitYaw = player.yRot
+                        prevOrbitYaw = player.yRot
+                        orbitPitch = -12.0f
+                        prevOrbitPitch = -12.0f
+                    }
+                    cameraDetach = 1.0f
+                    prevCameraDetach = 1.0f
                 }
                 InfiltrationPhase.PEEKING -> {
                     flashColorRgb = 0x8CFFE6
                     flashAlpha = 0.90f
                     prevFlashAlpha = 0.90f
+                    // Synchroniser l'orientation du joueur avec l'angle de caméra orbitale + vue plongeante douce sur le perso à moitié sorti
+                    if (player != null && prevPhase == InfiltrationPhase.SWIMMING_THROUGH) {
+                        player.yRot = orbitYaw
+                        player.yRotO = orbitYaw
+                        player.xRot = 24.0f
+                        player.xRotO = 24.0f
+                    }
                 }
                 InfiltrationPhase.EMERGING -> {
                     flashColorRgb = 0xA8FFF0
@@ -171,13 +211,28 @@ object InfiltrationClientHandler {
                     flashColorRgb = 0x74C8FF
                     flashAlpha = 0.65f
                     prevFlashAlpha = 0.65f
+                    vortexSeed = (System.nanoTime() xor (payload.originY.toBits())).toInt()
+                    if (player != null) {
+                        swimBodyYaw = player.yRot
+                        orbitYaw = player.yRot
+                        prevOrbitYaw = player.yRot
+                        orbitPitch = 14.0f
+                        prevOrbitPitch = 14.0f
+                    }
+                    cameraDetach = 1.0f
+                    prevCameraDetach = 1.0f
                 }
                 InfiltrationPhase.IDLE -> {
-                    val player = Minecraft.getInstance().player
+                    cameraDetach = 0.0f
+                    prevCameraDetach = 0.0f
                     if (player != null) {
                         player.noPhysics = player.isSpectator
                         player.isNoGravity = false
                         player.fallDistance = 0.0
+                        if (prevPhase == InfiltrationPhase.RETURNING) {
+                            player.yRot = orbitYaw
+                            player.yRotO = orbitYaw
+                        }
                     }
                     if (prevPhase == InfiltrationPhase.RETURNING) {
                         flashColorRgb = 0x74C8FF
@@ -207,6 +262,8 @@ object InfiltrationClientHandler {
         prevCameraDetach = cameraDetach
         prevFovOffset = fovOffset
         prevFlashAlpha = flashAlpha
+        prevOrbitYaw = orbitYaw
+        prevOrbitPitch = orbitPitch
 
         // Décroissance douce du flash de transition
         flashAlpha = (flashAlpha - 0.085f).coerceAtLeast(0.0f)
@@ -299,8 +356,8 @@ object InfiltrationClientHandler {
 
             InfiltrationPhase.SWIMMING_THROUGH -> {
                 aimAnim = 0.0f
-                cameraDetach = Mth.lerp(0.35f, cameraDetach, 0.0f)
-                fovOffset = Mth.lerp(0.25f, fovOffset, 15.0f)
+                cameraDetach = Mth.lerp(0.28f, cameraDetach, 1.0f)
+                fovOffset = Mth.lerp(0.22f, fovOffset, 7.5f)
 
                 phaseTick = (phaseTick + 1).coerceAtMost(phaseDuration)
                 val t = (phaseTick.toDouble() / phaseDuration.coerceAtLeast(1).toDouble()).coerceIn(0.0, 1.0)
@@ -336,12 +393,17 @@ object InfiltrationClientHandler {
 
             InfiltrationPhase.EMERGING -> {
                 aimAnim = 0.0f
-                // Ramène la caméra en douceur pendant le bond de sortie
-                cameraDetach = Mth.lerp(0.2f, cameraDetach, 0.25f)
-                fovOffset = Mth.lerp(0.22f, fovOffset, 3.0f)
-
+                // Rapproche la caméra jusqu'au seuil sûr juste derrière la tête, puis bascule net en 1ère personne en fin de bond
                 phaseTick = (phaseTick + 1).coerceAtMost(phaseDuration)
                 val t = (phaseTick.toDouble() / phaseDuration.coerceAtLeast(1).toDouble()).coerceIn(0.0, 1.0)
+                cameraDetach = if (t < 0.78) {
+                    Mth.lerp((t / 0.78).toFloat(), 1.0f, 0.42f)
+                } else {
+                    0.0f
+                }
+                if (t >= 0.78) prevCameraDetach = 0.0f
+                fovOffset = Mth.lerp(0.22f, fovOffset, 2.5f)
+
                 val peekY = exitFloorY - InfiltrationMath.PEEK_HEAD_OFFSET
                 val arcY = if (t < 0.65) {
                     val u = t / 0.65
@@ -357,8 +419,8 @@ object InfiltrationClientHandler {
 
             InfiltrationPhase.RETURNING -> {
                 aimAnim = 0.0f
-                cameraDetach = Mth.lerp(0.35f, cameraDetach, 0.0f)
-                fovOffset = Mth.lerp(0.25f, fovOffset, 13.0f)
+                cameraDetach = Mth.lerp(0.28f, cameraDetach, 1.0f)
+                fovOffset = Mth.lerp(0.22f, fovOffset, 6.5f)
 
                 phaseTick = (phaseTick + 1).coerceAtMost(phaseDuration)
                 val t = (phaseTick.toDouble() / phaseDuration.coerceAtLeast(1).toDouble()).coerceIn(0.0, 1.0)
@@ -449,6 +511,8 @@ object InfiltrationClientHandler {
                     phaseTick = 0
                     phaseDuration = InfiltrationMath.computeRiseTicks(player.y, target.ceilingHitY)
                     phase = InfiltrationPhase.RISING_TO_CEILING
+                    cameraDetach = 0.38f
+                    prevCameraDetach = 0.38f
                     pitchNudgeTicks = 0
                 } else {
                     invalidFlashTicks = 14
